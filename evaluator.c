@@ -94,7 +94,7 @@ lval* builtin_op(lval **nodes, int count) {
 	/* I am not going to be fussy about the difference between integers
 		and real numbers. If I am evaluating: + 1 2 14.0, then I'll just 
 		convert the result type to float when I hit the real number */
-	if (strcmp(op, "+") == 0 || strcmp(op, "-") == 0 || strcmp(op, "*") == 0 || strcmp(op, "/") == 0) {
+	if (strcmp(op, "+") == 0 || strcmp(op, "-") == 0 || strcmp(op, "*") == 0 || strcmp(op, "/") == 0 || strcmp(op, "%") == 0) {
 		/* Unary subtraction */
 		if (strcmp(op, "-") == 0 && count == 2) {
 			if (nodes[1]->type != LVAL_NUM)
@@ -120,11 +120,22 @@ lval* builtin_op(lval **nodes, int count) {
 					lval_num_mul(result, nodes[j]);
 				else if (strcmp(op, "/") == 0) {
 					/* Let's make sure we're not trying to divide by zero */
-					if (strcmp(op, "/") == 0 && is_zero(nodes[j])) {
+					if (is_zero(nodes[j])) {
 						lval_free(result);
 						return lval_err("Division by zero!");
 					}
 					lval_num_div(result, nodes[j]);
+				}
+				else if (strcmp(op, "%") == 0) {
+					if (nodes[j]->num_type != NUM_TYPE_INT || nodes[1]->num_type != NUM_TYPE_INT) {
+						lval_free(result);
+						return lval_err("Can only calculate the remainder for integers.");
+					}
+					else if (is_zero(nodes[j])) {
+						lval_free(result);
+						return lval_err("Division by zero!");
+					}
+					result->n.i_num %= nodes[j]->n.i_num;
 				}
 			}
 			else {

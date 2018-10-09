@@ -151,7 +151,7 @@ token* next_token(char *s, int *start) {
 	if (s[*start] == '\0')
 		return token_create(T_NULL, NULL);
 	
-	if (s[*start] == '+' || s[*start] == '*' || s[*start] == '/') {
+	if (s[*start] == '+' || s[*start] == '*' || s[*start] == '/' || s[*start] == '%') {
 		t = token_create(T_OP, NULL);
 		x = *start + 1;
 	}
