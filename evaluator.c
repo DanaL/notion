@@ -95,6 +95,15 @@ lval* builtin_op(lval **nodes, int count) {
 		and real numbers. If I am evaluating: + 1 2 14.0, then I'll just 
 		convert the result type to float when I hit the real number */
 	if (strcmp(op, "+") == 0 || strcmp(op, "-") == 0 || strcmp(op, "*") == 0 || strcmp(op, "/") == 0) {
+		/* Unary subtraction */
+		if (strcmp(op, "-") == 0 && count == 2) {
+			if (nodes[1]->type != LVAL_NUM)
+				return lval_err("Expected number!");
+			result = lval_num_s("0");
+			lval_num_sub(result, nodes[1]);
+			return result;
+		}
+
 		for (int j = 1; j < count; j++) {
 			/* The first number value after the operator is result's starting value */
 			if (j == 1) {
