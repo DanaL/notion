@@ -22,12 +22,15 @@ void print_lval_type(enum lval_type t) {
 	}
 }
 
+void lval_convert_num_type(lval *v) {
+	long x = v->n.i_num;
+	v->n.d_num = x;
+	v->num_type = NUM_TYPE_DEC;
+}
+
 void lval_num_add(lval *result, lval *v) {
-	if (result->num_type == NUM_TYPE_INT && v->num_type == NUM_TYPE_DEC) {
-		long x = result->n.i_num;
-		result->n.d_num = x;
-		result->num_type = NUM_TYPE_DEC;
-	}
+	if (result->num_type == NUM_TYPE_INT && v->num_type == NUM_TYPE_DEC) 
+		lval_convert_num_type(result);
 
 	if (result->num_type == NUM_TYPE_DEC) {
 		result->n.d_num += v->num_type == NUM_TYPE_INT ? v->n.i_num : v->n.d_num;
@@ -37,6 +40,53 @@ void lval_num_add(lval *result, lval *v) {
 	}
 }
 
+void lval_num_sub(lval *result, lval *v) {
+	if (result->num_type == NUM_TYPE_INT && v->num_type == NUM_TYPE_DEC) 
+		lval_convert_num_type(result);
+
+	if (result->num_type == NUM_TYPE_DEC) {
+		result->n.d_num -= v->num_type == NUM_TYPE_INT ? v->n.i_num : v->n.d_num;
+	}
+	else {
+		result->n.i_num -= v->n.i_num; 
+	}
+}
+
+void lval_num_mul(lval *result, lval *v) {
+	if (result->num_type == NUM_TYPE_INT && v->num_type == NUM_TYPE_DEC) 
+		lval_convert_num_type(result);
+
+	if (result->num_type == NUM_TYPE_DEC) {
+		result->n.d_num *= v->num_type == NUM_TYPE_INT ? v->n.i_num : v->n.d_num;
+	}
+	else {
+		result->n.i_num *= v->n.i_num; 
+	}
+}
+
+void lval_num_div(lval *result, lval *v) {
+	if (result->num_type == NUM_TYPE_INT && v->num_type == NUM_TYPE_DEC) 
+		lval_convert_num_type(result);
+
+	if (result->num_type == NUM_TYPE_DEC) {
+		result->n.d_num /= v->num_type == NUM_TYPE_INT ? v->n.i_num : v->n.d_num;
+	}
+	else {
+		result->n.i_num /= v->n.i_num; 
+	}
+}
+
+void lval_math_op(char *op, lval *result, lval *v) {
+	if (strcmp(op, "+") == 0)
+		lval_num_add(result, v);
+	else if (strcmp(op, "-") == 0)
+		lval_num_sub(result, v);
+	else if (strcmp(op, "*") == 0)
+		lval_num_mul(result, v);
+	else if (strcmp(op, "/") == 0)
+		lval_num_div(result, v);
+}
+
 lval* builtin_op(lval **nodes, int count) {
 	if (nodes[0]->type != LVAL_SYM)
 		return lval_err("Expected symbol/built-in op!");
@@ -44,14 +94,17 @@ lval* builtin_op(lval **nodes, int count) {
 	char *op = nodes[0]->sym;
 	lval *result = NULL;
 
-	if (strcmp(op, "+") == 0) {
-		result = lval_num("0");
+	/* I am not going to be fussy about the difference between integers
+		and real numbers. If I am evaluating: + 1 2 14.0, then I'll just 
+		convert the result type to float when I hit the real number */
+	if (strcmp(op, "+") == 0 || strcmp(op, "-") == 0 || strcmp(op, "*") == 0 || strcmp(op, "/") == 0) {
+		/* The first number value after the operator is result's starting value */
 		for (int j = 1; j < count; j++) {
-			/* I am not going to be fussy about the difference between integers
-				and real numbers. If I am evaluating: + 1 2 14.0, then I'll just 
-				convert the result type to float when I hit the real number */
 			if (nodes[j]->type == LVAL_NUM) {
-				lval_num_add(result, nodes[j]);
+				if (j == 1) 
+					result = lval_num(nodes[j]);
+				else 
+					lval_math_op(op, result, nodes[j]);
 			}
 			else if (nodes[j]->type == LVAL_SEXPR) {
 				/* Complicated case -- gotta recurse and calc the nested expression */
@@ -66,8 +119,12 @@ lval* builtin_op(lval **nodes, int count) {
 					return lval_err("Expected number!");
 				}
 
-				lval_num_add(result, subexp);
-				free(subexp);
+				if (j == 1) 
+					result = subexp;
+				else {
+					lval_math_op(op, result, subexp);
+					free(subexp);
+				}
 			}
 			else {
 				lval_free(result);

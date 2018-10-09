@@ -26,7 +26,21 @@ void token_free(token *t) {
 	free(t);
 }
 
-lval* lval_num(char *s) {
+lval* lval_num(lval* j) {
+	lval *v = malloc(sizeof(lval));
+	v->type = LVAL_NUM;
+	v->num_type = j->num_type;
+
+	if (j->num_type == NUM_TYPE_INT) {
+		v->n.i_num = j->n.i_num;
+	}
+	else
+		v->n.d_num = j->n.d_num;
+
+	return v;
+}
+
+lval* lval_num_s(char *s) {
 	lval *v = malloc(sizeof(lval));
 	v->type = LVAL_NUM;
 
@@ -226,7 +240,7 @@ lval* parse_sexpr(char *s, int *curr) {
 					curr_type = T_OP;
 				}
 				else if (nt->type == T_NUM) {
-					lval *num = lval_num(nt->val);
+					lval *num = lval_num_s(nt->val);
 					lval_append(head, num);
 					curr_type = T_NUM;
 				}
@@ -238,7 +252,7 @@ lval* parse_sexpr(char *s, int *curr) {
 				break;
 			case T_OP:
 				if (nt->type == T_NUM) {
-					lval *num = lval_num(nt->val);
+					lval *num = lval_num_s(nt->val);
 					lval_append(head, num);
 					curr_type = T_NUM;
 				}
@@ -261,7 +275,7 @@ lval* parse_sexpr(char *s, int *curr) {
 				break;
 			case T_NUM:
 				if (nt->type == T_NUM) {
-					lval *num = lval_num(nt->val);
+					lval *num = lval_num_s(nt->val);
 					lval_append(head, num);
 					curr_type = T_NUM;
 				}

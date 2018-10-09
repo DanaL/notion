@@ -28,7 +28,8 @@ typedef struct lval {
 } lval;
 
 lval* lval_err(char*);
-lval* lval_num(char*);
+lval* lval_num_s(char*);
+lval* lval_num(lval*);
 lval* lval_null(void);
 lval* lval_sym(char*);
 lval* lval_sexpr(void);
