@@ -4,6 +4,7 @@
 #include <editline/readline.h>
 
 #include "parser.h"
+#include "evaluator.h"
 
 int main(int argc, char **argv) {
 	puts("Notion (Dana's toy Scheme) 0.0.0.0.1");
@@ -15,11 +16,15 @@ int main(int argc, char **argv) {
 		add_history(line);
 
 		lval *ast = parse(line);
-		lval_pprint(ast, 0);
+		lval *result = lval_eval(ast);
+
+		lval_pprint(result, 0);
+		putchar('\n');
+		free(result);
+
 		free(ast);
 		free(line);
 	}
+
 	return 0;
 }
-
-#include "notion.h"

@@ -1,7 +1,7 @@
 CC=cc
 CFLAGS= -std=c99 -Wall -ledit
 LIBS= -ledit
-FILES= notion.c parser.c
+FILES= notion.c parser.c evaluator.c
 OUTPUT= notion
 
 default: notion
