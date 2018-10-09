@@ -52,11 +52,22 @@ lval* builtin_op(lval **nodes, int count) {
 				convert the result type to float when I hit the real number */
 			if (nodes[j]->type == LVAL_NUM) {
 				lval_num_add(result, nodes[j]);
-				//if (nodes[j]->num_type == NUM_TYPE_DEC)
-				//	result->n.
 			}
 			else if (nodes[j]->type == LVAL_SEXPR) {
 				/* Complicated case -- gotta recurse and calc the nested expression */
+				lval *subexp = lval_eval(nodes[j]);
+				if (subexp->type == LVAL_ERR) {
+					lval_free(result);
+					return subexp;
+				}
+				else if (subexp->type != LVAL_NUM) {
+					lval_free(result);
+					lval_free(subexp);
+					return lval_err("Expected number!");
+				}
+
+				lval_num_add(result, subexp);
+				free(subexp);
 			}
 			else {
 				lval_free(result);
