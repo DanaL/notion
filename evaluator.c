@@ -98,33 +98,15 @@ lval* builtin_op(lval **nodes, int count) {
 		and real numbers. If I am evaluating: + 1 2 14.0, then I'll just 
 		convert the result type to float when I hit the real number */
 	if (strcmp(op, "+") == 0 || strcmp(op, "-") == 0 || strcmp(op, "*") == 0 || strcmp(op, "/") == 0) {
-		/* The first number value after the operator is result's starting value */
 		for (int j = 1; j < count; j++) {
-			if (nodes[j]->type == LVAL_NUM) {
-				if (j == 1) 
-					result = lval_num(nodes[j]);
-				else 
-					lval_math_op(op, result, nodes[j]);
+			/* The first number value after the operator is result's starting value */
+			if (j == 1) {
+				result = lval_num(nodes[j]);
+				continue;
 			}
-			else if (nodes[j]->type == LVAL_SEXPR) {
-				/* Complicated case -- gotta recurse and calc the nested expression */
-				lval *subexp = lval_eval(nodes[j]);
-				if (subexp->type == LVAL_ERR) {
-					lval_free(result);
-					return subexp;
-				}
-				else if (subexp->type != LVAL_NUM) {
-					lval_free(result);
-					lval_free(subexp);
-					return lval_err("Expected number!");
-				}
-
-				if (j == 1) 
-					result = subexp;
-				else {
-					lval_math_op(op, result, subexp);
-					free(subexp);
-				}
+		
+			if (nodes[j]->type == LVAL_NUM) {
+				lval_math_op(op, result, nodes[j]);
 			}
 			else {
 				lval_free(result);
@@ -141,6 +123,18 @@ lval* lval_eval(lval *v) {
 
 	switch (v->type) {
 		case LVAL_SEXPR:
+			/* Evaluate all the child expressions first, which makes the code in 
+				builtin_op() simpler */
+			for (int j = 0; j < v->count; j++) {
+				if (v->children[j]->type == LVAL_SEXPR) {
+					lval *result = lval_eval(v->children[j]);
+					if (result->type == LVAL_ERR)
+						return result;
+					lval_free(v->children[j]);
+					v->children[j] = result;
+				}
+			}
+
 			result = builtin_op(v->children, v->count);
 			return result;
 			break;
