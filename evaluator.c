@@ -224,50 +224,13 @@ lval* builtin_op(lval **nodes, int count) {
 					return cp;
 				}
 			}
-			/*
 			else if (nodes[j]->type == LVAL_LIST) {
-				puts("foo");
 				cp = lval_list();
-
-				printf("Src count %d\n", nodes[j]->count);
-				for (int k = 0; k < nodes[j]->count; k++) {
-					putchar('(');
-					printf("%d", nodes[j]->children[k]->n.i_num);
-					puts(')');
-				}
-
-				lval_copy_list(cp, nodes[j]);
-
-				for (int k = 0; k < cp->count; k++) {
-					putchar('(');
-					printf("%d", cp->children[k]->n.i_num);
-					puts(')');
-				}				
+				lval_copy_list(cp, nodes[j]);		
 			}
-			*/
+
 			lval_append(result, cp);
 		}
-
-		printf("flag %d\n", result->count);
-		for (int k = 0; k < result->count; k++) {
-			printf("foo %d\n", result->children[k]->n.i_num);
-		}
-		/*
-		for (int j = 0; j < result->count; j++) {
-			print_lval_type(result->children[j]->type);
-			putchar(' ');
-			if (result->children[j]->type != LVAL_LIST)
-				printf("%d ", result->children[j]->n.i_num);
-			else {
-				lval *l = result->children[j];
-				putchar("(");
-				for (int k = 0; k < l->count; k++)
-					printf("%d ", l->children[k]->n.i_num);
-				puts(")");
-			}
-		}
-		putchar('\n');
-		*/		
 	}
 
 	return result;

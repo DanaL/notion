@@ -133,7 +133,7 @@ void lval_copy_list(lval* dst, lval* src) {
 	for (int j = 0; j < src->count; j++) {
 		if (src->children[j]->type == LVAL_NUM || src->children[j]->type == LVAL_SYM) {
 			lval *cp = lval_copy_atom(src->children[j]);
-			lval_append(dst, src);
+			lval_append(dst, cp);
 		}
 		else if (src->children[j]->type == LVAL_LIST) {
 			lval *cp = lval_list();
