@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -76,15 +77,11 @@ void lval_num_div(lval *result, lval *v) {
 	}
 }
 
-void lval_math_op(char *op, lval *result, lval *v) {
-	if (strcmp(op, "+") == 0)
-		lval_num_add(result, v);
-	else if (strcmp(op, "-") == 0)
-		lval_num_sub(result, v);
-	else if (strcmp(op, "*") == 0)
-		lval_num_mul(result, v);
-	else if (strcmp(op, "/") == 0)
-		lval_num_div(result, v);
+int is_zero(lval *num) {
+	if (num->num_type == NUM_TYPE_INT)
+		return num->n.i_num == 0;
+	else
+		return (fabs(0 - num->n.d_num) < 0.00000001);
 }
 
 lval* builtin_op(lval **nodes, int count) {
@@ -106,7 +103,20 @@ lval* builtin_op(lval **nodes, int count) {
 			}
 		
 			if (nodes[j]->type == LVAL_NUM) {
-				lval_math_op(op, result, nodes[j]);
+				if (strcmp(op, "+") == 0)
+					lval_num_add(result, nodes[j]);
+				else if (strcmp(op, "-") == 0)
+					lval_num_sub(result, nodes[j]);
+				else if (strcmp(op, "*") == 0)
+					lval_num_mul(result, nodes[j]);
+				else if (strcmp(op, "/") == 0) {
+					/* Let's make sure we're not trying to divide by zero */
+					if (strcmp(op, "/") == 0 && is_zero(nodes[j])) {
+						lval_free(result);
+						return lval_err("Division by zero!");
+					}
+					lval_num_div(result, nodes[j]);
+				}
 			}
 			else {
 				lval_free(result);
