@@ -249,6 +249,28 @@ lval* builtin_op(lval **nodes, int count) {
 			result = lval_copy_atom(l->children[0]);
 	}
 
+	if (strcmp(op, "cdr") == 0) {
+		if (count != 2)
+			return lval_err("cdr expects only one parameter");
+
+		if (nodes[1]->type != LVAL_LIST || nodes[1]->count == 0)
+			return lval_err("cdr is defined only for non-empty lists.");
+
+		result = lval_list();
+		lval *l = nodes[1];
+		for (int j = 1; j < l->count; j++) {
+			if (l->children[j]->type == LVAL_LIST) {
+				lval *lst = lval_list();
+				lval_copy_list(lst, l->children[j]);
+				lval_append(result, lst);
+			}
+			else {
+				lval *a = lval_copy_atom(l->children[j]);
+				lval_append(result, a);
+			}
+		}
+	}
+
 	return result;
 }
 

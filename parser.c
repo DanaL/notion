@@ -250,7 +250,9 @@ int is_built_in(char *s) {
 		result = 1;
 	else if (strcmp(ls, "car") == 0)
 		result = 1;
-
+	else if (strcmp(ls, "cdr") == 0)
+		result = 1;
+	
 	free(ls);
 
 	return result;
