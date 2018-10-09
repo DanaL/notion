@@ -248,6 +248,8 @@ int is_built_in(char *s) {
 		result = 1;
 	else if (strcmp(ls, "list") == 0)
 		result = 1;
+	else if (strcmp(ls, "car") == 0)
+		result = 1;
 
 	free(ls);
 
@@ -399,7 +401,7 @@ void lval_pprint(lval *v, int depth) {
 
 			for (int j = 0; j < v->count; j++) {
 				lval_pprint(v->children[j], depth + 1);
-				if (j < v->count)
+				if (j < v->count - 1)
 					putchar(' ');
 			}
 			puts(")");

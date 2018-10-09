@@ -233,6 +233,22 @@ lval* builtin_op(lval **nodes, int count) {
 		}
 	}
 
+	if (strcmp(op, "car") == 0) {
+		if (count != 2)
+			return lval_err("car expects only one parameter");
+
+		if (nodes[1]->type != LVAL_LIST || nodes[1]->count == 0)
+			return lval_err("car is defined only for non-empty lists.");
+
+		lval *l = nodes[1];
+		if (l->children[0]->type == LVAL_LIST) {
+			result = lval_list();
+			lval_copy_list(result, l->children[0]);
+		}
+		else 
+			result = lval_copy_atom(l->children[0]);
+	}
+
 	return result;
 }
 
