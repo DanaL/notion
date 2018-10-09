@@ -85,6 +85,15 @@ lval* lval_sexpr(void) {
 	return v;
 }
 
+lval* lval_list(void) {
+	lval *v = malloc(sizeof(lval));
+	v->type = LVAL_LIST;
+	v->count = 0;
+	v->children = NULL;
+
+	return v;
+}
+
 void lval_free(lval *v) {
 	switch (v->type) {
 		case LVAL_NUM:
@@ -96,12 +105,42 @@ void lval_free(lval *v) {
 			free(v->sym);
 			break;
 		case LVAL_SEXPR:
+		case LVAL_LIST:
 			for (int j = 0; j < v->count; j++)
 				lval_free(v->children[j]);
 			break;
 	}
 
 	free(v);
+}
+
+lval* lval_copy_atom(lval* src) {
+	lval* dst;
+
+	if (src->type == LVAL_NUM) {
+		dst = lval_num(src);
+		return dst;		
+	}
+	else if (src->type == LVAL_SYM) {
+		dst = lval_sym(src->sym);
+		return dst;
+	}
+
+	return lval_err("Can only copy atoms.");
+}
+
+void lval_copy_list(lval* dst, lval* src) {
+	for (int j = 0; j < src->count; j++) {
+		if (src->children[j]->type == LVAL_NUM || src->children[j]->type == LVAL_SYM) {
+			lval *cp = lval_copy_atom(src->children[j]);
+			lval_append(dst, src);
+		}
+		else if (src->children[j]->type == LVAL_LIST) {
+			lval *cp = lval_list();
+			lval_copy_list(cp, src->children[j]);
+			lval_append(dst, cp);
+		}
+	}
 }
 
 lval* lval_append(lval *v, lval *next) {
@@ -188,7 +227,7 @@ token* next_token(char *s, int *start) {
 
 	len = x - *start + 1;
 	t->val = malloc(len * sizeof(char));
-	strncpy(t->val, &s[*start], len - 1);
+	memcpy(t->val, &s[*start], len - 1);
 	t->val[len - 1] = '\0';
 	(*start) = x;
 
@@ -206,6 +245,8 @@ int is_built_in(char *s) {
 	if (strcmp(ls, "max") == 0)
 		result = 1;
 	else if (strcmp(ls, "min") == 0)
+		result = 1;
+	else if (strcmp(ls, "list") == 0)
 		result = 1;
 
 	free(ls);
@@ -351,6 +392,17 @@ void lval_pprint(lval *v, int depth) {
 			print_padding(depth);
 			puts(")");
 
+			break;
+		case LVAL_LIST:
+			print_padding(depth);
+			putchar('(');
+
+			for (int j = 0; j < v->count; j++) {
+				lval_pprint(v->children[j], depth + 1);
+				if (j < v->count)
+					putchar(' ');
+			}
+			puts(")");
 			break;
 		case LVAL_SYM:
 			printf("%s", v->sym);

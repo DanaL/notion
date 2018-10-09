@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifndef _WIN32
 #include <editline/readline.h>
-
+#endif
 #include "parser.h"
 #include "evaluator.h"
 
@@ -11,10 +12,20 @@ int main(int argc, char **argv) {
 	puts("Press Ctrl-C to exit");
 
 	while (1) {
-		char *line = readline(">");
+		char *line;
+		
+#ifdef _WIN32
+		line = malloc(sizeof(char) * 1000);
+		fgets(line, 200, stdin);
+		char *p = strchr(line, '\n');
+		if (p) {
+			*p = '\0';
+		}
+#else
+		line = readline(">");
 
 		add_history(line);
-
+#endif
 		lval *ast = parse(line);
 		lval *result = lval_eval(ast);
 

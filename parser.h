@@ -11,7 +11,7 @@ typedef struct token {
 token* token_create(enum token_type, char*);
 void token_free(token *);
 
-enum lval_type { LVAL_NUM, LVAL_ERR, LVAL_SYM, LVAL_SEXPR };
+enum lval_type { LVAL_NUM, LVAL_ERR, LVAL_SYM, LVAL_SEXPR, LVAL_LIST };
 enum lval_num_type { NUM_TYPE_INT, NUM_TYPE_DEC };
 
 typedef struct lval {
@@ -33,6 +33,9 @@ lval* lval_num(lval*);
 lval* lval_null(void);
 lval* lval_sym(char*);
 lval* lval_sexpr(void);
+lval* lval_list(void);
+lval* lval_copy_atom(lval*);
+void lval_copy_list(lval*, lval*);
 void lval_free(lval*);
 lval* lval_append(lval*, lval*); 
 

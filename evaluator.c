@@ -20,6 +20,9 @@ void print_lval_type(enum lval_type t) {
 		case LVAL_ERR:
 			printf("error");
 			break;
+		case LVAL_LIST:
+			printf("list");
+			break;
 	}
 }
 
@@ -142,7 +145,129 @@ lval* builtin_op(lval **nodes, int count) {
 				lval_free(result);
 				return lval_err("Expected number!");
 			}
+		}		
+	}
+
+	if (strcmp(op, "min") == 0) {
+		for (int j = 1; j < count; j++) {
+			if (j == 1) {
+				result = lval_num(nodes[j]);
+				continue;
+			}
+
+			lval *n = nodes[j];
+			if (n->type == LVAL_NUM) {
+				if (result->num_type == NUM_TYPE_INT) {
+					if (n->num_type == NUM_TYPE_INT && n->n.i_num < result->n.i_num) 
+						result->n.i_num = n->n.i_num;
+					else if (n->num_type == NUM_TYPE_DEC && n->n.d_num < result->n.i_num) {
+						/* We need to switch the number type of result to be a real number in this case */
+						lval_convert_num_type(result);
+						result->n.d_num = n->n.d_num;
+					}
+				}
+				else {
+					if (n->num_type == NUM_TYPE_INT && n->n.i_num < result->n.d_num)
+						result->n.d_num = n->n.i_num;
+					else if (n->num_type == NUM_TYPE_DEC && n->n.d_num < result->n.d_num) 
+						result->n.d_num = n->n.d_num;
+				}
+			}
+			else {
+				lval_free(result);
+				return lval_err("Expected number!");
+			}
 		}
+	}
+
+	if (strcmp(op, "max") == 0) {
+		for (int j = 1; j < count; j++) {
+			if (j == 1) {
+				result = lval_num(nodes[j]);
+				continue;
+			}
+
+			lval *n = nodes[j];
+			if (n->type == LVAL_NUM) {
+				if (result->num_type == NUM_TYPE_INT) {
+					if (n->num_type == NUM_TYPE_INT && n->n.i_num > result->n.i_num) 
+						result->n.i_num = n->n.i_num;
+					else if (n->num_type == NUM_TYPE_DEC && n->n.d_num > result->n.i_num) {
+						/* We need to switch the number type of result to be a real number in this case */
+						lval_convert_num_type(result);
+						result->n.d_num = n->n.d_num;
+					}
+				}
+				else {
+					if (n->num_type == NUM_TYPE_INT && n->n.i_num > result->n.d_num)
+						result->n.d_num = n->n.i_num;
+					else if (n->num_type == NUM_TYPE_DEC && n->n.d_num > result->n.d_num) 
+						result->n.d_num = n->n.d_num;
+				}
+			}
+			else {
+				lval_free(result);
+				return lval_err("Expected number!");
+			}
+		}
+	}
+
+	if (strcmp(op, "list") == 0) {
+		result = lval_list();
+
+		for (int j = 1; j < count; j++) {
+			lval *cp = NULL;
+			if (nodes[j]->type == LVAL_NUM || nodes[j]->type == LVAL_SYM) {
+				cp = lval_copy_atom(nodes[j]);
+				if (cp->type == LVAL_ERR) {
+					lval_free(result);
+					return cp;
+				}
+			}
+			/*
+			else if (nodes[j]->type == LVAL_LIST) {
+				puts("foo");
+				cp = lval_list();
+
+				printf("Src count %d\n", nodes[j]->count);
+				for (int k = 0; k < nodes[j]->count; k++) {
+					putchar('(');
+					printf("%d", nodes[j]->children[k]->n.i_num);
+					puts(')');
+				}
+
+				lval_copy_list(cp, nodes[j]);
+
+				for (int k = 0; k < cp->count; k++) {
+					putchar('(');
+					printf("%d", cp->children[k]->n.i_num);
+					puts(')');
+				}				
+			}
+			*/
+			lval_append(result, cp);
+		}
+
+		printf("flag %d\n", result->count);
+		for (int k = 0; k < result->count; k++) {
+			printf("foo %d\n", result->children[k]->n.i_num);
+		}
+		/*
+		for (int j = 0; j < result->count; j++) {
+			print_lval_type(result->children[j]->type);
+			putchar(' ');
+			if (result->children[j]->type != LVAL_LIST)
+				printf("%d ", result->children[j]->n.i_num);
+			else {
+				lval *l = result->children[j];
+				putchar("(");
+				for (int k = 0; k < l->count; k++)
+					printf("%d ", l->children[k]->n.i_num);
+				puts(")");
+			}
+		}
+		putchar('\n');
+		*/		
 	}
 
 	return result;
