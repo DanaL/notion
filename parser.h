@@ -34,7 +34,6 @@ lval* lval_null(void);
 lval* lval_sym(char*);
 lval* lval_sexpr(void);
 lval* lval_list(void);
-int lval_is_atom(lval*);
 lval* lval_copy_atom(lval*);
 void lval_copy_list(lval*, lval*);
 void lval_free(lval*);
@@ -44,5 +43,7 @@ void lval_append(lval*, lval*);
 void lval_pprint(lval*, int);
 
 lval* parse(char *s);
+
+#define IS_ATOM(a) (a->type == LVAL_NUM || a->type == LVAL_SYM) ? 1 : 0
 
 #endif

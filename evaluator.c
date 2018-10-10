@@ -241,7 +241,7 @@ lval* builtin_op(lval **nodes, int count) {
 
 		for (int j = 1; j < count; j++) {
 			lval *cp = NULL;
-			if (nodes[j]->type == LVAL_NUM || nodes[j]->type == LVAL_SYM) {
+			if (IS_ATOM(nodes[j])) {
 				cp = lval_copy_atom(nodes[j]);
 				if (cp->type == LVAL_ERR) {
 					lval_free(result);

@@ -114,13 +114,6 @@ void lval_free(lval *v) {
 	free(v);
 }
 
-int lval_is_atom(lval* a) {
-	if (a->type == LVAL_NUM || a->type == LVAL_SYM)
-		return 1;
-
-	return 0;
-}
-
 lval* lval_copy_atom(lval* src) {
 	lval* dst;
 
@@ -138,7 +131,7 @@ lval* lval_copy_atom(lval* src) {
 
 void lval_copy_list(lval* dst, lval* src) {
 	for (int j = 0; j < src->count; j++) {
-		if (src->children[j]->type == LVAL_NUM || src->children[j]->type == LVAL_SYM) {
+		if (IS_ATOM(src->children[j])) {
 			lval *cp = lval_copy_atom(src->children[j]);
 			lval_append(dst, cp);
 		}
