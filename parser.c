@@ -129,7 +129,9 @@ lval* lval_copy_atom(lval* src) {
 	return lval_err("Can only copy atoms.");
 }
 
-void lval_copy_list(lval* dst, lval* src) {
+lval* lval_copy_list(lval* src) {
+	lval *dst = lval_list();
+
 	for (int j = 0; j < src->count; j++) {
 		if (IS_ATOM(src->children[j])) {
 			lval *cp = lval_copy_atom(src->children[j]);
@@ -141,6 +143,15 @@ void lval_copy_list(lval* dst, lval* src) {
 			lval_append(dst, cp);
 		}
 	}
+
+	return dst;
+}
+
+lval* lval_copy(lval* src) {
+	if (IS_ATOM(src))
+		return lval_copy_atom(src);
+
+	return lval_copy_list(src);
 }
 
 void lval_append(lval *v, lval *next) {
@@ -150,15 +161,8 @@ void lval_append(lval *v, lval *next) {
 }
 
 void lval_list_insert(lval *dst, lval *item) {
-	if (item->type == LVAL_LIST) {
-		lval *lst = lval_list();
-		lval_copy_list(lst, item);
-		lval_append(dst, lst);
-	}
-	else {
-		lval *a = lval_copy_atom(item);
-		lval_append(dst, a);
-	}
+	lval* cp = lval_copy(item);
+	lval_append(dst, cp);
 }
 
 int skip_whitespace(char *s, int x) {

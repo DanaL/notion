@@ -240,19 +240,7 @@ lval* builtin_op(lval **nodes, int count) {
 		result = lval_list();
 
 		for (int j = 1; j < count; j++) {
-			lval *cp = NULL;
-			if (IS_ATOM(nodes[j])) {
-				cp = lval_copy_atom(nodes[j]);
-				if (cp->type == LVAL_ERR) {
-					lval_free(result);
-					return cp;
-				}
-			}
-			else if (nodes[j]->type == LVAL_LIST) {
-				cp = lval_list();
-				lval_copy_list(cp, nodes[j]);		
-			}
-
+			lval *cp = lval_copy(nodes[j]);			
 			lval_append(result, cp);
 		}
 	}
@@ -265,12 +253,7 @@ lval* builtin_op(lval **nodes, int count) {
 			return lval_err("car is defined only for non-empty lists.");
 
 		lval *l = nodes[1];
-		if (l->children[0]->type == LVAL_LIST) {
-			result = lval_list();
-			lval_copy_list(result, l->children[0]);
-		}
-		else 
-			result = lval_copy_atom(l->children[0]);
+		result = lval_copy(l->children[0]);
 	}
 
 	if (strcmp(op, "cdr") == 0) {
