@@ -7,8 +7,17 @@
 #include "parser.h"
 #include "evaluator.h"
 
+int is_whitespeace(char *s) {
+	while (*s) {
+		if (!isspace(*s++))
+			return 0;
+	}
+
+	return 1;
+}
+
 int main(int argc, char **argv) {
-	puts("Notion (Dana's toy Scheme) 0.0.0.2");
+	puts("Notion (Dana's toy Scheme) 0.0.0.3");
 	puts("Press Ctrl-C to exit");
 
 	while (1) {
@@ -27,13 +36,20 @@ int main(int argc, char **argv) {
 		add_history(line);
 #endif
 		lval *ast = parse(line);
-		lval *result = lval_eval(ast);
+		
+		if (is_whitespeace(line))
+			putchar('\n');
+		else 
+		{
+			lval *result = lval_eval(ast);
 
-		lval_pprint(result, 0);
-		putchar('\n');
-		free(result);
+			lval_pprint(result, 0);
+			putchar('\n');
+			free(result);
 
-		free(ast);
+			free(ast);
+		}
+
 		free(line);
 	}
 

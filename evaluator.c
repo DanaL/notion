@@ -323,8 +323,10 @@ lval* lval_eval(lval *v) {
 			}
 
 			result = builtin_op(v->children, v->count);
-			return result;
-			break;
+			return result;			
+		case LVAL_NUM:
+		case LVAL_SYM:
+			return v;
 	}
 
 	return lval_err("Something hasn't been implemented yet");

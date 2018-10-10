@@ -114,6 +114,13 @@ void lval_free(lval *v) {
 	free(v);
 }
 
+int lval_is_atom(lval* a) {
+	if (a->type == LVAL_NUM || a->type == LVAL_SYM)
+		return 1;
+
+	return 0;
+}
+
 lval* lval_copy_atom(lval* src) {
 	lval* dst;
 
@@ -373,13 +380,28 @@ lval* parse_sexpr(char *s, int *curr) {
 lval* parse(char *s) {
 	int j = 0;
 	
+	lval *head = NULL;
+
 	token *nt = next_token(s, &j);
-	if (nt->type != T_SEXPR_START) {
-		token_free(nt);
-		return lval_err("Expected start of s-expr!");
+
+	switch (nt->type) {
+		case T_STR:
+			head = lval_sym(nt->val);
+			break;
+		case T_NUM:
+			head = lval_num_s(nt->val);
+			break;
+		case T_SEXPR_START:
+			head = parse_sexpr(s, &j);
+			break;
+		case T_OP:
+		case T_NULL:
+		case T_SEXPR_END:
+			head = lval_err("Expected s-expr or atom!");
+			break;
 	}
 
-	lval *head = parse_sexpr(s, &j);
+	token_free(nt);
 	
 	return head;
 }

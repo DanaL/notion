@@ -34,6 +34,7 @@ lval* lval_null(void);
 lval* lval_sym(char*);
 lval* lval_sexpr(void);
 lval* lval_list(void);
+int lval_is_atom(lval*);
 lval* lval_copy_atom(lval*);
 void lval_copy_list(lval*, lval*);
 void lval_free(lval*);
