@@ -19,4 +19,4 @@ So far, we don't have variables, but we do have basic math operations, min, max,
 
 I was pretty tickled when, after implementing cdr, this gem ran correctly:
 
-(div (car (cdr (cdr(list(car (car (cdr (list 1 (list 2 3) (list (list 4)))))) 4 8)))) 2)
+(/ (car (cdr (cdr(list(car (car (cdr (list 1 (list 2 3) (list (list 4)))))) 4 8)))) 2)
