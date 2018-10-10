@@ -139,8 +139,7 @@ lval* lval_copy_list(lval* src) {
 		}
 		else if (src->children[j]->type == LVAL_LIST) {
 			lval *cp = lval_list();
-			lval_copy_list(cp, src->children[j]);
-			lval_append(dst, cp);
+			lval_append(dst, lval_copy_list(src->children[j]));
 		}
 	}
 
