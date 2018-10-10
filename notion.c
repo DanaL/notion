@@ -8,7 +8,7 @@
 #include "evaluator.h"
 
 int main(int argc, char **argv) {
-	puts("Notion (Dana's toy Scheme) 0.0.0.0.1");
+	puts("Notion (Dana's toy Scheme) 0.0.0.2");
 	puts("Press Ctrl-C to exit");
 
 	while (1) {

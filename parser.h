@@ -37,7 +37,8 @@ lval* lval_list(void);
 lval* lval_copy_atom(lval*);
 void lval_copy_list(lval*, lval*);
 void lval_free(lval*);
-lval* lval_append(lval*, lval*); 
+void lval_list_insert(lval*, lval*);
+void lval_append(lval*, lval*); 
 
 void lval_pprint(lval*, int);
 

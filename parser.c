@@ -143,12 +143,22 @@ void lval_copy_list(lval* dst, lval* src) {
 	}
 }
 
-lval* lval_append(lval *v, lval *next) {
+void lval_append(lval *v, lval *next) {
 	v->count++;
 	v->children = realloc(v->children, sizeof(lval*) * v->count);	
 	v->children[v->count - 1] = next;
+}
 
-	return v;
+void lval_list_insert(lval *dst, lval *item) {
+	if (item->type == LVAL_LIST) {
+		lval *lst = lval_list();
+		lval_copy_list(lst, item);
+		lval_append(dst, lst);
+	}
+	else {
+		lval *a = lval_copy_atom(item);
+		lval_append(dst, a);
+	}
 }
 
 int skip_whitespace(char *s, int x) {
@@ -252,7 +262,9 @@ int is_built_in(char *s) {
 		result = 1;
 	else if (strcmp(ls, "cdr") == 0)
 		result = 1;
-	
+	else if (strcmp(ls, "cons") == 0)
+		result = 1;
+
 	free(ls);
 
 	return result;

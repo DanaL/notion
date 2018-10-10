@@ -235,7 +235,7 @@ lval* builtin_op(lval **nodes, int count) {
 
 	if (strcmp(op, "car") == 0) {
 		if (count != 2)
-			return lval_err("car expects only one parameter");
+			return lval_err("car expects only one argument");
 
 		if (nodes[1]->type != LVAL_LIST || nodes[1]->count == 0)
 			return lval_err("car is defined only for non-empty lists.");
@@ -251,7 +251,7 @@ lval* builtin_op(lval **nodes, int count) {
 
 	if (strcmp(op, "cdr") == 0) {
 		if (count != 2)
-			return lval_err("cdr expects only one parameter");
+			return lval_err("cdr expects only one argument");
 
 		if (nodes[1]->type != LVAL_LIST || nodes[1]->count == 0)
 			return lval_err("cdr is defined only for non-empty lists.");
@@ -259,15 +259,22 @@ lval* builtin_op(lval **nodes, int count) {
 		result = lval_list();
 		lval *l = nodes[1];
 		for (int j = 1; j < l->count; j++) {
-			if (l->children[j]->type == LVAL_LIST) {
-				lval *lst = lval_list();
-				lval_copy_list(lst, l->children[j]);
-				lval_append(result, lst);
-			}
-			else {
-				lval *a = lval_copy_atom(l->children[j]);
-				lval_append(result, a);
-			}
+			lval_list_insert(result, l->children[j]);
+		}
+	}
+
+	if (strcmp(op, "cons") == 0) {
+		if (count != 3)
+			return lval_err("cons expects two aruments");
+
+		if (nodes[2]->type != LVAL_LIST)
+			return lval_err("The second argument of cons must be a list.");
+
+		result = lval_list();
+		lval_list_insert(result, nodes[1]);
+
+		for (int j = 0; j < nodes[2]->count; j++) {
+			lval_list_insert(result, nodes[2]->children[j]);
 		}
 	}
 
