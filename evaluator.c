@@ -87,6 +87,133 @@ int is_zero(lval *num) {
 		return (fabs(0 - num->n.d_num) < 0.00000001);
 }
 
+lval* builtin_math_op(lval **nodes, int count, char *op) {
+	lval *result = NULL;
+
+	/* Unary subtraction */
+	if (strcmp(op, "-") == 0 && count == 2) {
+		if (nodes[1]->type != LVAL_NUM)
+			return lval_err("Expected number!");
+		result = lval_num_s("0");
+		lval_num_sub(result, nodes[1]);
+		return result;
+	}
+
+	for (int j = 1; j < count; j++) {
+		/* The first number value after the operator is result's starting value */
+		if (j == 1) {
+			result = lval_num(nodes[j]);
+			continue;
+		}
+		
+		if (nodes[j]->type == LVAL_NUM) {
+			if (strcmp(op, "+") == 0)
+				lval_num_add(result, nodes[j]);
+			else if (strcmp(op, "-") == 0)
+				lval_num_sub(result, nodes[j]);
+			else if (strcmp(op, "*") == 0)
+				lval_num_mul(result, nodes[j]);
+			else if (strcmp(op, "/") == 0) {
+				/* Let's make sure we're not trying to divide by zero */
+				if (is_zero(nodes[j])) {
+					lval_free(result);
+					return lval_err("Division by zero!");
+				}
+				lval_num_div(result, nodes[j]);
+			}
+			else if (strcmp(op, "%") == 0) {
+				if (nodes[j]->num_type != NUM_TYPE_INT || nodes[1]->num_type != NUM_TYPE_INT) {
+					lval_free(result);
+					return lval_err("Can only calculate the remainder for integers.");
+				}
+				else if (is_zero(nodes[j])) {
+					lval_free(result);
+					return lval_err("Division by zero!");
+				}
+				result->n.i_num %= nodes[j]->n.i_num;
+			}
+		}
+		else {
+			lval_free(result);
+			return lval_err("Expected number!");
+		}
+	}
+
+	return result;
+}
+
+lval* builtin_min_op(lval **nodes, int count, char *op) {
+	lval *result = NULL;
+
+	for (int j = 1; j < count; j++) {
+		if (j == 1) {
+			result = lval_num(nodes[j]);
+			continue;
+		}
+
+		lval *n = nodes[j];
+		if (n->type == LVAL_NUM) {
+			if (result->num_type == NUM_TYPE_INT) {
+				if (n->num_type == NUM_TYPE_INT && n->n.i_num < result->n.i_num) 
+					result->n.i_num = n->n.i_num;
+				else if (n->num_type == NUM_TYPE_DEC && n->n.d_num < result->n.i_num) {
+					/* We need to switch the number type of result to be a real number in this case */
+					lval_convert_num_type(result);
+					result->n.d_num = n->n.d_num;
+				}
+			}
+			else {
+				if (n->num_type == NUM_TYPE_INT && n->n.i_num < result->n.d_num)
+					result->n.d_num = n->n.i_num;
+				else if (n->num_type == NUM_TYPE_DEC && n->n.d_num < result->n.d_num) 
+					result->n.d_num = n->n.d_num;
+			}
+		}
+		else {
+			lval_free(result);
+			return lval_err("Expected number!");
+		}
+	}
+
+	return result;
+}
+
+lval* builtin_max_op(lval **nodes, int count, char *op) {
+	lval *result = NULL;
+
+	for (int j = 1; j < count; j++) {
+		if (j == 1) {
+			result = lval_num(nodes[j]);
+			continue;
+		}
+
+		lval *n = nodes[j];
+		if (n->type == LVAL_NUM) {
+			if (result->num_type == NUM_TYPE_INT) {
+				if (n->num_type == NUM_TYPE_INT && n->n.i_num > result->n.i_num) 
+					result->n.i_num = n->n.i_num;
+				else if (n->num_type == NUM_TYPE_DEC && n->n.d_num > result->n.i_num) {
+					/* We need to switch the number type of result to be a real number in this case */
+					lval_convert_num_type(result);
+					result->n.d_num = n->n.d_num;
+				}
+			}
+			else {
+				if (n->num_type == NUM_TYPE_INT && n->n.i_num > result->n.d_num)
+					result->n.d_num = n->n.i_num;
+				else if (n->num_type == NUM_TYPE_DEC && n->n.d_num > result->n.d_num) 
+					result->n.d_num = n->n.d_num;
+			}
+		}
+		else {
+			lval_free(result);
+			return lval_err("Expected number!");
+		}
+	}
+
+	return result;
+}
+
 lval* builtin_op(lval **nodes, int count) {
 	if (nodes[0]->type != LVAL_SYM)
 		return lval_err("Expected symbol/built-in op!");
@@ -97,119 +224,16 @@ lval* builtin_op(lval **nodes, int count) {
 	/* I am not going to be fussy about the difference between integers
 		and real numbers. If I am evaluating: + 1 2 14.0, then I'll just 
 		convert the result type to float when I hit the real number */
-	if (strcmp(op, "+") == 0 || strcmp(op, "-") == 0 || strcmp(op, "*") == 0 || strcmp(op, "/") == 0 || strcmp(op, "%") == 0) {
-		/* Unary subtraction */
-		if (strcmp(op, "-") == 0 && count == 2) {
-			if (nodes[1]->type != LVAL_NUM)
-				return lval_err("Expected number!");
-			result = lval_num_s("0");
-			lval_num_sub(result, nodes[1]);
-			return result;
-		}
-
-		for (int j = 1; j < count; j++) {
-			/* The first number value after the operator is result's starting value */
-			if (j == 1) {
-				result = lval_num(nodes[j]);
-				continue;
-			}
-		
-			if (nodes[j]->type == LVAL_NUM) {
-				if (strcmp(op, "+") == 0)
-					lval_num_add(result, nodes[j]);
-				else if (strcmp(op, "-") == 0)
-					lval_num_sub(result, nodes[j]);
-				else if (strcmp(op, "*") == 0)
-					lval_num_mul(result, nodes[j]);
-				else if (strcmp(op, "/") == 0) {
-					/* Let's make sure we're not trying to divide by zero */
-					if (is_zero(nodes[j])) {
-						lval_free(result);
-						return lval_err("Division by zero!");
-					}
-					lval_num_div(result, nodes[j]);
-				}
-				else if (strcmp(op, "%") == 0) {
-					if (nodes[j]->num_type != NUM_TYPE_INT || nodes[1]->num_type != NUM_TYPE_INT) {
-						lval_free(result);
-						return lval_err("Can only calculate the remainder for integers.");
-					}
-					else if (is_zero(nodes[j])) {
-						lval_free(result);
-						return lval_err("Division by zero!");
-					}
-					result->n.i_num %= nodes[j]->n.i_num;
-				}
-			}
-			else {
-				lval_free(result);
-				return lval_err("Expected number!");
-			}
-		}		
+	if (strstr("+-*/%", op)) {
+		result = builtin_math_op(nodes, count, op);
 	}
 
 	if (strcmp(op, "min") == 0) {
-		for (int j = 1; j < count; j++) {
-			if (j == 1) {
-				result = lval_num(nodes[j]);
-				continue;
-			}
-
-			lval *n = nodes[j];
-			if (n->type == LVAL_NUM) {
-				if (result->num_type == NUM_TYPE_INT) {
-					if (n->num_type == NUM_TYPE_INT && n->n.i_num < result->n.i_num) 
-						result->n.i_num = n->n.i_num;
-					else if (n->num_type == NUM_TYPE_DEC && n->n.d_num < result->n.i_num) {
-						/* We need to switch the number type of result to be a real number in this case */
-						lval_convert_num_type(result);
-						result->n.d_num = n->n.d_num;
-					}
-				}
-				else {
-					if (n->num_type == NUM_TYPE_INT && n->n.i_num < result->n.d_num)
-						result->n.d_num = n->n.i_num;
-					else if (n->num_type == NUM_TYPE_DEC && n->n.d_num < result->n.d_num) 
-						result->n.d_num = n->n.d_num;
-				}
-			}
-			else {
-				lval_free(result);
-				return lval_err("Expected number!");
-			}
-		}
+		result = builtin_min_op(nodes, count, op);
 	}
 
 	if (strcmp(op, "max") == 0) {
-		for (int j = 1; j < count; j++) {
-			if (j == 1) {
-				result = lval_num(nodes[j]);
-				continue;
-			}
-
-			lval *n = nodes[j];
-			if (n->type == LVAL_NUM) {
-				if (result->num_type == NUM_TYPE_INT) {
-					if (n->num_type == NUM_TYPE_INT && n->n.i_num > result->n.i_num) 
-						result->n.i_num = n->n.i_num;
-					else if (n->num_type == NUM_TYPE_DEC && n->n.d_num > result->n.i_num) {
-						/* We need to switch the number type of result to be a real number in this case */
-						lval_convert_num_type(result);
-						result->n.d_num = n->n.d_num;
-					}
-				}
-				else {
-					if (n->num_type == NUM_TYPE_INT && n->n.i_num > result->n.d_num)
-						result->n.d_num = n->n.i_num;
-					else if (n->num_type == NUM_TYPE_DEC && n->n.d_num > result->n.d_num) 
-						result->n.d_num = n->n.d_num;
-				}
-			}
-			else {
-				lval_free(result);
-				return lval_err("Expected number!");
-			}
-		}
+		result = builtin_max_op(nodes, count, op);
 	}
 
 	if (strcmp(op, "list") == 0) {
