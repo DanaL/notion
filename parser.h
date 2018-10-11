@@ -1,7 +1,7 @@
 #ifndef parser_h
 #define parser_h
 
-enum token_type { T_OP, T_NUM, T_STR, T_NULL, T_SEXPR_START, T_SEXPR_END };
+enum token_type { T_OP, T_NUM, T_STR, T_NULL, T_LIST_START, T_LIST_END };
 
 typedef struct token {
 	enum token_type type;
@@ -11,12 +11,12 @@ typedef struct token {
 token* token_create(enum token_type, char*);
 void token_free(token *);
 
-enum lval_type { LVAL_NUM, LVAL_ERR, LVAL_SYM, LVAL_SEXPR, LVAL_LIST };
-enum lval_num_type { NUM_TYPE_INT, NUM_TYPE_DEC };
+enum sexpr_type { LVAL_NUM, LVAL_ERR, LVAL_SYM, LVAL_LIST };
+enum sexpr_num_type { NUM_TYPE_INT, NUM_TYPE_DEC };
 
-typedef struct lval {
-	enum lval_type type;
-	enum lval_num_type num_type;
+typedef struct sexpr {
+	enum sexpr_type type;
+	enum sexpr_num_type num_type;
 	union {
 		long i_num;
 		float d_num;
@@ -24,24 +24,23 @@ typedef struct lval {
 	char *sym;
 	char *err;
 	int count;
-	struct lval **children;
-} lval;
+	struct sexpr **children;
+} sexpr;
 
-lval* lval_err(char*);
-lval* lval_num_s(char*);
-lval* lval_num(lval*);
-lval* lval_null(void);
-lval* lval_sym(char*);
-lval* lval_sexpr(void);
-lval* lval_list(void);
-lval* lval_copy(lval*);
-void lval_free(lval*);
-void lval_list_insert(lval*, lval*);
-void lval_append(lval*, lval*); 
+sexpr* sexpr_err(char*);
+sexpr* sexpr_num_s(char*);
+sexpr* sexpr_num(sexpr*);
+sexpr* sexpr_null(void);
+sexpr* sexpr_sym(char*);
+sexpr* sexpr_list(void);
+sexpr* sexpr_copy(sexpr*);
+void sexpr_free(sexpr*);
+void sexpr_list_insert(sexpr*, sexpr*);
+void sexpr_append(sexpr*, sexpr*); 
 
-void lval_pprint(lval*, int);
+void sexpr_pprint(sexpr*, int);
 
-lval* parse(char *s);
+sexpr* parse(char*, int*);
 
 #define IS_ATOM(a) (a->type == LVAL_NUM || a->type == LVAL_SYM) ? 1 : 0
 

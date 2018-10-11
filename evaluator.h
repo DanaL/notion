@@ -3,6 +3,6 @@
 
 #include "parser.h"
 
-lval* lval_eval(lval *v);
+sexpr* sexpr_eval(sexpr *v);
 
 #endif

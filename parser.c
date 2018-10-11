@@ -26,8 +26,8 @@ void token_free(token *t) {
 	free(t);
 }
 
-lval* lval_num(lval* j) {
-	lval *v = malloc(sizeof(lval));
+sexpr* sexpr_num(sexpr* j) {
+	sexpr *v = malloc(sizeof(sexpr));
 	v->type = LVAL_NUM;
 	v->num_type = j->num_type;
 
@@ -40,8 +40,8 @@ lval* lval_num(lval* j) {
 	return v;
 }
 
-lval* lval_num_s(char *s) {
-	lval *v = malloc(sizeof(lval));
+sexpr* sexpr_num_s(char *s) {
+	sexpr *v = malloc(sizeof(sexpr));
 	v->type = LVAL_NUM;
 
 	if (strchr(s, '.')) {
@@ -58,8 +58,8 @@ lval* lval_num_s(char *s) {
 	return v;
 }
 
-lval* lval_err(char *s) {
-	lval *v = malloc(sizeof(lval));
+sexpr* sexpr_err(char *s) {
+	sexpr *v = malloc(sizeof(sexpr));
 	v->type = LVAL_ERR;
 	v->err = malloc(strlen(s) + 1);
 	strcpy(v->err, s);
@@ -67,8 +67,8 @@ lval* lval_err(char *s) {
 	return v;
 }
 
-lval* lval_sym(char *s) {
-	lval *v = malloc(sizeof(lval));
+sexpr* sexpr_sym(char *s) {
+	sexpr *v = malloc(sizeof(sexpr));
 	v->type = LVAL_SYM;
 	v->sym = malloc(strlen(s) + 1);
 	strcpy(v->sym, s);
@@ -76,17 +76,8 @@ lval* lval_sym(char *s) {
 	return v;
 }
 
-lval* lval_sexpr(void) {
-	lval *v = malloc(sizeof(lval));
-	v->type = LVAL_SEXPR;
-	v->count = 0;
-	v->children = NULL;
-	
-	return v;
-}
-
-lval* lval_list(void) {
-	lval *v = malloc(sizeof(lval));
+sexpr* sexpr_list(void) {
+	sexpr *v = malloc(sizeof(sexpr));
 	v->type = LVAL_LIST;
 	v->count = 0;
 	v->children = NULL;
@@ -94,7 +85,7 @@ lval* lval_list(void) {
 	return v;
 }
 
-void lval_free(lval *v) {
+void sexpr_free(sexpr *v) {
 	switch (v->type) {
 		case LVAL_NUM:
 			break;
@@ -104,64 +95,63 @@ void lval_free(lval *v) {
 		case LVAL_SYM:
 			free(v->sym);
 			break;
-		case LVAL_SEXPR:
 		case LVAL_LIST:
 			for (int j = 0; j < v->count; j++)
-				lval_free(v->children[j]);
+				sexpr_free(v->children[j]);
 			break;
 	}
 
 	free(v);
 }
 
-lval* lval_copy_atom(lval* src) {
-	lval* dst;
+sexpr* sexpr_copy_atom(sexpr* src) {
+	sexpr* dst;
 
 	if (src->type == LVAL_NUM) {
-		dst = lval_num(src);
+		dst = sexpr_num(src);
 		return dst;		
 	}
 	else if (src->type == LVAL_SYM) {
-		dst = lval_sym(src->sym);
+		dst = sexpr_sym(src->sym);
 		return dst;
 	}
 
-	return lval_err("Can only copy atoms.");
+	return sexpr_err("Can only copy atoms.");
 }
 
-lval* lval_copy_list(lval* src) {
-	lval *dst = lval_list();
+sexpr* sexpr_copy_list(sexpr* src) {
+	sexpr *dst = sexpr_list();
 
 	for (int j = 0; j < src->count; j++) {
 		if (IS_ATOM(src->children[j])) {
-			lval *cp = lval_copy_atom(src->children[j]);
-			lval_append(dst, cp);
+			sexpr *cp = sexpr_copy_atom(src->children[j]);
+			sexpr_append(dst, cp);
 		}
 		else if (src->children[j]->type == LVAL_LIST) {
-			lval *cp = lval_list();
-			lval_append(dst, lval_copy_list(src->children[j]));
+			sexpr *cp = sexpr_list();
+			sexpr_append(dst, sexpr_copy_list(src->children[j]));
 		}
 	}
 
 	return dst;
 }
 
-lval* lval_copy(lval* src) {
+sexpr* sexpr_copy(sexpr* src) {
 	if (IS_ATOM(src))
-		return lval_copy_atom(src);
+		return sexpr_copy_atom(src);
 
-	return lval_copy_list(src);
+	return sexpr_copy_list(src);
 }
 
-void lval_append(lval *v, lval *next) {
+void sexpr_append(sexpr *v, sexpr *next) {
 	v->count++;
-	v->children = realloc(v->children, sizeof(lval*) * v->count);	
+	v->children = realloc(v->children, sizeof(sexpr*) * v->count);	
 	v->children[v->count - 1] = next;
 }
 
-void lval_list_insert(lval *dst, lval *item) {
-	lval* cp = lval_copy(item);
-	lval_append(dst, cp);
+void sexpr_list_insert(sexpr *dst, sexpr *item) {
+	sexpr* cp = sexpr_copy(item);
+	sexpr_append(dst, cp);
 }
 
 int skip_whitespace(char *s, int x) {
@@ -173,10 +163,10 @@ int skip_whitespace(char *s, int x) {
 
 void print_token(token *t) {
 	switch (t->type) {
-		case T_SEXPR_START:
+		case T_LIST_START:
 			puts("(");
 			break;
-		case T_SEXPR_END:
+		case T_LIST_END:
 			puts(")");
 			break;
 		case T_OP:
@@ -208,11 +198,11 @@ token* next_token(char *s, int *start) {
 		x = *start + 1;
 	}
 	else if(s[*start] == '(') {
-		t = token_create(T_SEXPR_START, NULL);
+		t = token_create(T_LIST_START, NULL);
 		x = *start + 1;
 	}
 	else if(s[*start] == ')') {
-		t = token_create(T_SEXPR_END, NULL);
+		t = token_create(T_LIST_END, NULL);
 		x = *start + 1;
 	}
 	else if (s[*start] == '-' || isdigit(s[*start])) {
@@ -278,161 +268,88 @@ int is_built_in(char *s) {
 	We start at the beginning of an expression and (currently) we expect an operator. 
 	Eventually we'll allow other s-expressions (+ (* 6 8) 4 -1) and user-defined functions. 
 
+	An sexpr is either an atom (number, symbol) or a list (which contains numbers, symbols, or other lists)
 	So:
-		s-expr 		-> operator OR number
-		operator 	-> number OR s-expr
-		number 		-> number OR end-of-s-expr OR s-expr
+		atomic type -> return it
+		start of list -> return sexpr with list of its items
 
-	Eventually we'll have nested s-exprs and empty s-exprs ()
 */
-lval* parse_sexpr(char *s, int *curr) {
-	lval *head = lval_sexpr();
-	enum token_type curr_type = T_SEXPR_START;
+sexpr* sexpr_from_token(token *t) {
+	sexpr *expr = NULL;
 
-	while (curr_type != T_SEXPR_END) {
-		token *nt = next_token(s, curr);
-	
-		switch (curr_type) {
-			case T_SEXPR_START:
-				if (nt->type == T_OP || is_built_in(nt->val)) {
-					lval *op = lval_sym(nt->val);
-					lval_append(head, op);
-					curr_type = T_OP;
-				}
-				else if (nt->type == T_NUM) {
-					lval *num = lval_num_s(nt->val);
-					lval_append(head, num);
-					curr_type = T_NUM;
-				}
-				else {
-					token_free(nt);
-					lval_free(head);
-					return lval_err("Expected operator.");
-				}
-				break;
-			case T_OP:
-				if (nt->type == T_NUM) {
-					lval *num = lval_num_s(nt->val);
-					lval_append(head, num);
-					curr_type = T_NUM;
-				}
-				else if (nt->type == T_SEXPR_START) {
-					lval *sub_expr = parse_sexpr(s, curr);
-					if (sub_expr->type == LVAL_ERR) {
-						lval_free(head);
-						token_free(nt);
-						return sub_expr;
-					}
-
-					lval_append(head, sub_expr);
-					curr_type = T_NUM;
-				}
-				else {
-					token_free(nt);
-					lval_free(head);
-					return lval_err("Expected atom or start of s-expr.");
-				}
-				break;
-			case T_NUM:
-				if (nt->type == T_NUM) {
-					lval *num = lval_num_s(nt->val);
-					lval_append(head, num);
-					curr_type = T_NUM;
-				}
-				else if (nt->type == T_SEXPR_START) {
-					lval *sub_expr = parse_sexpr(s, curr);
-					if (sub_expr->type == LVAL_ERR) {
-						lval_free(head);
-						token_free(nt);
-						return sub_expr;
-					}
-
-					lval_append(head, sub_expr);
-					curr_type = T_NUM;
-				}
-				else if (nt->type == T_SEXPR_END) {
-					curr_type = T_SEXPR_END;
-				}
-				else {
-					token_free(nt);
-					lval_free(head);
-					return lval_err("Expected end of s-expr.");
-				}
-				break;
-			case T_STR:
-			case T_NULL:
-			case T_SEXPR_END:
-				token_free(nt);
-				lval_free(head);
-				return lval_err("Unexpeted token");
-		}
-
-		token_free(nt);
+	switch (t->type) {
+		case T_NUM:
+			expr = sexpr_num_s(t->val);
+			break;
+		/* Do I really need to parse the difference between a symbol and an op at this point?
+							Is that for the evaluator to decide? */
+		case T_OP:
+		case T_STR:
+			expr = sexpr_sym(t->val);
+			break;
+		case T_LIST_START:
+		case T_LIST_END:
+		case T_NULL:
+			expr = sexpr_err("Unexpeted token.");
+			break;
 	}
 
-	return head;
+	return expr;
 }
 
-lval* parse(char *s) {
-	int j = 0;
-	
-	lval *head = NULL;
+sexpr* parse(char *s, int *curr) {
+	sexpr *expr = NULL;
 
-	token *nt = next_token(s, &j);
+	token *nt = next_token(s, curr);
+	if (nt->type == T_LIST_START) {
+		expr = sexpr_list();
+		
+		token_free(nt);
+		nt = next_token(s, curr);
+		while (nt->type != T_LIST_END) {
+			sexpr *child = NULL;
+			if (nt->type == T_LIST_START) {
+				(*curr)--; /* Back up the token otherwise we skip past the start of the list in the recursive call */
+				child = parse(s, curr);
+			}
+			else
+				child = sexpr_from_token(nt);
 
-	switch (nt->type) {
-		case T_STR:
-			head = lval_sym(nt->val);
-			break;
-		case T_NUM:
-			head = lval_num_s(nt->val);
-			break;
-		case T_SEXPR_START:
-			head = parse_sexpr(s, &j);
-			break;
-		case T_OP:
-		case T_NULL:
-		case T_SEXPR_END:
-			head = lval_err("Expected s-expr or atom!");
-			break;
+			if (child->type == LVAL_ERR) {
+				token_free(nt);
+				sexpr_free(expr);
+				return child;
+			}
+
+			sexpr_append(expr, child);
+			token_free(nt);
+			nt = next_token(s, curr);
+		}
 	}
+	else
+		expr = sexpr_from_token(nt);
 
 	token_free(nt);
 	
-	return head;
+	return expr;
 }
 
 void print_padding(int depth) {
 	for (int j = 0; j < depth * 4; j++) putchar(' ');
 }
 
-void lval_pprint(lval *v, int depth) {
+void sexpr_pprint(sexpr *v, int depth) {
 	switch (v->type) {
 		case LVAL_ERR:
 			printf("Error: %s\n", v->err);
 			break;
-		case LVAL_SEXPR:
-			putchar('\n');
-			print_padding(depth);
-			putchar('(');
-
-			int j = 0;
-			while (j < v->count) {
-				lval_pprint(v->children[j++], depth + 1);
-				if (j < v->count)
-					putchar(' ');
-			}
-			putchar('\n');
-			print_padding(depth);
-			puts(")");
-
-			break;
 		case LVAL_LIST:
+			putchar('\n');
 			print_padding(depth);
 			putchar('(');
 
 			for (int j = 0; j < v->count; j++) {
-				lval_pprint(v->children[j], depth + 1);
+				sexpr_pprint(v->children[j], depth + 1);
 				if (j < v->count - 1)
 					putchar(' ');
 			}

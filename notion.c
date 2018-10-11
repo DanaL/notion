@@ -35,17 +35,22 @@ int main(int argc, char **argv) {
 
 		add_history(line);
 #endif
-		lval *ast = parse(line);
+		int c = 0;
+		sexpr *ast = parse(line, &c);
 		
+		sexpr_pprint(ast, 0);
+
+		break;
+
 		if (is_whitespeace(line))
 			putchar('\n');
 		else 
 		{
-			lval *result = lval_eval(ast);
+			//sexpr *result = sexpr_eval(ast);
 
-			lval_pprint(result, 0);
-			putchar('\n');
-			free(result);
+			//sexpr_pprint(result, 0);
+			//putchar('\n');
+			//free(result);
 
 			free(ast);
 		}
