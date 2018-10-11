@@ -5,16 +5,10 @@
 
 #include "parser.h"
 
-token* token_create(enum token_type type, char* sym) {
+token* token_create(enum token_type type) {
 	token *t = malloc(sizeof(token));
 	t->type = type;
-
-	if (sym != NULL) {
-		t->val = malloc(strlen(sym) + 1);
-		strcpy(t->val, sym);
-	}
-	else
-		t->val = NULL;
+	t->val = NULL;
 
 	return t;
 }
@@ -169,8 +163,8 @@ void print_token(token *t) {
 		case T_LIST_END:
 			puts(")");
 			break;
-		case T_OP:
-			printf("Operator: %s\n", t->val);
+		case T_SYM:
+			printf("Symbol: %s\n", t->val);
 			break;
 		case T_NUM:
 			printf("Number: %s\n", t->val);
@@ -191,18 +185,18 @@ token* next_token(char *s, int *start) {
 	*start = skip_whitespace(s, *start);
 
 	if (s[*start] == '\0')
-		return token_create(T_NULL, NULL);
+		return token_create(T_NULL);
 	
 	if (s[*start] == '+' || s[*start] == '*' || s[*start] == '/' || s[*start] == '%') {
-		t = token_create(T_OP, NULL);
+		t = token_create(T_SYM);
 		x = *start + 1;
 	}
 	else if(s[*start] == '(') {
-		t = token_create(T_LIST_START, NULL);
+		t = token_create(T_LIST_START);
 		x = *start + 1;
 	}
 	else if(s[*start] == ')') {
-		t = token_create(T_LIST_END, NULL);
+		t = token_create(T_LIST_END);
 		x = *start + 1;
 	}
 	else if (s[*start] == '-' || isdigit(s[*start])) {
@@ -217,12 +211,12 @@ token* next_token(char *s, int *start) {
 		}
 
 		if (s[*start] == '-' && x - *start == 1)
-			t = token_create(T_OP, NULL);
+			t = token_create(T_NUM);
 		else
-			t = token_create(T_NUM, NULL);
+			t = token_create(T_NUM);
 	}
 	else if (isalpha(s[*start])) {
-		t = token_create(T_STR, NULL);
+		t = token_create(T_SYM);
 		x = *start + 1;
 		while (s[x] != '\0' && (isalpha(s[x]) || isdigit(s[x])))
 			++x;
@@ -235,32 +229,6 @@ token* next_token(char *s, int *start) {
 	(*start) = x;
 
 	return t;
-}
-
-int is_built_in(char *s) {
-	int result = 0;
-	char *ls = malloc(strlen(s) + 1);
-	for (int j = 0; j < strlen(s); j++) {
-		ls[j] = tolower(s[j]);
-	}
-	ls[strlen(s)] = '\0';
-
-	if (strcmp(ls, "max") == 0)
-		result = 1;
-	else if (strcmp(ls, "min") == 0)
-		result = 1;
-	else if (strcmp(ls, "list") == 0)
-		result = 1;
-	else if (strcmp(ls, "car") == 0)
-		result = 1;
-	else if (strcmp(ls, "cdr") == 0)
-		result = 1;
-	else if (strcmp(ls, "cons") == 0)
-		result = 1;
-
-	free(ls);
-
-	return result;
 }
 
 /* Parsing an s-expression is a simple state machine:
@@ -281,14 +249,12 @@ sexpr* sexpr_from_token(token *t) {
 		case T_NUM:
 			expr = sexpr_num_s(t->val);
 			break;
-		/* Do I really need to parse the difference between a symbol and an op at this point?
-							Is that for the evaluator to decide? */
-		case T_OP:
-		case T_STR:
+		case T_SYM:
 			expr = sexpr_sym(t->val);
 			break;
 		case T_LIST_START:
 		case T_LIST_END:
+		case T_STR:
 		case T_NULL:
 			expr = sexpr_err("Unexpeted token.");
 			break;

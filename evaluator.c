@@ -96,10 +96,10 @@ sexpr* builtin_math_op(sexpr **nodes, int count, char *op) {
 		return result;
 	}
 
-	for (int j = 1; j < count; j++) {
+	for (int j = 1; j < count; j++) {		
 		/* The first number value after the operator is result's starting value */
 		if (j == 1) {
-			result = sexpr_num(nodes[j]);
+			result = sexpr_num(nodes[j]);			
 			continue;
 		}
 		
@@ -285,16 +285,54 @@ sexpr* builtin_op(sexpr **nodes, int count) {
 	return result;
 }
 
-sexpr* sexpr_eval(sexpr *v) {
+int is_built_in(sexpr *e) {	
+	if (e->type != LVAL_SYM)
+		return 0;
+
+	if (strstr("+-*/%", e->sym))
+		return 1;
+
+	int result = 0;
+
+	char *ls = malloc(strlen(e->sym) + 1);
+	for (int j = 0; j < strlen(e->sym); j++) {
+		ls[j] = tolower(e->sym[j]);
+	}
+	ls[strlen(e->sym)] = '\0';
+
+	if (strcmp(ls, "max") == 0)
+		result = 1;
+	else if (strcmp(ls, "min") == 0)
+		result = 1;
+	else if (strcmp(ls, "list") == 0)
+		result = 1;
+	else if (strcmp(ls, "car") == 0)
+		result = 1;
+	else if (strcmp(ls, "cdr") == 0)
+		result = 1;
+	else if (strcmp(ls, "cons") == 0)
+		result = 1;
+
+	free(ls);
+
+	return result;
+}
+
+sexpr* eval(sexpr *v) {
 	sexpr *result = NULL;
 
 	switch (v->type) {
-		case LVAL_LIST:
+		case LVAL_LIST:			
+			/* When I have user defined functions, I'll have to check if the
+				op is one of them */
+			if (v->count == 0 || !is_built_in(v->children[0]))
+				return sexpr_err("Expected operator or function");
+			
 			/* Evaluate all the child expressions first, which makes the code in 
 				builtin_op() simpler */
-			for (int j = 0; j < v->count; j++) {
+			for (int j = 1; j < v->count; j++) {
 				if (v->children[j]->type == LVAL_LIST) {
-					sexpr *result = sexpr_eval(v->children[j]);
+					sexpr *result = eval(v->children[j]);
 					if (result->type == LVAL_ERR)
 						return result;
 					sexpr_free(v->children[j]);
@@ -306,7 +344,7 @@ sexpr* sexpr_eval(sexpr *v) {
 			return result;			
 		case LVAL_NUM:
 		case LVAL_SYM:
-			return v;
+			return sexpr_copy(v);
 	}
 
 	return sexpr_err("Something hasn't been implemented yet");

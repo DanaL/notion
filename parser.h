@@ -1,14 +1,14 @@
 #ifndef parser_h
 #define parser_h
 
-enum token_type { T_OP, T_NUM, T_STR, T_NULL, T_LIST_START, T_LIST_END };
+enum token_type { T_NUM, T_SYM, T_STR, T_NULL, T_LIST_START, T_LIST_END };
 
 typedef struct token {
 	enum token_type type;
 	char *val;
 } token;
 
-token* token_create(enum token_type, char*);
+token* token_create(enum token_type);
 void token_free(token *);
 
 enum sexpr_type { LVAL_NUM, LVAL_ERR, LVAL_SYM, LVAL_LIST };
