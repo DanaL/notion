@@ -312,10 +312,33 @@ int is_built_in(sexpr *e) {
 		result = 1;
 	else if (strcmp(ls, "cons") == 0)
 		result = 1;
+	else if (strcmp(ls, "quote") == 0)
+		result = 1;
+	else if (strcmp(ls, "'") == 0)
+		result = 1;
 
 	free(ls);
 
 	return result;
+}
+
+int is_quote_form(sexpr *e) {
+	if (!e->type == LVAL_SYM)
+		return 0;
+
+	if (strcmp(e->sym, "'") == 0)
+		return 1;
+	
+	char *ls = malloc(strlen(e->sym) + 1);
+	for (int j = 0; j < strlen(e->sym); j++) {
+		ls[j] = tolower(e->sym[j]);
+	}
+	ls[strlen(e->sym)] = '\0';
+
+	if (strcmp(ls, "quote") == 0)
+		return 1;
+
+	return 0;	
 }
 
 sexpr* eval(sexpr *v) {
@@ -328,6 +351,17 @@ sexpr* eval(sexpr *v) {
 			if (v->count == 0 || !is_built_in(v->children[0]))
 				return sexpr_err("Expected operator or function");
 			
+			/* quote is a special form -- we simply return its first paramter without evaluating it.
+				Note that I am not certain I really understand quote, so I'm mostly going by what's in
+				the Little Schemer and mucking around with other Scheme REPLs. 
+
+				For instance (quote 1 2 3) returns 1 but I'm not sure if that's valid input from a proper
+				definition of Scheme or not.
+				*/
+			if (is_quote_form(v->children[0])) {
+				return sexpr_copy(v->children[1]);
+			}
+
 			/* Evaluate all the child expressions first, which makes the code in 
 				builtin_op() simpler */
 			for (int j = 1; j < v->count; j++) {
