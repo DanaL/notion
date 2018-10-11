@@ -4,7 +4,9 @@
 #ifndef _WIN32
 #include <editline/readline.h>
 #endif
+
 #include "parser.h"
+#include "environment.h"
 #include "evaluator.h"
 
 int is_whitespeace(char *s) {
@@ -20,6 +22,8 @@ int main(int argc, char **argv) {
 	puts("Notion (Dana's toy Scheme) 0.0.0.3");
 	puts("Press Ctrl-C to exit");
 
+	scheme_env *env = env_new();
+	
 	while (1) {
 		char *line;
 		
