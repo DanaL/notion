@@ -178,6 +178,26 @@ void print_token(token *t) {
 	}
 }
 
+int is_valid_in_symbol(char c) 
+{
+	if (isalpha(c) || isdigit(c))
+		return 1;
+
+	switch (c) {
+		case '@':
+		case '#':
+		case '$':
+		case '&':
+		case ':':
+		case '|':
+		case '?':
+		case '.':
+			return 1;
+	}
+
+	return 0;
+}
+
 token* next_token(char *s, int *start) {
 	token *t = NULL;
 	int len, x = 0;
@@ -218,7 +238,7 @@ token* next_token(char *s, int *start) {
 	else if (isalpha(s[*start])) {
 		t = token_create(T_SYM);
 		x = *start + 1;
-		while (s[x] != '\0' && (isalpha(s[x]) || isdigit(s[x])))
+		while (s[x] != '\0' && is_valid_in_symbol(s[x]))
 			++x;
 	}
 
