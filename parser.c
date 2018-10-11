@@ -231,17 +231,6 @@ token* next_token(char *s, int *start) {
 	return t;
 }
 
-/* Parsing an s-expression is a simple state machine:
-
-	We start at the beginning of an expression and (currently) we expect an operator. 
-	Eventually we'll allow other s-expressions (+ (* 6 8) 4 -1) and user-defined functions. 
-
-	An sexpr is either an atom (number, symbol) or a list (which contains numbers, symbols, or other lists)
-	So:
-		atomic type -> return it
-		start of list -> return sexpr with list of its items
-
-*/
 sexpr* sexpr_from_token(token *t) {
 	sexpr *expr = NULL;
 
@@ -263,6 +252,11 @@ sexpr* sexpr_from_token(token *t) {
 	return expr;
 }
 
+/* Either return an atom, or if we find the start of a list, 
+	keep pulling the next token until we hit the end of the list or
+	run out of tokens (which is an error condition). 
+
+	If we encounter a nested list, it's recursion time! */
 sexpr* parse(char *s, int *curr) {
 	sexpr *expr = NULL;
 

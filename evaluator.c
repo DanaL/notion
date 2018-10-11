@@ -294,30 +294,22 @@ int is_built_in(sexpr *e) {
 
 	int result = 0;
 
-	char *ls = malloc(strlen(e->sym) + 1);
-	for (int j = 0; j < strlen(e->sym); j++) {
-		ls[j] = tolower(e->sym[j]);
-	}
-	ls[strlen(e->sym)] = '\0';
-
-	if (strcmp(ls, "max") == 0)
+	if (strcmp(e->sym, "max") == 0)
 		result = 1;
-	else if (strcmp(ls, "min") == 0)
+	else if (strcmp(e->sym, "min") == 0)
 		result = 1;
-	else if (strcmp(ls, "list") == 0)
+	else if (strcmp(e->sym, "list") == 0)
 		result = 1;
-	else if (strcmp(ls, "car") == 0)
+	else if (strcmp(e->sym, "car") == 0)
 		result = 1;
-	else if (strcmp(ls, "cdr") == 0)
+	else if (strcmp(e->sym, "cdr") == 0)
 		result = 1;
-	else if (strcmp(ls, "cons") == 0)
+	else if (strcmp(e->sym, "cons") == 0)
 		result = 1;
-	else if (strcmp(ls, "quote") == 0)
+	else if (strcmp(e->sym, "quote") == 0)
 		result = 1;
-	else if (strcmp(ls, "'") == 0)
+	else if (strcmp(e->sym, "'") == 0)
 		result = 1;
-
-	free(ls);
 
 	return result;
 }
@@ -326,18 +318,9 @@ int is_quote_form(sexpr *e) {
 	if (!e->type == LVAL_SYM)
 		return 0;
 
-	if (strcmp(e->sym, "'") == 0)
+	if (strcmp(e->sym, "'") == 0 || strcmp(e->sym, "quote") == 0)
 		return 1;
 	
-	char *ls = malloc(strlen(e->sym) + 1);
-	for (int j = 0; j < strlen(e->sym); j++) {
-		ls[j] = tolower(e->sym[j]);
-	}
-	ls[strlen(e->sym)] = '\0';
-
-	if (strcmp(ls, "quote") == 0)
-		return 1;
-
 	return 0;	
 }
 
