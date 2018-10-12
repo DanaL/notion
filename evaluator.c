@@ -334,7 +334,7 @@ sexpr* builtin_op(scheme_env *env, sexpr **nodes, int count) {
 		for (int j = 0; j < a2->count; j++) {
 			sexpr_list_insert(result, sexpr_copy(a2->children[j]));
 		}
-		
+
 		sexpr_free(a2);
 	}
 
@@ -383,14 +383,17 @@ int is_quote_form(sexpr *e) {
 }
 
 sexpr* define_var(scheme_env *env, sexpr *exp) {
-	if (exp->count == 3 && exp->children[1]->type != LVAL_SYM)
+	if (exp->count != 3)
+		return sexpr_err("Define requires a name and a definition.");
+
+	if (exp->children[1]->type != LVAL_SYM)
 		return sexpr_err("Expected variable name.");
 
 	/* Actually I don't actually know if you can redefine built-ins in Scheme... */
 	if (is_built_in(exp->children[1]))
 		return sexpr_err("Cannot redefine built-in function.");
 
-	sexpr *result = eval(env, exp->children[2]);
+	sexpr *result = resolve_sexp(env, exp->children[2]);
 	if (result->type == LVAL_ERR)
 		return result;
 
