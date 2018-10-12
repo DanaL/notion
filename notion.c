@@ -20,7 +20,7 @@ int is_whitespeace(char *s) {
 }
 
 int main(int argc, char **argv) {
-	puts("Notion (Dana's toy Scheme) 0.0.0.3");
+	puts("Notion (Dana's toy Scheme) 0.0.0.5");
 	puts("Press Ctrl-C to exit");
 
 	puts("Loading env...");
@@ -55,7 +55,6 @@ int main(int argc, char **argv) {
 		{
 			sexpr *result = eval(env, ast);
 
-			putchar('\n');
 			sexpr_pprint(result, 0);
 			putchar('\n');
 			sexpr_free(result);

@@ -87,15 +87,18 @@ int is_zero(sexpr *num) {
 		return (fabs(0 - num->n.d_num) < 0.00000001);
 }
 
-/* When operating over a list, we will encounter symbols and
-		literals (ie., numbers or eventually strings). So in many cases
-		we'll replace a symbol with the value it represents, if it exists
-		in the environment (or, scope when scope exists) */
-sexpr* resolve_atomic(scheme_env *env, sexpr *a) {
+/* This is function where we sort out what something is. If passed a simple
+	type (like a number), just return it. If passed a symbol, try to
+	resolve it. And if passed a list, evaluate it.
+
+	Return a copy of the result so that we can free() it without worrying
+	about clobbering a reference somewhere.
+*/
+sexpr* resolve_sexp(scheme_env *env, sexpr *a) {
 	if (a->type == LVAL_NUM)
 		return sexpr_copy(a);
 
-	if (a->type == LVAL_SYM)
+	if (a->type == LVAL_SYM || a->type == LVAL_LIST)
 		return eval(env, a);
 }
 
@@ -104,7 +107,7 @@ sexpr* builtin_math_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 
 	/* Unary subtraction */
 	if (strcmp(op, "-") == 0 && count == 2) {
-		sexpr *n = resolve_atomic(env, nodes[1]);
+		sexpr *n = resolve_sexp(env, nodes[1]);
 		if (n->type != LVAL_NUM)
 			result = sexpr_err("Expected number!");
 		else {
@@ -117,7 +120,7 @@ sexpr* builtin_math_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 	}
 
 	for (int j = 1; j < count; j++) {
-		sexpr *n = resolve_atomic(env, nodes[j]);
+		sexpr *n = resolve_sexp(env, nodes[j]);
 
 		if (n->type != LVAL_NUM) {
 			if (result) sexpr_free(result);
@@ -167,7 +170,7 @@ sexpr* builtin_min_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 	sexpr *result = NULL;
 
 	for (int j = 1; j < count; j++) {
-		sexpr *n = resolve_atomic(env, nodes[j]);
+		sexpr *n = resolve_sexp(env, nodes[j]);
 		/* This check can be macro-ized, I think */
 		if (n->type != LVAL_NUM) {
 			if (result)
@@ -206,7 +209,7 @@ sexpr* builtin_max_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 	sexpr *result = NULL;
 
 	for (int j = 1; j < count; j++) {
-		sexpr *n = resolve_atomic(env, nodes[j]);
+		sexpr *n = resolve_sexp(env, nodes[j]);
 		if (n->type != LVAL_NUM) {
 			if (result)
 				sexpr_free(result);
@@ -265,7 +268,8 @@ sexpr* builtin_op(scheme_env *env, sexpr **nodes, int count) {
 		result = sexpr_list();
 
 		for (int j = 1; j < count; j++) {
-			sexpr *cp = sexpr_copy(nodes[j]);
+
+			sexpr *cp = resolve_sexp(env, nodes[j]);
 			sexpr_append(result, cp);
 		}
 	}
@@ -274,24 +278,30 @@ sexpr* builtin_op(scheme_env *env, sexpr **nodes, int count) {
 		if (count != 2)
 			return sexpr_err("car expects only one argument");
 
-		if (nodes[1]->type != LVAL_LIST || nodes[1]->count == 0)
-			return sexpr_err("car is defined only for non-empty lists.");
+		sexpr *l = resolve_sexp(env, nodes[1]);
 
-		sexpr *l = nodes[1];
-		result = sexpr_copy(l->children[0]);
+		if (l->type != LVAL_LIST || l->count == 0) {
+			sexpr_free(l);
+			return sexpr_err("car is defined only for non-empty lists.");
+		}
+
+		result = resolve_sexp(env, l->children[0]);
+		sexpr_free(l);
 	}
 
 	if (strcmp(op, "cdr") == 0) {
 		if (count != 2)
 			return sexpr_err("cdr expects only one argument");
 
-		if (nodes[1]->type != LVAL_LIST || nodes[1]->count == 0)
+		sexpr *l = resolve_sexp(env, nodes[1]);
+		if (l->type != LVAL_LIST || l->count == 0) {
+			sexpr_free(l);
 			return sexpr_err("cdr is defined only for non-empty lists.");
+		}
 
 		result = sexpr_list();
-		sexpr *l = nodes[1];
 		for (int j = 1; j < l->count; j++) {
-			sexpr_list_insert(result, l->children[j]);
+			sexpr_list_insert(result, resolve_sexp(env, l->children[j]));
 		}
 	}
 
@@ -299,15 +309,20 @@ sexpr* builtin_op(scheme_env *env, sexpr **nodes, int count) {
 		if (count != 3)
 			return sexpr_err("cons expects two aruments");
 
-		if (nodes[2]->type != LVAL_LIST)
+		sexpr *a2 = resolve_sexp(env, nodes[2]);
+		if (a2->type != LVAL_LIST) {
+			sexpr_free(a2);
 			return sexpr_err("The second argument of cons must be a list.");
+		}
 
 		result = sexpr_list();
-		sexpr_list_insert(result, nodes[1]);
+		sexpr_list_insert(result, resolve_sexp(env, nodes[1]));
 
-		for (int j = 0; j < nodes[2]->count; j++) {
-			sexpr_list_insert(result, nodes[2]->children[j]);
+		for (int j = 0; j < a2->count; j++) {
+			sexpr_list_insert(result, resolve_sexp(env, a2->children[j]));
 		}
+
+		sexpr_free(a2);
 	}
 
 	return result;
@@ -396,18 +411,6 @@ sexpr* eval(scheme_env *env, sexpr *v) {
 				result = define_var(env, v);
 
 				return result;
-			}
-
-			/* Evaluate all the child expressions first, which makes the code in
-				builtin_op() simpler */
-			for (int j = 1; j < v->count; j++) {
-				if (v->children[j]->type == LVAL_LIST) {
-					sexpr *result = eval(env, v->children[j]);
-					if (result->type == LVAL_ERR || result->type == LVAL_NULL)
-						return result;
-					sexpr_free(v->children[j]);
-					v->children[j] = result;
-				}
 			}
 
 			result = builtin_op(env, v->children, v->count);

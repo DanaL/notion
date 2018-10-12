@@ -267,7 +267,7 @@ token* next_token(char *s, int *start) {
 	memcpy(t->val, &s[*start], len - 1);
 	t->val[len - 1] = '\0';
 	(*start) = x;
-	
+
 	return t;
 }
 
@@ -355,7 +355,8 @@ void sexpr_pprint(sexpr *v, int depth) {
 			printf("Error: %s\n", v->err);
 			break;
 		case LVAL_LIST:
-			putchar('\n');
+			if (depth > 0)
+				putchar('\n');
 			print_padding(depth);
 			putchar('(');
 
