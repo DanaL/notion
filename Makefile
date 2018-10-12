@@ -1,6 +1,6 @@
 CC=cc
-CFLAGS= -std=c99 -Wall -ledit
-#LIBS= -ledit
+CFLAGS= -std=c99 -Wall
+LIBS= -ledit
 FILES= parser.c environment.c evaluator.c
 OUTPUT= notion
 
@@ -8,9 +8,6 @@ default: notion
 
 objs:
 	$(CC) $(CFLAGS) -c $(FILES)
-
-#%.o: %.c
-#	$(CC) $(CFLAGS) -c $< -o $@
 
 notion: objs
 	$(CC) $(CFLAGS) $(LIBS) $(FILES) notion.c -o $(OUTPUT)
