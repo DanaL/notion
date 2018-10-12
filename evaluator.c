@@ -300,7 +300,7 @@ sexpr* builtin_op(scheme_env *env, sexpr **nodes, int count) {
 		sexpr_free(l);
 	}
 
-	if (strcmp(op, "cdr") == 0) {		
+	if (strcmp(op, "cdr") == 0) {
 		if (count != 2)
 			return sexpr_err("cdr expects only one argument");
 
@@ -322,6 +322,7 @@ sexpr* builtin_op(scheme_env *env, sexpr **nodes, int count) {
 			return sexpr_err("cons expects two aruments");
 
 		sexpr *a2 = resolve_sexp(env, nodes[2]);
+
 		if (a2->type != LVAL_LIST) {
 			sexpr_free(a2);
 			return sexpr_err("The second argument of cons must be a list.");
@@ -331,15 +332,9 @@ sexpr* builtin_op(scheme_env *env, sexpr **nodes, int count) {
 		sexpr_list_insert(result, resolve_sexp(env, nodes[1]));
 
 		for (int j = 0; j < a2->count; j++) {
-			sexpr *child = resolve_sexp(env, a2->children[j]);
-			if (child->type == LVAL_ERR) {
-				sexpr_free(result);
-				sexpr_free(a2);
-				return child;
-			}
-			sexpr_list_insert(result, child);
+			sexpr_list_insert(result, sexpr_copy(a2->children[j]));
 		}
-
+		
 		sexpr_free(a2);
 	}
 
