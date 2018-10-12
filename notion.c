@@ -31,6 +31,7 @@ int main(int argc, char **argv) {
 
 #ifdef _WIN32
 		line = malloc(sizeof(char) * 1000);
+		printf("> ");
 		fgets(line, 200, stdin);
 		char *p = strchr(line, '\n');
 		if (p) {
