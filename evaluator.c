@@ -100,6 +100,8 @@ sexpr* resolve_sexp(scheme_env *env, sexpr *a) {
 
 	if (a->type == LVAL_SYM || a->type == LVAL_LIST)
 		return eval(env, a);
+
+	return sexpr_err("Unknown but definitely bad result of resolve_sexp()");
 }
 
 sexpr* builtin_math_op(scheme_env *env, sexpr **nodes, int count, char *op) {
@@ -200,6 +202,8 @@ sexpr* builtin_min_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 			else if (n->num_type == NUM_TYPE_DEC && n->n.d_num < result->n.d_num)
 				result->n.d_num = n->n.d_num;
 		}
+
+		sexpr_free(n);
 	}
 
 	return result;
@@ -237,6 +241,8 @@ sexpr* builtin_max_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 			else if (n->num_type == NUM_TYPE_DEC && n->n.d_num > result->n.d_num)
 				result->n.d_num = n->n.d_num;
 		}
+
+		sexpr_free(n);
 	}
 
 	return result;
@@ -268,8 +274,12 @@ sexpr* builtin_op(scheme_env *env, sexpr **nodes, int count) {
 		result = sexpr_list();
 
 		for (int j = 1; j < count; j++) {
-
 			sexpr *cp = resolve_sexp(env, nodes[j]);
+			if (cp->type == LVAL_ERR) {
+				sexpr_free(result);
+				return cp;
+			}
+
 			sexpr_append(result, cp);
 		}
 	}
@@ -285,11 +295,12 @@ sexpr* builtin_op(scheme_env *env, sexpr **nodes, int count) {
 			return sexpr_err("car is defined only for non-empty lists.");
 		}
 
-		result = resolve_sexp(env, l->children[0]);
+		result = sexpr_copy(l->children[0]);
+
 		sexpr_free(l);
 	}
 
-	if (strcmp(op, "cdr") == 0) {
+	if (strcmp(op, "cdr") == 0) {		
 		if (count != 2)
 			return sexpr_err("cdr expects only one argument");
 
@@ -301,8 +312,9 @@ sexpr* builtin_op(scheme_env *env, sexpr **nodes, int count) {
 
 		result = sexpr_list();
 		for (int j = 1; j < l->count; j++) {
-			sexpr_list_insert(result, resolve_sexp(env, l->children[j]));
+			sexpr_list_insert(result, sexpr_copy(l->children[j]));
 		}
+		sexpr_free(l);
 	}
 
 	if (strcmp(op, "cons") == 0) {
@@ -319,7 +331,13 @@ sexpr* builtin_op(scheme_env *env, sexpr **nodes, int count) {
 		sexpr_list_insert(result, resolve_sexp(env, nodes[1]));
 
 		for (int j = 0; j < a2->count; j++) {
-			sexpr_list_insert(result, resolve_sexp(env, a2->children[j]));
+			sexpr *child = resolve_sexp(env, a2->children[j]);
+			if (child->type == LVAL_ERR) {
+				sexpr_free(result);
+				sexpr_free(a2);
+				return child;
+			}
+			sexpr_list_insert(result, child);
 		}
 
 		sexpr_free(a2);
