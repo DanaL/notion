@@ -1,7 +1,7 @@
 #ifndef parser_h
 #define parser_h
 
-enum token_type { T_NUM, T_SYM, T_STR, T_NULL, T_LIST_START, T_LIST_END };
+enum token_type { T_NUM, T_SYM, T_STR, T_NULL, T_LIST_START, T_LIST_END, T_UNKNOWN };
 
 typedef struct token {
 	enum token_type type;
@@ -10,6 +10,7 @@ typedef struct token {
 
 token* token_create(enum token_type);
 void token_free(token *);
+void dump_tokens(char *);
 
 enum sexpr_type { LVAL_NUM, LVAL_ERR, LVAL_SYM, LVAL_LIST, LVAL_NULL };
 enum sexpr_num_type { NUM_TYPE_INT, NUM_TYPE_DEC };

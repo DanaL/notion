@@ -187,6 +187,9 @@ void print_token(token *t) {
 		case T_NULL:
 			puts("Null token");
 			break;
+		case T_UNKNOWN:
+			printf("Unknown token: %s\n", t->val);
+			break;
 	}
 }
 
@@ -235,7 +238,8 @@ token* next_token(char *s, int *start) {
 		int dot_found = 0;
 		/* It's either a negative number or a subtraction function */
 		x = *start + 1;
-		/*This is terrible and I should turn this whole function into a state machine */
+
+		/* This is terrible and I should turn this whole function into a state machine */
 		while (s[x] != '\0' && (isdigit(s[x]) || (s[x] == '.' && !dot_found))) {
 			if (s[x] == '.')
 				dot_found = 1;
@@ -243,7 +247,7 @@ token* next_token(char *s, int *start) {
 		}
 
 		if (s[*start] == '-' && x - *start == 1)
-			t = token_create(T_NUM);
+			t = token_create(T_SYM);
 		else
 			t = token_create(T_NUM);
 	}
@@ -253,13 +257,17 @@ token* next_token(char *s, int *start) {
 		while (s[x] != '\0' && is_valid_in_symbol(s[x]))
 			++x;
 	}
+	else {
+		t = token_create(T_UNKNOWN);
+		x = *start + 1;
+	}
 
 	len = x - *start + 1;
 	t->val = malloc(len * sizeof(char));
 	memcpy(t->val, &s[*start], len - 1);
 	t->val[len - 1] = '\0';
 	(*start) = x;
-
+	
 	return t;
 }
 
@@ -277,11 +285,22 @@ sexpr* sexpr_from_token(token *t) {
 		case T_LIST_END:
 		case T_STR:
 		case T_NULL:
+		case T_UNKNOWN:
 			expr = sexpr_err("Unexpeted token.");
 			break;
 	}
 
 	return expr;
+}
+
+void dump_tokens(char *s) {
+		int c = 0;
+
+		token *nt = next_token(s, &c);
+		while (nt && nt->type != T_NULL) {
+			print_token(nt);
+			nt = next_token(s, &c);
+		}
 }
 
 /* Either return an atom, or if we find the start of a list,

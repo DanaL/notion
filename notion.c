@@ -46,6 +46,10 @@ int main(int argc, char **argv) {
 
 		if (is_whitespeace(line))
 			putchar('\n');
+		else if (ast->type == LVAL_ERR) {
+			sexpr_pprint(ast, 0);
+			sexpr_free(ast);
+		}
 		else
 		{
 			sexpr *result = eval(env, ast);
@@ -53,9 +57,9 @@ int main(int argc, char **argv) {
 			putchar('\n');
 			sexpr_pprint(result, 0);
 			putchar('\n');
-			free(result);
+			sexpr_free(result);
 
-			free(ast);
+			sexpr_free(ast);
 		}
 
 		free(line);
