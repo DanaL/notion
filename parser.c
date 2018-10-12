@@ -79,8 +79,18 @@ sexpr* sexpr_list(void) {
 	return v;
 }
 
+sexpr* sexpr_null(void) {
+	sexpr *v = malloc(sizeof(sexpr));
+	v->type = LVAL_NULL;
+	v->count = 0;
+	v->children = NULL;
+
+	return v;
+}
+
 void sexpr_free(sexpr *v) {
 	switch (v->type) {
+		case LVAL_NULL:
 		case LVAL_NUM:
 			break;
 		case LVAL_ERR:
@@ -103,12 +113,15 @@ sexpr* sexpr_copy_atom(sexpr* src) {
 
 	if (src->type == LVAL_NUM) {
 		dst = sexpr_num(src);
-		return dst;		
+		return dst;
 	}
 	else if (src->type == LVAL_SYM) {
 		dst = sexpr_sym(src->sym);
 		return dst;
 	}
+
+	if (src->type == LVAL_NULL)
+		return sexpr_null();
 
 	return sexpr_err("Can only copy atoms.");
 }
@@ -138,7 +151,7 @@ sexpr* sexpr_copy(sexpr* src) {
 
 void sexpr_append(sexpr *v, sexpr *next) {
 	v->count++;
-	v->children = realloc(v->children, sizeof(sexpr*) * v->count);	
+	v->children = realloc(v->children, sizeof(sexpr*) * v->count);
 	v->children[v->count - 1] = next;
 }
 
@@ -177,7 +190,7 @@ void print_token(token *t) {
 	}
 }
 
-int is_valid_in_symbol(char c) 
+int is_valid_in_symbol(char c)
 {
 	if (isalpha(c) || isdigit(c))
 		return 1;
@@ -205,7 +218,7 @@ token* next_token(char *s, int *start) {
 
 	if (s[*start] == '\0')
 		return token_create(T_NULL);
-	
+
 	if (s[*start] == '+' || s[*start] == '*' || s[*start] == '/' || s[*start] == '%' || s[*start] == '\'') {
 		t = token_create(T_SYM);
 		x = *start + 1;
@@ -271,9 +284,9 @@ sexpr* sexpr_from_token(token *t) {
 	return expr;
 }
 
-/* Either return an atom, or if we find the start of a list, 
+/* Either return an atom, or if we find the start of a list,
 	keep pulling the next token until we hit the end of the list or
-	run out of tokens (which is an error condition). 
+	run out of tokens (which is an error condition).
 
 	If we encounter a nested list, it's recursion time! */
 sexpr* parse(char *s, int *curr) {
@@ -282,7 +295,7 @@ sexpr* parse(char *s, int *curr) {
 	token *nt = next_token(s, curr);
 	if (nt->type == T_LIST_START) {
 		expr = sexpr_list();
-		
+
 		token_free(nt);
 		nt = next_token(s, curr);
 		while (nt->type != T_LIST_END) {
@@ -309,7 +322,7 @@ sexpr* parse(char *s, int *curr) {
 		expr = sexpr_from_token(nt);
 
 	token_free(nt);
-	
+
 	return expr;
 }
 
@@ -342,6 +355,9 @@ void sexpr_pprint(sexpr *v, int depth) {
 				printf("%li", v->n.i_num);
 			else
 				printf("%f", v->n.d_num);
+			break;
+		case LVAL_NULL:
+			/* Don't need to do anything */
 			break;
 	}
 }

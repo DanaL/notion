@@ -80,7 +80,6 @@ sexpr* env_fetch_var(scheme_env *env, char* key) {
 	if (env->buckets[h] == NULL)
 		return sexpr_err("Idenfifier not found.");
 
-	sexpr* result;
 	bucket *b = env->buckets[h];
 
 	/* Assuming a variable called is probably going to be
@@ -93,7 +92,7 @@ sexpr* env_fetch_var(scheme_env *env, char* key) {
 	if (b == NULL)
 		return sexpr_err("Identifier not found.");
 
-	return b->val;
+	return sexpr_copy(b->val);
 }
 
 void env_free(scheme_env *env) {

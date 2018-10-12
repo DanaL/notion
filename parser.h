@@ -11,7 +11,7 @@ typedef struct token {
 token* token_create(enum token_type);
 void token_free(token *);
 
-enum sexpr_type { LVAL_NUM, LVAL_ERR, LVAL_SYM, LVAL_LIST };
+enum sexpr_type { LVAL_NUM, LVAL_ERR, LVAL_SYM, LVAL_LIST, LVAL_NULL };
 enum sexpr_num_type { NUM_TYPE_INT, NUM_TYPE_DEC };
 
 typedef struct sexpr {
@@ -33,15 +33,17 @@ sexpr* sexpr_num(sexpr*);
 sexpr* sexpr_null(void);
 sexpr* sexpr_sym(char*);
 sexpr* sexpr_list(void);
+sexpr* sexpr_null(void);
+
 sexpr* sexpr_copy(sexpr*);
 void sexpr_free(sexpr*);
 void sexpr_list_insert(sexpr*, sexpr*);
-void sexpr_append(sexpr*, sexpr*); 
+void sexpr_append(sexpr*, sexpr*);
 
 void sexpr_pprint(sexpr*, int);
 
 sexpr* parse(char*, int*);
 
-#define IS_ATOM(a) (a->type == LVAL_NUM || a->type == LVAL_SYM) ? 1 : 0
+#define IS_ATOM(a) (a->type == LVAL_NUM || a->type == LVAL_SYM || a->type == LVAL_NULL) ? 1 : 0
 
 #endif

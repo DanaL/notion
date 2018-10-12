@@ -25,10 +25,10 @@ int main(int argc, char **argv) {
 
 	puts("Loading env...");
 	scheme_env *env = env_new();
-	
+
 	while (1) {
 		char *line;
-		
+
 #ifdef _WIN32
 		line = malloc(sizeof(char) * 1000);
 		fgets(line, 200, stdin);
@@ -46,10 +46,10 @@ int main(int argc, char **argv) {
 
 		if (is_whitespeace(line))
 			putchar('\n');
-		else 
+		else
 		{
-			sexpr *result = eval(ast);
-
+			sexpr *result = eval(env, ast);
+			putchar('\n');
 			sexpr_pprint(result, 0);
 			putchar('\n');
 			free(result);
@@ -59,6 +59,8 @@ int main(int argc, char **argv) {
 
 		free(line);
 	}
+
+	env_free(env);
 
 	return 0;
 }
