@@ -20,13 +20,22 @@ bucket* bucket_new(char *name, sexpr* e) {
 void bucket_free(bucket* b) {
 	free(b->name);
 
-	/* still gotta loop over the chain and free them too */
+	bucket *n, *p = b->next;
+	while (p) {
+		free(p->name);
+		sexpr_free(p->val);
+		n = p->next;
+		free(p);
+		p = n;
+	}
+
+	sexpr_free(b->val);
 	free(b);
 }
 
 scheme_env* env_new(void) {
 	scheme_env *e = malloc(sizeof(scheme_env));
-	
+
 	/* I bet there's a fancy C trick to do this better/fast */
 	for (int j = 0; j < TABLE_SIZE; j++)
 		e->buckets[j] = NULL;
@@ -55,7 +64,7 @@ void env_insert_var(scheme_env* env, char *name, sexpr *s) {
 		env->buckets[h] = b;
 	}
 	else {
-		/* Collision! I am going to make the assumption that a variable added will 
+		/* Collision! I am going to make the assumption that a variable added will
 			also likely be called soon, so I will put it at the head of th chain */
 
 		/* Note that I am curently in no way handling what to do when a variable with the same name is added */
@@ -71,13 +80,27 @@ sexpr* env_fetch_var(scheme_env *env, char* key) {
 	if (env->buckets[h] == NULL)
 		return sexpr_err("Idenfifier not found.");
 
-	sexpr *result = env->buckets[h]->val;
+	sexpr* result;
+	bucket *b = env->buckets[h];
 
-	return result;
+	/* Assuming a variable called is probably going to be
+			called again soon, it might be worth moving it to
+			the top of the chain. But that's more complicated
+			code */
+	while (b != NULL && strcmp(b->name, key) != 0)
+		b = b->next;
+
+	if (b == NULL)
+		return sexpr_err("Identifier not found.");
+
+	return b->val;
 }
 
 void env_free(scheme_env *env) {
-	/* ofc I need to free all the items in all the buckets before I really free it*/
+	for (int j = 0; j < TABLE_SIZE; j++) {
+		if (env->buckets[j])
+			bucket_free(env->buckets[j]);
+	}
 
 	free(env);
 }
