@@ -167,8 +167,8 @@ sexpr* builtin_min_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 	sexpr *result = NULL;
 
 	for (int j = 1; j < count; j++) {
-		print_sexpr_type(nodes[j]);
 		sexpr *n = resolve_atomic(env, nodes[j]);
+		/* This check can be macro-ized, I think */
 		if (n->type != LVAL_NUM) {
 			if (result)
 				sexpr_free(result);
@@ -416,6 +416,9 @@ sexpr* eval(scheme_env *env, sexpr *v) {
 			/* Is the symbol a variable? */
 			result = env_fetch_var(env, v->sym);
 			return result;
+			break;
+		case LVAL_ERR:
+			return v;
 			break;
 		case LVAL_NUM:
 		case LVAL_NULL:

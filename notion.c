@@ -49,6 +49,7 @@ int main(int argc, char **argv) {
 		else
 		{
 			sexpr *result = eval(env, ast);
+
 			putchar('\n');
 			sexpr_pprint(result, 0);
 			putchar('\n');
