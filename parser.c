@@ -70,6 +70,14 @@ sexpr* sexpr_sym(char *s) {
 	return v;
 }
 
+sexpr* sexpr_bool(int v) {
+		sexpr *b = malloc(sizeof(sexpr));
+		b->type = LVAL_BOOL;
+		b->bool = v;
+
+		return b;
+}
+
 sexpr* sexpr_list(void) {
 	sexpr *v = malloc(sizeof(sexpr));
 	v->type = LVAL_LIST;
@@ -92,6 +100,7 @@ void sexpr_free(sexpr *v) {
 	switch (v->type) {
 		case LVAL_NULL:
 		case LVAL_NUM:
+		case LVAL_BOOL:
 			break;
 		case LVAL_ERR:
 			free(v->err);
@@ -109,16 +118,14 @@ void sexpr_free(sexpr *v) {
 }
 
 sexpr* sexpr_copy_atom(sexpr* src) {
-	sexpr* dst;
+	if (src->type == LVAL_NUM)
+		return sexpr_num(src);
 
-	if (src->type == LVAL_NUM) {
-		dst = sexpr_num(src);
-		return dst;
-	}
-	else if (src->type == LVAL_SYM) {
-		dst = sexpr_sym(src->sym);
-		return dst;
-	}
+	if (src->type == LVAL_SYM)
+		return sexpr_sym(src->sym);
+
+	if (src->type == LVAL_BOOL)
+		return sexpr_bool(src->bool);
 
 	if (src->type == LVAL_NULL)
 		return sexpr_null();
@@ -375,6 +382,9 @@ void sexpr_pprint(sexpr *v, int depth) {
 				printf("%li", v->n.i_num);
 			else
 				printf("%f", v->n.d_num);
+			break;
+		case LVAL_BOOL:
+			printf("%s", v->bool ? "true" : "false");
 			break;
 		case LVAL_NULL:
 			/* Don't need to do anything */

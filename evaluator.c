@@ -23,6 +23,9 @@ void print_sexpr_type(sexpr *v) {
 		case LVAL_NULL:
 			printf("null type");
 			break;
+		case LVAL_BOOL:
+			printf("boolean (%s)", v->bool ? "true" : "false");
+			break;
 	}
 }
 
@@ -95,7 +98,7 @@ int is_zero(sexpr *num) {
 	about clobbering a reference somewhere.
 */
 sexpr* resolve_sexp(scheme_env *env, sexpr *a) {
-	if (a->type == LVAL_NUM)
+	if (a->type == LVAL_NUM || a->type == LVAL_BOOL)
 		return sexpr_copy(a);
 
 	if (a->type == LVAL_SYM || a->type == LVAL_LIST)
@@ -338,6 +341,16 @@ sexpr* builtin_op(scheme_env *env, sexpr **nodes, int count) {
 		sexpr_free(a2);
 	}
 
+	if (strcmp(op, "null?") == 0) {
+		if (count != 2)
+			return sexpr_err("null? expects just 1 argument");
+
+		sexpr *a = resolve_sexp(env, nodes[1]);
+		if (a->type == LVAL_ERR)
+			return a;
+
+		result = sexpr_bool(a->type == LVAL_LIST && a->count == 0 ? 1 :0);
+	}
 	return result;
 }
 
@@ -367,6 +380,8 @@ int is_built_in(sexpr *e) {
 	else if (strcmp(e->sym, "'") == 0)
 		result = 1;
 	else if (strcmp(e->sym, "define") == 0)
+		return 1;
+	else if (strcmp(e->sym, "null?") == 0)
 		return 1;
 
 	return result;
@@ -440,6 +455,7 @@ sexpr* eval(scheme_env *env, sexpr *v) {
 			return v;
 			break;
 		case LVAL_NUM:
+		case LVAL_BOOL:
 		case LVAL_NULL:
 			return sexpr_copy(v);
 	}
