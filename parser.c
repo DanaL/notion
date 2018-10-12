@@ -122,7 +122,6 @@ sexpr* sexpr_copy_list(sexpr* src) {
 			sexpr_append(dst, cp);
 		}
 		else if (src->children[j]->type == LVAL_LIST) {
-			sexpr *cp = sexpr_list();
 			sexpr_append(dst, sexpr_copy_list(src->children[j]));
 		}
 	}

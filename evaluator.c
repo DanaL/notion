@@ -315,7 +315,7 @@ int is_built_in(sexpr *e) {
 }
 
 int is_quote_form(sexpr *e) {
-	if (!e->type == LVAL_SYM)
+	if (e->type != LVAL_SYM)
 		return 0;
 
 	if (strcmp(e->sym, "'") == 0 || strcmp(e->sym, "quote") == 0)

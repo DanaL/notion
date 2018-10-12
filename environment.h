@@ -7,20 +7,21 @@
 
 typedef struct bucket {
 	int hash_val;
+	char *name;
 	struct sexpr *val;
 	struct bucket *next;
 } bucket;
 
-bucket* bucket_new(sexpr*);
+bucket* bucket_new(char*, sexpr*);
 void bucket_free(bucket*);
 
 typedef struct scheme_env {
-	struct bucket **buckets;
+	struct bucket *buckets[TABLE_SIZE];
 } scheme_env;
 
 scheme_env* env_new(void);
 void env_free(scheme_env*);
-void env_insert_var(scheme_env*, sexpr*);
-sexpr* env_fetch_var(char*);
+void env_insert_var(scheme_env*, char*, sexpr*);
+sexpr* env_fetch_var(scheme_env*, char*);
 
 #endif

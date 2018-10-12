@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #ifndef _WIN32
 #include <editline/readline.h>
@@ -22,6 +23,7 @@ int main(int argc, char **argv) {
 	puts("Notion (Dana's toy Scheme) 0.0.0.3");
 	puts("Press Ctrl-C to exit");
 
+	puts("Loading env...");
 	scheme_env *env = env_new();
 	
 	while (1) {
