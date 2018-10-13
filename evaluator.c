@@ -251,6 +251,123 @@ sexpr* builtin_max_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return result;
 }
 
+sexpr* builtin_list(scheme_env *env, sexpr **nodes, int count, char *op) {
+	sexpr* result = sexpr_list();
+
+	for (int j = 1; j < count; j++) {
+		sexpr *cp = resolve_sexp(env, nodes[j]);
+		if (cp->type == LVAL_ERR) {
+			sexpr_free(result);
+			return cp;
+		}
+
+		sexpr_append(result, cp);
+	}
+
+	return result;
+}
+
+sexpr* builtin_cdr(scheme_env *env, sexpr **nodes, int count, char *op) {
+	if (count != 2)
+		return sexpr_err("cdr expects only one argument");
+
+	sexpr *l = resolve_sexp(env, nodes[1]);
+	if (l->type != LVAL_LIST || l->count == 0) {
+		sexpr_free(l);
+		return sexpr_err("cdr is defined only for non-empty lists.");
+	}
+
+	sexpr *result = sexpr_list();
+	for (int j = 1; j < l->count; j++) {
+		sexpr_list_insert(result, sexpr_copy(l->children[j]));
+	}
+	sexpr_free(l);
+
+	return result;
+}
+
+sexpr* builtin_car(scheme_env *env, sexpr **nodes, int count, char *op) {
+	if (count != 2)
+		return sexpr_err("car expects only one argument");
+
+	sexpr *l = resolve_sexp(env, nodes[1]);
+
+	if (l->type != LVAL_LIST || l->count == 0) {
+		sexpr_free(l);
+		return sexpr_err("car is defined only for non-empty lists.");
+	}
+
+	sexpr *result = sexpr_copy(l->children[0]);
+
+	sexpr_free(l);
+
+	return result;
+}
+
+sexpr* builtin_cons(scheme_env *env, sexpr **nodes, int count, char *op) {
+	if (count != 3)
+		return sexpr_err("cons expects two aruments");
+
+	sexpr *a2 = resolve_sexp(env, nodes[2]);
+
+	if (a2->type != LVAL_LIST) {
+		sexpr_free(a2);
+		return sexpr_err("The second argument of cons must be a list.");
+	}
+
+	sexpr *result = sexpr_list();
+	sexpr_list_insert(result, resolve_sexp(env, nodes[1]));
+
+	for (int j = 0; j < a2->count; j++) {
+		sexpr_list_insert(result, sexpr_copy(a2->children[j]));
+	}
+
+	sexpr_free(a2);
+
+	return result;
+}
+
+sexpr* builtin_nullq(scheme_env *env, sexpr **nodes, int count, char *op) {
+	if (count != 2)
+		return sexpr_err("null? expects just 1 argument");
+
+	sexpr *a = resolve_sexp(env, nodes[1]);
+	if (a->type == LVAL_ERR)
+		return a;
+
+	sexpr *result = sexpr_bool(a->type == LVAL_LIST && a->count == 0 ? 1 :0);
+
+	sexpr_free(a);
+
+	return result;
+}
+
+/* eq? as defined in the Little Schemer operates only on non-numeric atoms,
+		but Scheme implementations I've seen accept broader inputs. I'm going to
+		stick to the Little Schemer "standard" for now */
+sexpr* builtin_eq(scheme_env *env, sexpr **nodes, int count, char *op) {
+	if (count != 3)
+		return sexpr_err("eq? expects exactly 2 arguments.");
+
+	sexpr *a = resolve_sexp(env, nodes[1]);
+	sexpr *b = resolve_sexp(env, nodes[2]);
+
+	/* Note, this actually hides errors that occurred in resolving the two
+			inputs, which is maybe not the most ideal behaviour */
+	sexpr *result = NULL;
+	if (a->type == LVAL_BOOL && b->type == LVAL_BOOL && a->bool == b->bool)
+		result = sexpr_bool(1);
+	else if (a->type == LVAL_SYM && b->type == LVAL_SYM && strcmp(a->sym, b->sym) == 0)
+		result = sexpr_bool(1);
+	else
+		result = sexpr_bool(0);
+
+	sexpr_free(a);
+	sexpr_free(b);
+
+	return result;
+}
+
 sexpr* builtin_op(scheme_env *env, sexpr **nodes, int count) {
 	if (nodes[0]->type != LVAL_SYM)
 		return sexpr_err("Expected symbol/built-in op!");
@@ -269,89 +386,27 @@ sexpr* builtin_op(scheme_env *env, sexpr **nodes, int count) {
 		result = builtin_min_op(env, nodes, count, op);
 	}
 
-	if (strcmp(op, "max") == 0) {
-		result = builtin_max_op(env, nodes, count, op);
-	}
+	if (strcmp(op, "max") == 0)
+		return builtin_max_op(env, nodes, count, op);
 
-	if (strcmp(op, "list") == 0) {
-		result = sexpr_list();
+	if (strcmp(op, "list") == 0)
+		return builtin_list(env, nodes, count, op);
 
-		for (int j = 1; j < count; j++) {
-			sexpr *cp = resolve_sexp(env, nodes[j]);
-			if (cp->type == LVAL_ERR) {
-				sexpr_free(result);
-				return cp;
-			}
+	if (strcmp(op, "car") == 0)
+		return builtin_car(env, nodes, count, op);
 
-			sexpr_append(result, cp);
-		}
-	}
+	if (strcmp(op, "cdr") == 0)
+		return builtin_cdr(env, nodes, count, op);
 
-	if (strcmp(op, "car") == 0) {
-		if (count != 2)
-			return sexpr_err("car expects only one argument");
+	if (strcmp(op, "cons") == 0)
+		return builtin_cons(env, nodes, count, op);
 
-		sexpr *l = resolve_sexp(env, nodes[1]);
+	if (strcmp(op, "null?") == 0)
+		return builtin_nullq(env, nodes, count, op);
 
-		if (l->type != LVAL_LIST || l->count == 0) {
-			sexpr_free(l);
-			return sexpr_err("car is defined only for non-empty lists.");
-		}
+	if (strcmp(op, "eq?") == 0)
+		return builtin_eq(env, nodes, count, op);
 
-		result = sexpr_copy(l->children[0]);
-
-		sexpr_free(l);
-	}
-
-	if (strcmp(op, "cdr") == 0) {
-		if (count != 2)
-			return sexpr_err("cdr expects only one argument");
-
-		sexpr *l = resolve_sexp(env, nodes[1]);
-		if (l->type != LVAL_LIST || l->count == 0) {
-			sexpr_free(l);
-			return sexpr_err("cdr is defined only for non-empty lists.");
-		}
-
-		result = sexpr_list();
-		for (int j = 1; j < l->count; j++) {
-			sexpr_list_insert(result, sexpr_copy(l->children[j]));
-		}
-		sexpr_free(l);
-	}
-
-	if (strcmp(op, "cons") == 0) {
-		if (count != 3)
-			return sexpr_err("cons expects two aruments");
-
-		sexpr *a2 = resolve_sexp(env, nodes[2]);
-
-		if (a2->type != LVAL_LIST) {
-			sexpr_free(a2);
-			return sexpr_err("The second argument of cons must be a list.");
-		}
-
-		result = sexpr_list();
-		sexpr_list_insert(result, resolve_sexp(env, nodes[1]));
-
-		for (int j = 0; j < a2->count; j++) {
-			sexpr_list_insert(result, sexpr_copy(a2->children[j]));
-		}
-
-		sexpr_free(a2);
-	}
-
-	if (strcmp(op, "null?") == 0) {
-		if (count != 2)
-			return sexpr_err("null? expects just 1 argument");
-
-		sexpr *a = resolve_sexp(env, nodes[1]);
-		if (a->type == LVAL_ERR)
-			return a;
-
-		result = sexpr_bool(a->type == LVAL_LIST && a->count == 0 ? 1 :0);
-	}
-	
 	return result;
 }
 
@@ -383,6 +438,8 @@ int is_built_in(sexpr *e) {
 	else if (strcmp(e->sym, "define") == 0)
 		return 1;
 	else if (strcmp(e->sym, "null?") == 0)
+		return 1;
+	else if (strcmp(e->sym, "eq?") == 0)
 		return 1;
 
 	return result;
