@@ -1,7 +1,7 @@
 #ifndef environment_h
 #define environment_h
 
-#include "parser.h"
+#include "sexpr.h"
 
 #define TABLE_SIZE 1019
 

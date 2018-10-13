@@ -9,6 +9,7 @@
 #include "parser.h"
 #include "environment.h"
 #include "evaluator.h"
+#include "sexpr.h"
 
 int is_whitespeace(char *s) {
 	while (*s) {
@@ -20,7 +21,7 @@ int is_whitespeace(char *s) {
 }
 
 int main(int argc, char **argv) {
-	puts("Notion (Dana's toy Scheme) 0.0.0.5");
+	puts("Notion (Dana's toy Scheme) 0.0.0.9");
 	puts("Press Ctrl-C to exit");
 
 	puts("Loading env...");

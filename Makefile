@@ -1,7 +1,7 @@
 CC=cc
 CFLAGS= -std=c99 -Wall
 LIBS= -ledit
-FILES= parser.c environment.c evaluator.c
+FILES= parser.c environment.c evaluator.c sexpr.c
 OUTPUT= notion
 
 default: notion

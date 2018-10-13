@@ -2,7 +2,7 @@
 #define evaluator_h
 
 #include "environment.h"
-#include "parser.h"
+#include "sexpr.h"
 
 sexpr* eval(scheme_env*, sexpr*);
 
