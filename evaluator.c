@@ -3,8 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "sexpr.h"
 #include "evaluator.h"
+#include "environment.h"
+#include "sexpr.h"
+#include "parser.h"
 
 void print_sexpr_type(sexpr *v) {
 	switch (v->type) {
@@ -88,6 +90,103 @@ int is_zero(sexpr *num) {
 		return num->n.i_num == 0;
 	else
 		return (fabs(0 - num->n.d_num) < 0.00000001);
+}
+
+int sexpr_cmp(sexpr *s1, sexpr *s2) {
+	if (s1->type != s2->type)
+		return 0;
+
+	switch (s1->type) {
+		case LVAL_BOOL:
+			if (s1->bool != s2->bool)
+				return 0;
+			break;
+		case LVAL_NUM:
+			if (s1->num_type != s2->num_type)
+				return 0;
+			if (s1->num_type == NUM_TYPE_INT && s1->n.i_num != s2->n.i_num)
+				return 0;
+			if (s1->num_type == NUM_TYPE_DEC && s1->n.d_num != s2->n.d_num)
+				return 0;
+			break;
+		case LVAL_SYM:
+			if (strcmp(s1->sym, s2->sym) != 0)
+				return 0;
+			break;
+		case LVAL_ERR:
+			if (strcmp(s1->err, s2->err) != 0)
+				return 0;
+			break;
+		case LVAL_LIST:
+			if (s1->count != s2->count)
+			 	return 0;
+
+			for (int j = 0; j < s1->count; j++) {
+				if (!sexpr_cmp(s1->children[j], s2->children[j]))
+					return 0;
+			}
+
+			break;
+	}
+
+	return 1;
+}
+
+sexpr* builtin_self_test(scheme_env *env, sexpr **nodes, int count, char *op) {
+	scheme_env *test_env = env_new(); /* We'll test in a fresh environment */
+
+	char *line = malloc(200 * sizeof(char));
+
+	int c = 0;
+	strcpy(line, "(/ (car (cdr (cdr(list(car (car (cdr (list 1 (list 2 3) (list (list 4)))))) 4 8)))) 2)");
+	printf(">>> %s", line);
+
+	sexpr *ast = parse(line, &c);
+	printf("Checking: %s\n", line);
+	sexpr *result = eval(test_env, ast);
+	sexpr *p = sexpr_num_s("4");
+	if (!sexpr_cmp(result, p)) {
+		puts("Test failed T_T\n");
+		return sexpr_bool(0);
+	}
+	sexpr_free(ast);
+	sexpr_free(result);
+	sexpr_free(p);
+
+	c = 0;
+	strcpy(line, "(define f 'list)");
+	ast = parse(line, &c);
+	result = eval(test_env, ast);
+	sexpr_free(result);
+	sexpr_free(ast);
+
+	c = 0;
+	strcpy(line, "(define f2 '((eval f) 1 2))");
+	ast = parse(line, &c);
+	result = eval(test_env, ast);
+	sexpr_free(result);
+	sexpr_free(ast);
+
+	c = 0;
+	strcpy(line, "(eval f2)");
+	ast = parse(line, &c);
+	printf("Checking: %s\n", line);
+	result = eval(test_env, ast);
+	c = 0;
+	p = parse("(list 1 2)", &c);
+	sexpr *expected = eval(test_env, p);
+	if (!sexpr_cmp(result, expected)) {
+		printf("Test failed T_T\n", line);
+		return sexpr_bool(0);
+	}
+	sexpr_free(ast);
+	sexpr_free(result);
+	sexpr_free(p);
+
+	free(line);
+	env_free(test_env);
+
+	return sexpr_bool(1);
 }
 
 /* This is function where we sort out what something is. If passed a simple
@@ -393,13 +492,11 @@ sexpr* builtin_op(scheme_env *env, sexpr **nodes, int count, sexpr *func) {
 	/* I am not going to be fussy about the difference between integers
 		and real numbers. If I am evaluating: + 1 2 14.0, then I'll just
 		convert the result type to float when I hit the real number */
-	if (strstr("+-*/%", op)) {
+	if (strstr("+-*/%", op))
 		result = builtin_math_op(env, nodes, count, op);
-	}
 
-	if (strcmp(op, "min") == 0) {
+	if (strcmp(op, "min") == 0)
 		result = builtin_min_op(env, nodes, count, op);
-	}
 
 	if (strcmp(op, "max") == 0)
 		return builtin_max_op(env, nodes, count, op);
@@ -424,6 +521,9 @@ sexpr* builtin_op(scheme_env *env, sexpr **nodes, int count, sexpr *func) {
 
 	if (strcmp(op, "eval") == 0)
 		return builtin_eval(env, nodes, count, op);
+
+	if (strcmp(op, "self-test") == 0)
+		return builtin_self_test(env, nodes, count, op);
 
 	return result;
 }
@@ -455,6 +555,8 @@ int is_built_in(sexpr *e) {
 	else if (strcmp(e->sym, "eq?") == 0)
 		return 1;
 	else if (strcmp(e->sym, "eval") == 0)
+		return 1;
+	else if (strcmp(e->sym, "self-test") == 0)
 		return 1;
 
 	return 0;
@@ -494,7 +596,7 @@ sexpr* eval(scheme_env *env, sexpr *v) {
 			if (v->count == 0)
 				return sexpr_err("Expected operator or function");
 
-			/* What function are we trying to execute. It might be a built-in, or it
+			/* What function are we trying to execute? It might be a built-in, or it
 				could a stored value we need to evaluate, for instance:
 
 				(define f 'list)

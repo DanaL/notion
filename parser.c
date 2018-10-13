@@ -74,6 +74,8 @@ int is_valid_in_symbol(char c)
 		case '|':
 		case '?':
 		case '.':
+		case '_':
+		case '-':
 			return 1;
 	}
 
