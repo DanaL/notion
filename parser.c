@@ -53,6 +53,10 @@ void print_token(token *t) {
 			break;
 		case T_CONSTANT:
 			printf("Constant: %s\n", t->val);
+			break;
+		case T_SINGLE_QUOTE:
+			printf("Single quote\n");
+			break;
 	}
 }
 
@@ -85,8 +89,12 @@ token* next_token(char *s, int *start) {
 	if (s[*start] == '\0')
 		return token_create(T_NULL);
 
-	if (s[*start] == '+' || s[*start] == '*' || s[*start] == '/' || s[*start] == '%' || s[*start] == '\'') {
+	if (s[*start] == '+' || s[*start] == '*' || s[*start] == '/' || s[*start] == '%') {
 		t = token_create(T_SYM);
+		x = *start + 1;
+	}
+	else if (s[*start] == '\'') {
+		t = token_create(T_SINGLE_QUOTE);
 		x = *start + 1;
 	}
 	else if(s[*start] == '(') {
@@ -197,12 +205,21 @@ sexpr* parse(char *s, int *curr) {
 		nt = next_token(s, curr);
 		while (nt->type != T_LIST_END) {
 			sexpr *child = NULL;
-			if (nt->type == T_LIST_START) {
+
+			/* Single quote form, so I want to transform, say, 'Q into
+				(quote Q) or '(1 2 3) into (quote (1 2 3)) */
+			if (nt->type == T_SINGLE_QUOTE) {
+				child = sexpr_list();
+				sexpr_append(child, sexpr_sym("quote"));
+				sexpr_append(child, parse(s, curr));
+			}
+			else if (nt->type == T_LIST_START) {
 				(*curr)--; /* Back up the token otherwise we skip past the start of the list in the recursive call */
 				child = parse(s, curr);
 			}
-			else
+			else {
 				child = sexpr_from_token(nt);
+			}
 
 			if (child->type == LVAL_ERR) {
 				token_free(nt);
@@ -214,6 +231,11 @@ sexpr* parse(char *s, int *curr) {
 			token_free(nt);
 			nt = next_token(s, curr);
 		}
+	}
+	else if (nt->type == T_SINGLE_QUOTE) {
+		expr = sexpr_list();
+		sexpr_append(expr, sexpr_sym("quote"));
+		sexpr_append(expr, parse(s, curr));
 	}
 	else
 		expr = sexpr_from_token(nt);
