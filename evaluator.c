@@ -373,16 +373,11 @@ sexpr* builtin_eval(scheme_env *env, sexpr **nodes, int count, char *op) {
 		return sexpr_err("Eval requires just one parameter.");
 
 	sexpr *f = resolve_sexp(env, nodes[1]);
-	printf("be1 - ");
-	sexpr_pprint(f, 0);
-	putchar('\n');
-	if (IS_FUNC(f) || IS_FUNC(f->children[0])) {
+
+	if (IS_FUNC(f)) {
 		sexpr *f2 = eval(env, f);
 		sexpr_free(f);
 		f = f2;
-		printf("be2 - ");
-		sexpr_pprint(f, 0);
-		putchar('\n');
 	}
 
 	return f;
