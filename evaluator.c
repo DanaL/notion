@@ -7,6 +7,7 @@
 #include "environment.h"
 #include "sexpr.h"
 #include "parser.h"
+#include "util.h"
 
 void print_sexpr_type(sexpr *v) {
 	switch (v->type) {
@@ -135,10 +136,10 @@ int sexpr_cmp(sexpr *s1, sexpr *s2) {
 sexpr* builtin_self_test(scheme_env *env, sexpr **nodes, int count, char *op) {
 	scheme_env *test_env = env_new(); /* We'll test in a fresh environment */
 
-	char *line = malloc(200 * sizeof(char));
+	char *line = NULL;
 
 	int c = 0;
-	strcpy(line, "(/ (car (cdr (cdr(list(car (car (cdr (list 1 (list 2 3) (list (list 4)))))) 4 8)))) 2)");
+	line = n_strcpy(line, "(/ (car (cdr (cdr(list(car (car (cdr (list 1 (list 2 3) (list (list 4)))))) 4 8)))) 2)");
 	printf(">>> %s", line);
 
 	sexpr *ast = parse(line, &c);
@@ -152,23 +153,26 @@ sexpr* builtin_self_test(scheme_env *env, sexpr **nodes, int count, char *op) {
 	sexpr_free(ast);
 	sexpr_free(result);
 	sexpr_free(p);
+	free(line);
 
 	c = 0;
-	strcpy(line, "(define f 'list)");
+	line = n_strcpy(line, "(define f 'list)");
 	ast = parse(line, &c);
 	result = eval(test_env, ast);
 	sexpr_free(result);
 	sexpr_free(ast);
+	free(line);
 
 	c = 0;
-	strcpy(line, "(define f2 '((eval f) 1 2))");
+	line = n_strcpy(line, "(define f2 '((eval f) 1 2))");
 	ast = parse(line, &c);
 	result = eval(test_env, ast);
 	sexpr_free(result);
 	sexpr_free(ast);
+	free(line);
 
 	c = 0;
-	strcpy(line, "(eval f2)");
+	line = n_strcpy(line, "(eval f2)");
 	ast = parse(line, &c);
 	printf("Checking: %s\n", line);
 	result = eval(test_env, ast);
@@ -176,14 +180,14 @@ sexpr* builtin_self_test(scheme_env *env, sexpr **nodes, int count, char *op) {
 	p = parse("(list 1 2)", &c);
 	sexpr *expected = eval(test_env, p);
 	if (!sexpr_cmp(result, expected)) {
-		printf("Test failed T_T\n", line);
+		printf("Test failed T_T\n");
 		return sexpr_bool(0);
 	}
 	sexpr_free(ast);
 	sexpr_free(result);
 	sexpr_free(p);
-
 	free(line);
+
 	env_free(test_env);
 
 	return sexpr_bool(1);

@@ -5,14 +5,14 @@
 
 #include "sexpr.h"
 #include "environment.h"
+#include "util.h"
 
 bucket* bucket_new(char *name, sexpr* e) {
 	bucket *b = malloc(sizeof(bucket));
-	b->name = malloc(strlen(name) + 1);
 	b->val = e;
 	b->next = NULL;
 
-	strcpy(b->name, name);
+	b->name = n_strcpy(b->name, name);
 
 	return b;
 }

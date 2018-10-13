@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "sexpr.h"
+#include "util.h"
 
 sexpr* sexpr_num(sexpr* j) {
 	sexpr *v = malloc(sizeof(sexpr));
@@ -40,8 +41,7 @@ sexpr* sexpr_num_s(char *s) {
 sexpr* sexpr_err(char *s) {
 	sexpr *v = malloc(sizeof(sexpr));
 	v->type = LVAL_ERR;
-	v->err = malloc(strlen(s) + 1);
-	strcpy(v->err, s);
+	v->err = n_strcpy(v->err, s);
 
 	return v;
 }
@@ -49,9 +49,8 @@ sexpr* sexpr_err(char *s) {
 sexpr* sexpr_sym(char *s) {
 	sexpr *v = malloc(sizeof(sexpr));
 	v->type = LVAL_SYM;
-	v->sym = malloc(strlen(s) + 1);
-	strcpy(v->sym, s);
-
+	v->sym = n_strcpy(v->sym, s);
+	
 	return v;
 }
 
