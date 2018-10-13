@@ -1,7 +1,7 @@
 #ifndef parser_h
 #define parser_h
 
-enum token_type { T_NUM, T_SYM, T_STR, T_NULL, T_LIST_START, T_LIST_END, T_UNKNOWN };
+enum token_type { T_NUM, T_SYM, T_STR, T_NULL, T_LIST_START, T_LIST_END, T_UNKNOWN, T_CONSTANT };
 
 typedef struct token {
 	enum token_type type;

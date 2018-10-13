@@ -197,6 +197,8 @@ void print_token(token *t) {
 		case T_UNKNOWN:
 			printf("Unknown token: %s\n", t->val);
 			break;
+		case T_CONSTANT:
+			printf("Constant: %s\n", t->val);
 	}
 }
 
@@ -264,6 +266,12 @@ token* next_token(char *s, int *start) {
 		while (s[x] != '\0' && is_valid_in_symbol(s[x]))
 			++x;
 	}
+	else if (s[*start] == '#') {
+		t = token_create(T_CONSTANT);
+		x = *start + 1;
+		while (s[x] != '\0' && isalpha(s[x]))
+			++x;
+	}
 	else {
 		t = token_create(T_UNKNOWN);
 		x = *start + 1;
@@ -288,11 +296,20 @@ sexpr* sexpr_from_token(token *t) {
 		case T_SYM:
 			expr = sexpr_sym(t->val);
 			break;
+		case T_CONSTANT:
+			if (strcmp("#t", t->val) == 0)
+				expr = sexpr_bool(1);
+			else if (strcmp("#f", t->val) == 0)
+				expr = sexpr_bool(0);
+			else
+				expr = sexpr_err("Unknown constant.");
+			break;
 		case T_LIST_START:
 		case T_LIST_END:
 		case T_STR:
 		case T_NULL:
 		case T_UNKNOWN:
+			printf("\"%s\"\n", t->val);
 			expr = sexpr_err("Unexpeted token.");
 			break;
 	}

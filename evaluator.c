@@ -351,6 +351,7 @@ sexpr* builtin_op(scheme_env *env, sexpr **nodes, int count) {
 
 		result = sexpr_bool(a->type == LVAL_LIST && a->count == 0 ? 1 :0);
 	}
+	
 	return result;
 }
 
