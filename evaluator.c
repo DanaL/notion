@@ -433,8 +433,6 @@ int is_built_in(sexpr *e) {
 		result = 1;
 	else if (strcmp(e->sym, "quote") == 0)
 		result = 1;
-	else if (strcmp(e->sym, "'") == 0)
-		result = 1;
 	else if (strcmp(e->sym, "define") == 0)
 		return 1;
 	else if (strcmp(e->sym, "null?") == 0)
@@ -446,13 +444,10 @@ int is_built_in(sexpr *e) {
 }
 
 int is_quote_form(sexpr *e) {
-	if (e->type != LVAL_SYM)
+	if (e->type != LVAL_SYM || strcmp(e->sym, "quote") != 0)
 		return 0;
 
-	if (strcmp(e->sym, "'") == 0 || strcmp(e->sym, "quote") == 0)
-		return 1;
-
-	return 0;
+	return 1;
 }
 
 sexpr* define_var(scheme_env *env, sexpr *exp) {
