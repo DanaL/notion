@@ -128,69 +128,75 @@ int sexpr_cmp(sexpr *s1, sexpr *s2) {
 			}
 
 			break;
+		case LVAL_NULL:
+			return 1;
 	}
 
 	return 1;
 }
 
-sexpr* builtin_self_test(scheme_env *env, sexpr **nodes, int count, char *op) {
-	scheme_env *test_env = env_new(); /* We'll test in a fresh environment */
-
-	char *line = NULL;
-
+int test_sexpr(scheme_env *env, char *s, sexpr *expected) {
 	int c = 0;
-	line = n_strcpy(line, "(/ (car (cdr (cdr(list(car (car (cdr (list 1 (list 2 3) (list (list 4)))))) 4 8)))) 2)");
-	printf(">>> %s", line);
-
+	char *line = n_strcpy(line, s);
 	sexpr *ast = parse(line, &c);
 	printf("Checking: %s\n", line);
-	sexpr *result = eval(test_env, ast);
+	sexpr *result = eval(env, ast);
+
+	int r = sexpr_cmp(result, expected);
+	sexpr_free(result);
+	sexpr_free(ast);
+	free(line);
+
+	if (!r)
+		printf("** Test %s failed T_T\n", s);
+
+	return r;
+}
+
+sexpr* builtin_self_test(scheme_env *env, sexpr **nodes, int count, char *op) {
+	scheme_env *test_env = env_new(); /* We'll test in a fresh environment */
+	sexpr *null_e = sexpr_null();
+	int r = 1;
+
 	sexpr *p = sexpr_num_s("4");
-	if (!sexpr_cmp(result, p)) {
-		puts("Test failed T_T\n");
-		return sexpr_bool(0);
-	}
-	sexpr_free(ast);
-	sexpr_free(result);
+	if (!test_sexpr(test_env, "(/ (car (cdr (cdr(list(car (car (cdr (list 1 (list 2 3) (list (list 4)))))) 4 8)))) 2)", p))
+		r = 0;
 	sexpr_free(p);
-	free(line);
 
-	c = 0;
-	line = n_strcpy(line, "(define f 'list)");
-	ast = parse(line, &c);
-	result = eval(test_env, ast);
-	sexpr_free(result);
-	sexpr_free(ast);
-	free(line);
+	if (!test_sexpr(test_env, "(define f 'list)", null_e))
+		r = 0;
+	if (!test_sexpr(test_env, "(define f2 '((eval f) x y))", null_e))
+		r = 0;
+	if (!test_sexpr(test_env, "(define x 4)", null_e))
+		r = 0;
+	if (!test_sexpr(test_env, "(define y 5)", null_e))
+		r = 0;
 
-	c = 0;
-	line = n_strcpy(line, "(define f2 '((eval f) 1 2))");
-	ast = parse(line, &c);
-	result = eval(test_env, ast);
-	sexpr_free(result);
-	sexpr_free(ast);
-	free(line);
-
-	c = 0;
-	line = n_strcpy(line, "(eval f2)");
-	ast = parse(line, &c);
-	printf("Checking: %s\n", line);
-	result = eval(test_env, ast);
-	c = 0;
-	p = parse("(list 1 2)", &c);
+	int c = 0;
+	p = parse("(list 4 5)", &c);
 	sexpr *expected = eval(test_env, p);
-	if (!sexpr_cmp(result, expected)) {
-		printf("Test failed T_T\n");
-		return sexpr_bool(0);
-	}
-	sexpr_free(ast);
-	sexpr_free(result);
+	if (!test_sexpr(test_env, "(eval f2)", expected))
+		r = 0;
 	sexpr_free(p);
-	free(line);
+	sexpr_free(expected);
 
+	if (!test_sexpr(test_env, "(define a #t)", null_e))
+		r = 0;
+
+	p = sexpr_bool(1);
+	if (!test_sexpr(test_env, "(eq? a #t)", p))
+		r = 0;
+	sexpr_free(p);
+
+	p = sexpr_bool(0);
+	if (!test_sexpr(test_env, "(eq? a #f)", p))
+		r = 0;
+	sexpr_free(p);
+
+	sexpr_free(null_e);
 	env_free(test_env);
 
-	return sexpr_bool(1);
+	return sexpr_bool(r);
 }
 
 /* This is function where we sort out what something is. If passed a simple
