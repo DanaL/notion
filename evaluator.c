@@ -101,7 +101,7 @@ sexpr* resolve_sexp(scheme_env *env, sexpr *a) {
 	if (a->type == LVAL_NUM || a->type == LVAL_BOOL)
 		return sexpr_copy(a);
 
-	if (a->type == LVAL_SYM || a->type == LVAL_LIST)
+	if (a->type == LVAL_SYM || IS_FUNC(a))
 		return eval(env, a);
 
 	return sexpr_err("Unknown but definitely bad result of resolve_sexp()");
@@ -368,11 +368,31 @@ sexpr* builtin_eq(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return result;
 }
 
-sexpr* builtin_op(scheme_env *env, sexpr **nodes, int count) {
-	if (nodes[0]->type != LVAL_SYM)
+sexpr* builtin_eval(scheme_env *env, sexpr **nodes, int count, char *op) {
+	if (count != 2)
+		return sexpr_err("Eval requires just one parameter.");
+
+	sexpr *f = resolve_sexp(env, nodes[1]);
+	printf("be1 - ");
+	sexpr_pprint(f, 0);
+	putchar('\n');
+	if (IS_FUNC(f) || IS_FUNC(f->children[0])) {
+		sexpr *f2 = eval(env, f);
+		sexpr_free(f);
+		f = f2;
+		printf("be2 - ");
+		sexpr_pprint(f, 0);
+		putchar('\n');
+	}
+
+	return f;
+}
+
+sexpr* builtin_op(scheme_env *env, sexpr **nodes, int count, sexpr *func) {
+	if (func->type != LVAL_SYM)
 		return sexpr_err("Expected symbol/built-in op!");
 
-	char *op = nodes[0]->sym;
+	char *op = func->sym;
 	sexpr *result = NULL;
 
 	/* I am not going to be fussy about the difference between integers
@@ -407,6 +427,9 @@ sexpr* builtin_op(scheme_env *env, sexpr **nodes, int count) {
 	if (strcmp(op, "eq?") == 0)
 		return builtin_eq(env, nodes, count, op);
 
+	if (strcmp(op, "eval") == 0)
+		return builtin_eval(env, nodes, count, op);
+
 	return result;
 }
 
@@ -416,31 +439,30 @@ int is_built_in(sexpr *e) {
 
 	if (strstr("+-*/%", e->sym))
 		return 1;
-
-	int result = 0;
-
-	if (strcmp(e->sym, "max") == 0)
-		result = 1;
+	else if (strcmp(e->sym, "max") == 0)
+		return 1;
 	else if (strcmp(e->sym, "min") == 0)
-		result = 1;
+		return 1;
 	else if (strcmp(e->sym, "list") == 0)
-		result = 1;
+		return 1;
 	else if (strcmp(e->sym, "car") == 0)
-		result = 1;
+		return 1;
 	else if (strcmp(e->sym, "cdr") == 0)
-		result = 1;
+		return 1;
 	else if (strcmp(e->sym, "cons") == 0)
-		result = 1;
+		return 1;
 	else if (strcmp(e->sym, "quote") == 0)
-		result = 1;
+		return 1;
 	else if (strcmp(e->sym, "define") == 0)
 		return 1;
 	else if (strcmp(e->sym, "null?") == 0)
 		return 1;
 	else if (strcmp(e->sym, "eq?") == 0)
 		return 1;
+	else if (strcmp(e->sym, "eval") == 0)
+		return 1;
 
-	return result;
+	return 0;
 }
 
 int is_quote_form(sexpr *e) {
@@ -474,10 +496,25 @@ sexpr* eval(scheme_env *env, sexpr *v) {
 	sexpr *result = NULL;
 	switch (v->type) {
 		case LVAL_LIST:
-			/* When I have user defined functions, I'll have to check if the
-				op is one of them */
-			if (v->count == 0 || !is_built_in(v->children[0]))
+			if (v->count == 0)
 				return sexpr_err("Expected operator or function");
+
+			/* What function are we trying to execute. It might be a built-in, or it
+				could a stored value we need to evaluate, for instance:
+
+				(define f 'list)
+				(eval '((eval f) 1 2))
+			*/
+			sexpr *func;
+			if (is_built_in(v->children[0]))
+				func = sexpr_copy(v->children[0]);
+			else
+				func = resolve_sexp(env, v->children[0]);
+
+			if (!is_built_in(func)) {
+				sexpr_free(func);
+				return sexpr_err("Expected operator or function");
+			}
 
 			/* quote is a special form -- we simply return its first paramter without evaluating it.
 				Note that I am not certain I really understand quote, so I'm mostly going by what's in
@@ -486,18 +523,21 @@ sexpr* eval(scheme_env *env, sexpr *v) {
 				For instance (quote 1 2 3) returns 1 but I'm not sure if that's valid input from a proper
 				definition of Scheme or not.
 				*/
-			if (is_quote_form(v->children[0])) {
+			if (is_quote_form(func)) {
 				return sexpr_copy(v->children[1]);
 			}
 
-			if (strcmp(v->children[0]->sym, "define") == 0) {
+			if (strcmp(func->sym, "define") == 0) {
 				/* We are defining either a variable or a function. */
 				result = define_var(env, v);
 
+				sexpr_free(func);
 				return result;
 			}
 
-			result = builtin_op(env, v->children, v->count);
+			result = builtin_op(env, v->children, v->count, func);
+			sexpr_free(func);
+
 			return result;
 		case LVAL_SYM:
 			/* Is the symbol a variable? */

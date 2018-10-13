@@ -162,9 +162,6 @@ void sexpr_pprint(sexpr *v, int depth) {
 			printf("Error: %s\n", v->err);
 			break;
 		case LVAL_LIST:
-			if (depth > 0)
-				putchar('\n');
-			print_padding(depth);
 			putchar('(');
 
 			for (int j = 0; j < v->count; j++) {
@@ -172,7 +169,7 @@ void sexpr_pprint(sexpr *v, int depth) {
 				if (j < v->count - 1)
 					putchar(' ');
 			}
-			puts(")");
+			putchar(')');
 			break;
 		case LVAL_SYM:
 			printf("%s", v->sym);
