@@ -173,6 +173,7 @@ sexpr* sexpr_from_token(token *t) {
 		case T_STR:
 		case T_NULL:
 		case T_UNKNOWN:
+		case T_SINGLE_QUOTE:
 			printf("\"%s\"\n", t->val);
 			expr = sexpr_err("Unexpeted token.");
 			break;

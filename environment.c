@@ -105,7 +105,7 @@ void env_free(scheme_env *env) {
 }
 
 void env_dump(scheme_env* env) {
-	bucket *b = env->buckets;
+	bucket *b;
 
 	for (int j = 0; j < TABLE_SIZE; j++) {
 		b = env->buckets[j];
