@@ -677,8 +677,8 @@ sexpr* define_var(scheme_env *env, sexpr **nodes, int count, char *op) {
 	if (is_quoted_val(nodes[2]))
 		env_insert_var(env, nodes[1]->sym, sexpr_copy(nodes[2]->children[1]));
 	else
-		env_insert_var(env, nodes[1]->sym, sexpr_copy(nodes[2]));
-
+		env_insert_var(env, nodes[1]->sym, eval2(env, nodes[2]));
+	
 	return sexpr_null();
 }
 
