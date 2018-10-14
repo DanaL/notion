@@ -24,6 +24,8 @@ struct sexpr {
 
 	int builtin;
 	builtinf fun;
+	sexpr *params;
+	sexpr *body;
 
 	int count;
 	struct sexpr **children;
@@ -37,7 +39,8 @@ sexpr* sexpr_sym(char*);
 sexpr* sexpr_list(void);
 sexpr* sexpr_null(void);
 sexpr* sexpr_bool(int);
-sexpr* sexpr_fun(builtinf, char*, int);
+sexpr* sexpr_fun_builtin(builtinf, char*);
+sexpr* sexpr_fun_user(sexpr*, sexpr*, char*);
 sexpr* sexpr_copy(sexpr*);
 sexpr* sexpr_quote(void);
 

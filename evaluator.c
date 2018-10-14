@@ -477,7 +477,7 @@ sexpr* define_var(scheme_env *env, sexpr **nodes, int count, char *op) {
 	if (nodes[1]->type != LVAL_SYM)
 		return sexpr_err("Expected variable name.");
 
-	ASSERT_NOT_PRIMITIVE(env, nodes[1]->sym);
+	ASSERT_PRIMITIVE(env, nodes[1]->sym);
 
 	if (is_quoted_val(nodes[2])) {
 		env_insert_var(env, nodes[1]->sym, sexpr_copy(nodes[2]->children[1]));
@@ -488,11 +488,41 @@ sexpr* define_var(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return sexpr_null();
 }
 
+sexpr* define_fun(scheme_env *env, sexpr **nodes, int count, char *op)  {
+	sexpr *header = nodes[1];
+	sexpr *body = nodes[2];
+
+	if (header->count == 0 || body->count == 0)
+		return sexpr_err("Invalid definition.");
+
+	ASSERT_PRIMITIVE(env, header->children[0]->sym);
+	char *fun_num = header->children[0]->sym;
+
+	/* Each parameter must be a symbol and be uniquely named
+		Note to self: there can be zero params of course */
+	sexpr *params = sexpr_list();
+	for (int j = 1; j < header->count; j++) {
+		if (header->children[j]->type != LVAL_SYM) {
+			sexpr_free(params);
+			return sexpr_err("Paramter names must be symbols.");
+		}
+		sexpr_append(params, sexpr_copy(header->children[j]));
+	}
+
+	sexpr *fun = sexpr_fun_user(params, body, fun_num);
+	env_insert_var(env, fun_num, fun);
+
+	return sexpr_null();
+}
+
 sexpr* define(scheme_env *env, sexpr **nodes, int count, char *op) {
 	if (count != 3)
 		return sexpr_err("Invalid definition.");
 
-	return define_var(env, nodes, count, op);
+	if (nodes[1]->type == LVAL_LIST)
+		return define_fun(env, nodes, count, op);
+	else
+		return define_var(env, nodes, count, op);
 }
 
 sexpr* resolve_symbol(scheme_env *env, sexpr *s) {
@@ -548,21 +578,21 @@ sexpr* eval2(scheme_env *env, sexpr *v) {
 }
 
 void load_built_ins(scheme_env *env) {
-	env_insert_var(env, "car", sexpr_fun(&builtin_car, "car", 1));
-	env_insert_var(env, "cdr", sexpr_fun(&builtin_cdr, "cdr", 1));
-	env_insert_var(env, "cons", sexpr_fun(&builtin_cons, "cons", 1));
-	env_insert_var(env, "list", sexpr_fun(&builtin_list, "list", 1));
-	env_insert_var(env, "eq?", sexpr_fun(&builtin_eq, "eq?", 1));
-	env_insert_var(env, "null?", sexpr_fun(&builtin_nullq, "null?", 1));
-	env_insert_var(env, "eval", sexpr_fun(&builtin_eval, "eval", 1));
-	env_insert_var(env, "self-test", sexpr_fun(&builtin_self_test, "self-test", 1));
-	env_insert_var(env, "+", sexpr_fun(&builtin_math_op, "+", 1));
-	env_insert_var(env, "-", sexpr_fun(&builtin_math_op, "-", 1));
-	env_insert_var(env, "*", sexpr_fun(&builtin_math_op, "*", 1));
-	env_insert_var(env, "/", sexpr_fun(&builtin_math_op, "/", 1));
-	env_insert_var(env, "%", sexpr_fun(&builtin_math_op, "%", 1));
-	env_insert_var(env, "min", sexpr_fun(&builtin_min_op, "min", 1));
-	env_insert_var(env, "max", sexpr_fun(&builtin_max_op, "max", 1));
-	env_insert_var(env, "define", sexpr_fun(&define, "define", 1));
-	env_insert_var(env, "quote", sexpr_fun(&quote_form, "quote", 1));
+	env_insert_var(env, "car", sexpr_fun_builtin(&builtin_car, "car"));
+	env_insert_var(env, "cdr", sexpr_fun_builtin(&builtin_cdr, "cdr"));
+	env_insert_var(env, "cons", sexpr_fun_builtin(&builtin_cons, "cons"));
+	env_insert_var(env, "list", sexpr_fun_builtin(&builtin_list, "list"));
+	env_insert_var(env, "eq?", sexpr_fun_builtin(&builtin_eq, "eq?"));
+	env_insert_var(env, "null?", sexpr_fun_builtin(&builtin_nullq, "null?"));
+	env_insert_var(env, "eval", sexpr_fun_builtin(&builtin_eval, "eval"));
+	env_insert_var(env, "self-test", sexpr_fun_builtin(&builtin_self_test, "self-test"));
+	env_insert_var(env, "+", sexpr_fun_builtin(&builtin_math_op, "+"));
+	env_insert_var(env, "-", sexpr_fun_builtin(&builtin_math_op, "-"));
+	env_insert_var(env, "*", sexpr_fun_builtin(&builtin_math_op, "*"));
+	env_insert_var(env, "/", sexpr_fun_builtin(&builtin_math_op, "/"));
+	env_insert_var(env, "%", sexpr_fun_builtin(&builtin_math_op, "%"));
+	env_insert_var(env, "min", sexpr_fun_builtin(&builtin_min_op, "min"));
+	env_insert_var(env, "max", sexpr_fun_builtin(&builtin_max_op, "max"));
+	env_insert_var(env, "define", sexpr_fun_builtin(&define, "define"));
+	env_insert_var(env, "quote", sexpr_fun_builtin(&quote_form, "quote"));
 }
