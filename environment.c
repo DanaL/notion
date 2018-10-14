@@ -90,7 +90,7 @@ sexpr* env_fetch_var(scheme_env *env, char* key) {
 		b = b->next;
 
 	if (b == NULL)
-		return sexpr_err("Identifier not found.");
+		return sexpr_err("Unbound symbol.");
 
 	return sexpr_copy(b->val);
 }
@@ -102,4 +102,19 @@ void env_free(scheme_env *env) {
 	}
 
 	free(env);
+}
+
+void env_dump(scheme_env* env) {
+	bucket *b = env->buckets;
+
+	for (int j = 0; j < TABLE_SIZE; j++) {
+		b = env->buckets[j];
+		if (b) {
+			printf("%s ", b->name);
+			print_sexpr_type(b->val);
+			putchar(' ');
+			sexpr_pprint(b->val);
+			putchar('\n');
+		}
+	}
 }

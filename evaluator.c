@@ -9,29 +9,6 @@
 #include "parser.h"
 #include "util.h"
 
-void print_sexpr_type(sexpr *v) {
-	switch (v->type) {
-		case LVAL_NUM:
-			printf("number");
-			break;
-		case LVAL_SYM:
-			printf("symbol (%s)", v->sym);
-			break;
-		case LVAL_ERR:
-			printf("error");
-			break;
-		case LVAL_LIST:
-			printf("list");
-			break;
-		case LVAL_NULL:
-			printf("null type");
-			break;
-		case LVAL_BOOL:
-			printf("boolean (%s)", v->bool ? "true" : "false");
-			break;
-	}
-}
-
 void sexpr_convert_num_type(sexpr *v) {
 	long x = v->n.i_num;
 	v->n.d_num = x;
@@ -128,6 +105,10 @@ int sexpr_cmp(sexpr *s1, sexpr *s2) {
 			}
 
 			break;
+		case LVAL_FUN:
+			if (s1->fun != s2->fun)
+				return 0;
+			break;
 		case LVAL_NULL:
 			return 1;
 	}
@@ -137,10 +118,11 @@ int sexpr_cmp(sexpr *s1, sexpr *s2) {
 
 int test_sexpr(scheme_env *env, char *s, sexpr *expected) {
 	int c = 0;
-	char *line = n_strcpy(line, s);
+	char *line = NULL;
+	line = n_strcpy(line, s);
 	sexpr *ast = parse(line, &c);
 	printf("Checking: %s\n", line);
-	sexpr *result = eval(env, ast);
+	sexpr *result = eval2(env, ast);
 
 	int r = sexpr_cmp(result, expected);
 	sexpr_free(result);
@@ -155,6 +137,7 @@ int test_sexpr(scheme_env *env, char *s, sexpr *expected) {
 
 sexpr* builtin_self_test(scheme_env *env, sexpr **nodes, int count, char *op) {
 	scheme_env *test_env = env_new(); /* We'll test in a fresh environment */
+	load_built_ins(test_env);
 	sexpr *null_e = sexpr_null();
 	int r = 1;
 
@@ -174,7 +157,7 @@ sexpr* builtin_self_test(scheme_env *env, sexpr **nodes, int count, char *op) {
 
 	int c = 0;
 	p = parse("(list 4 5)", &c);
-	sexpr *expected = eval(test_env, p);
+	sexpr *expected = eval2(test_env, p);
 	if (!test_sexpr(test_env, "(eval f2)", expected))
 		r = 0;
 	sexpr_free(p);
@@ -199,29 +182,12 @@ sexpr* builtin_self_test(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return sexpr_bool(r);
 }
 
-/* This is function where we sort out what something is. If passed a simple
-	type (like a number), just return it. If passed a symbol, try to
-	resolve it. And if passed a list, evaluate it.
-
-	Return a copy of the result so that we can free() it without worrying
-	about clobbering a reference somewhere.
-*/
-sexpr* resolve_sexp(scheme_env *env, sexpr *a) {
-	if (a->type == LVAL_NUM || a->type == LVAL_BOOL)
-		return sexpr_copy(a);
-
-	if (a->type == LVAL_SYM || IS_FUNC(a))
-		return eval(env, a);
-
-	return sexpr_err("Unknown but definitely bad result of resolve_sexp()");
-}
-
 sexpr* builtin_math_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 	sexpr *result = NULL;
 
 	/* Unary subtraction */
 	if (strcmp(op, "-") == 0 && count == 2) {
-		sexpr *n = resolve_sexp(env, nodes[1]);
+		sexpr *n = eval2(env, nodes[1]);
 		if (n->type != LVAL_NUM)
 			result = sexpr_err("Expected number!");
 		else {
@@ -234,7 +200,7 @@ sexpr* builtin_math_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 	}
 
 	for (int j = 1; j < count; j++) {
-		sexpr *n = resolve_sexp(env, nodes[j]);
+		sexpr *n = eval2(env, nodes[j]);
 
 		if (n->type != LVAL_NUM) {
 			if (result) sexpr_free(result);
@@ -284,7 +250,7 @@ sexpr* builtin_min_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 	sexpr *result = NULL;
 
 	for (int j = 1; j < count; j++) {
-		sexpr *n = resolve_sexp(env, nodes[j]);
+		sexpr *n = eval2(env, nodes[j]);
 		/* This check can be macro-ized, I think */
 		if (n->type != LVAL_NUM) {
 			if (result)
@@ -325,7 +291,7 @@ sexpr* builtin_max_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 	sexpr *result = NULL;
 
 	for (int j = 1; j < count; j++) {
-		sexpr *n = resolve_sexp(env, nodes[j]);
+		sexpr *n = eval2(env, nodes[j]);
 		if (n->type != LVAL_NUM) {
 			if (result)
 				sexpr_free(result);
@@ -364,7 +330,7 @@ sexpr* builtin_list(scheme_env *env, sexpr **nodes, int count, char *op) {
 	sexpr* result = sexpr_list();
 
 	for (int j = 1; j < count; j++) {
-		sexpr *cp = resolve_sexp(env, nodes[j]);
+		sexpr *cp = eval2(env, nodes[j]);
 		if (cp->type == LVAL_ERR) {
 			sexpr_free(result);
 			return cp;
@@ -380,7 +346,7 @@ sexpr* builtin_cdr(scheme_env *env, sexpr **nodes, int count, char *op) {
 	if (count != 2)
 		return sexpr_err("cdr expects only one argument");
 
-	sexpr *l = resolve_sexp(env, nodes[1]);
+	sexpr *l = eval2(env, nodes[1]);
 	if (l->type != LVAL_LIST || l->count == 0) {
 		sexpr_free(l);
 		return sexpr_err("cdr is defined only for non-empty lists.");
@@ -399,7 +365,7 @@ sexpr* builtin_car(scheme_env *env, sexpr **nodes, int count, char *op) {
 	if (count != 2)
 		return sexpr_err("car expects only one argument");
 
-	sexpr *l = resolve_sexp(env, nodes[1]);
+	sexpr *l = eval2(env, nodes[1]);
 
 	if (l->type != LVAL_LIST || l->count == 0) {
 		sexpr_free(l);
@@ -417,7 +383,7 @@ sexpr* builtin_cons(scheme_env *env, sexpr **nodes, int count, char *op) {
 	if (count != 3)
 		return sexpr_err("cons expects two aruments");
 
-	sexpr *a2 = resolve_sexp(env, nodes[2]);
+	sexpr *a2 = eval2(env, nodes[2]);
 
 	if (a2->type != LVAL_LIST) {
 		sexpr_free(a2);
@@ -425,7 +391,7 @@ sexpr* builtin_cons(scheme_env *env, sexpr **nodes, int count, char *op) {
 	}
 
 	sexpr *result = sexpr_list();
-	sexpr_list_insert(result, resolve_sexp(env, nodes[1]));
+	sexpr_list_insert(result, eval2(env, nodes[1]));
 
 	for (int j = 0; j < a2->count; j++) {
 		sexpr_list_insert(result, sexpr_copy(a2->children[j]));
@@ -440,7 +406,7 @@ sexpr* builtin_nullq(scheme_env *env, sexpr **nodes, int count, char *op) {
 	if (count != 2)
 		return sexpr_err("null? expects just 1 argument");
 
-	sexpr *a = resolve_sexp(env, nodes[1]);
+	sexpr *a = eval2(env, nodes[1]);
 	if (a->type == LVAL_ERR)
 		return a;
 
@@ -458,8 +424,8 @@ sexpr* builtin_eq(scheme_env *env, sexpr **nodes, int count, char *op) {
 	if (count != 3)
 		return sexpr_err("eq? expects exactly 2 arguments.");
 
-	sexpr *a = resolve_sexp(env, nodes[1]);
-	sexpr *b = resolve_sexp(env, nodes[2]);
+	sexpr *a = eval2(env, nodes[1]);
+	sexpr *b = eval2(env, nodes[2]);
 
 	/* Note, this actually hides errors that occurred in resolving the two
 			inputs, which is maybe not the most ideal behaviour */
@@ -481,10 +447,10 @@ sexpr* builtin_eval(scheme_env *env, sexpr **nodes, int count, char *op) {
 	if (count != 2)
 		return sexpr_err("Eval requires just one parameter.");
 
-	sexpr *f = resolve_sexp(env, nodes[1]);
+	sexpr *f = eval2(env, nodes[1]);
 
 	if (IS_FUNC(f)) {
-		sexpr *f2 = eval(env, f);
+		sexpr *f2 = eval2(env, f);
 		sexpr_free(f);
 		f = f2;
 	}
@@ -538,127 +504,110 @@ sexpr* builtin_op(scheme_env *env, sexpr **nodes, int count, sexpr *func) {
 	return result;
 }
 
-int is_built_in(sexpr *e) {
-	if (e->type != LVAL_SYM)
+sexpr* quote_form(scheme_env *env, sexpr **nodes, int count, char *op) {
+	return sexpr_copy(nodes[1]);
+}
+
+int is_quoted_val(sexpr *v) {
+	if (v->type != LVAL_LIST || v->count == 0)
 		return 0;
 
-	if (strstr("+-*/%", e->sym))
-		return 1;
-	else if (strcmp(e->sym, "max") == 0)
-		return 1;
-	else if (strcmp(e->sym, "min") == 0)
-		return 1;
-	else if (strcmp(e->sym, "list") == 0)
-		return 1;
-	else if (strcmp(e->sym, "car") == 0)
-		return 1;
-	else if (strcmp(e->sym, "cdr") == 0)
-		return 1;
-	else if (strcmp(e->sym, "cons") == 0)
-		return 1;
-	else if (strcmp(e->sym, "quote") == 0)
-		return 1;
-	else if (strcmp(e->sym, "define") == 0)
-		return 1;
-	else if (strcmp(e->sym, "null?") == 0)
-		return 1;
-	else if (strcmp(e->sym, "eq?") == 0)
-		return 1;
-	else if (strcmp(e->sym, "eval") == 0)
-		return 1;
-	else if (strcmp(e->sym, "self-test") == 0)
+	sexpr *c = v->children[0];
+	if (c->type == LVAL_SYM && strcmp(c->sym, "quote") == 0)
 		return 1;
 
 	return 0;
 }
 
-int is_quote_form(sexpr *e) {
-	if (e->type != LVAL_SYM || strcmp(e->sym, "quote") != 0)
-		return 0;
-
-	return 1;
-}
-
-sexpr* define_var(scheme_env *env, sexpr *exp) {
-	if (exp->count != 3)
+sexpr* define_var(scheme_env *env, sexpr **nodes, int count, char *op) {
+	if (count != 3)
 		return sexpr_err("Define requires a name and a definition.");
 
-	if (exp->children[1]->type != LVAL_SYM)
+	if (nodes[1]->type != LVAL_SYM)
 		return sexpr_err("Expected variable name.");
 
 	/* Actually I don't actually know if you can redefine built-ins in Scheme... */
-	if (is_built_in(exp->children[1]))
-		return sexpr_err("Cannot redefine built-in function.");
+	/* Will need to fix this for eval2() */
+	//if (is_built_in(nodes[1]))
+	//	return sexpr_err("Cannot redefine built-in function.");
 
-	sexpr *result = resolve_sexp(env, exp->children[2]);
-	if (result->type == LVAL_ERR)
-		return result;
-
-	env_insert_var(env, exp->children[1]->sym, result);
+	if (is_quoted_val(nodes[2])) {
+		env_insert_var(env, nodes[1]->sym, sexpr_copy(nodes[2]->children[1]));
+	}
+	else
+		env_insert_var(env, nodes[1]->sym, sexpr_copy(nodes[2]));
 
 	return sexpr_null();
 }
 
-sexpr* eval(scheme_env *env, sexpr *v) {
+sexpr* resolve_symbol(scheme_env *env, sexpr *s) {
+	sexpr *r = env_fetch_var(env, s->sym);
+	if (r->type == LVAL_SYM) {
+		sexpr *r2 = resolve_symbol(env, r);
+		sexpr_free(r);
+		return r2;
+	}
+
+	return r;
+}
+
+sexpr* eval2(scheme_env *env, sexpr *v) {
 	sexpr *result = NULL;
 	switch (v->type) {
 		case LVAL_LIST:
 			if (v->count == 0)
 				return sexpr_err("Expected operator or function");
 
-			/* What function are we trying to execute? It might be a built-in, or it
-				could a stored value we need to evaluate, for instance:
-
-				(define f 'list)
-				(eval '((eval f) 1 2))
-			*/
 			sexpr *func;
-			if (is_built_in(v->children[0]))
-				func = sexpr_copy(v->children[0]);
+			if (v->children[0]->type == LVAL_LIST)
+				func = eval2(env, v->children[0]);
+			else if (v->children[0]->type == LVAL_SYM)
+				func = resolve_symbol(env, v->children[0]);
 			else
-				func = resolve_sexp(env, v->children[0]);
+				return sexpr_err("Expected function.");
 
-			if (!is_built_in(func)) {
+			if (func->type != LVAL_FUN) {
 				sexpr_free(func);
-				return sexpr_err("Expected operator or function");
+				return sexpr_err("Expected function.");
 			}
 
-			/* quote is a special form -- we simply return its first paramter without evaluating it.
-				Note that I am not certain I really understand quote, so I'm mostly going by what's in
-				the Little Schemer and mucking around with other Scheme REPLs.
-
-				For instance (quote 1 2 3) returns 1 but I'm not sure if that's valid input from a proper
-				definition of Scheme or not.
-				*/
-			if (is_quote_form(func)) {
-				return sexpr_copy(v->children[1]);
-			}
-
-			if (strcmp(func->sym, "define") == 0) {
-				/* We are defining either a variable or a function. */
-				result = define_var(env, v);
-
-				sexpr_free(func);
-				return result;
-			}
-
-			result = builtin_op(env, v->children, v->count, func);
+			/* Okay! We have our function! */
+			result = func->fun(env, v->children, v->count, func->sym);
 			sexpr_free(func);
-
 			return result;
 		case LVAL_SYM:
-			/* Is the symbol a variable? */
-			result = env_fetch_var(env, v->sym);
+			result = resolve_symbol(env, v);
 			return result;
+		case LVAL_FUN:
 			break;
 		case LVAL_ERR:
 			return v;
-			break;
 		case LVAL_NUM:
 		case LVAL_BOOL:
 		case LVAL_NULL:
 			return sexpr_copy(v);
+			break;
 	}
 
 	return sexpr_err("Something hasn't been implemented yet");
+}
+
+void load_built_ins(scheme_env *env) {
+	env_insert_var(env, "car", sexpr_fun(&builtin_car, "car"));
+	env_insert_var(env, "cdr", sexpr_fun(&builtin_cdr, "cdr"));
+	env_insert_var(env, "cons", sexpr_fun(&builtin_cons, "cons"));
+	env_insert_var(env, "list", sexpr_fun(&builtin_list, "list"));
+	env_insert_var(env, "eq?", sexpr_fun(&builtin_eq, "eq?"));
+	env_insert_var(env, "null?", sexpr_fun(&builtin_nullq, "null?"));
+	env_insert_var(env, "eval", sexpr_fun(&builtin_eval, "eval"));
+	env_insert_var(env, "self-test", sexpr_fun(&builtin_self_test, "self-test"));
+	env_insert_var(env, "+", sexpr_fun(&builtin_math_op, "+"));
+	env_insert_var(env, "-", sexpr_fun(&builtin_math_op, "-"));
+	env_insert_var(env, "*", sexpr_fun(&builtin_math_op, "*"));
+	env_insert_var(env, "/", sexpr_fun(&builtin_math_op, "/"));
+	env_insert_var(env, "%", sexpr_fun(&builtin_math_op, "%"));
+	env_insert_var(env, "min", sexpr_fun(&builtin_min_op, "min"));
+	env_insert_var(env, "max", sexpr_fun(&builtin_max_op, "max"));
+	env_insert_var(env, "define", sexpr_fun(&define_var, "define"));
+	env_insert_var(env, "quote", sexpr_fun(&quote_form, "quote"));
 }

@@ -6,6 +6,32 @@
 #include "sexpr.h"
 #include "util.h"
 
+void print_sexpr_type(sexpr *v) {
+	switch (v->type) {
+		case LVAL_NUM:
+			printf("number");
+			break;
+		case LVAL_SYM:
+			printf("symbol (%s)", v->sym);
+			break;
+		case LVAL_FUN:
+			printf("func (%s)", v->sym);
+			break;
+		case LVAL_ERR:
+			printf("error");
+			break;
+		case LVAL_LIST:
+			printf("list");
+			break;
+		case LVAL_NULL:
+			printf("null type");
+			break;
+		case LVAL_BOOL:
+			printf("boolean (%s)", v->bool ? "true" : "false");
+			break;
+	}
+}
+
 sexpr* sexpr_num(sexpr* j) {
 	sexpr *v = malloc(sizeof(sexpr));
 	v->type = LVAL_NUM;
@@ -38,6 +64,15 @@ sexpr* sexpr_num_s(char *s) {
 	return v;
 }
 
+sexpr* sexpr_fun(builtinf fun, char *name) {
+	sexpr *v = malloc(sizeof(sexpr));
+	v->type = LVAL_FUN;
+	v->fun = fun;
+	v->sym = n_strcpy(v->sym, name);
+
+	return v;
+}
+
 sexpr* sexpr_err(char *s) {
 	sexpr *v = malloc(sizeof(sexpr));
 	v->type = LVAL_ERR;
@@ -50,7 +85,7 @@ sexpr* sexpr_sym(char *s) {
 	sexpr *v = malloc(sizeof(sexpr));
 	v->type = LVAL_SYM;
 	v->sym = n_strcpy(v->sym, s);
-	
+
 	return v;
 }
 
@@ -89,6 +124,7 @@ void sexpr_free(sexpr *v) {
 		case LVAL_ERR:
 			free(v->err);
 			break;
+		case LVAL_FUN:
 		case LVAL_SYM:
 			free(v->sym);
 			break;
@@ -113,6 +149,9 @@ sexpr* sexpr_copy_atom(sexpr* src) {
 
 	if (src->type == LVAL_NULL)
 		return sexpr_null();
+
+	if (src->type == LVAL_FUN)
+		return sexpr_fun(src->fun, src->sym);
 
 	return sexpr_err("Can only copy atoms.");
 }
@@ -155,7 +194,7 @@ void print_padding(int depth) {
 	for (int j = 0; j < depth * 4; j++) putchar(' ');
 }
 
-void sexpr_pprint(sexpr *v, int depth) {
+void sexpr_pprint(sexpr *v) {
 	switch (v->type) {
 		case LVAL_ERR:
 			printf("Error: %s\n", v->err);
@@ -164,7 +203,7 @@ void sexpr_pprint(sexpr *v, int depth) {
 			putchar('(');
 
 			for (int j = 0; j < v->count; j++) {
-				sexpr_pprint(v->children[j], depth + 1);
+				sexpr_pprint(v->children[j]);
 				if (j < v->count - 1)
 					putchar(' ');
 			}
@@ -182,6 +221,8 @@ void sexpr_pprint(sexpr *v, int depth) {
 		case LVAL_BOOL:
 			printf("%s", v->bool ? "true" : "false");
 			break;
+		case LVAL_FUN:
+			printf("Function type");
 		case LVAL_NULL:
 			/* Don't need to do anything */
 			break;

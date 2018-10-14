@@ -26,6 +26,7 @@ int main(int argc, char **argv) {
 
 	puts("Loading env...");
 	scheme_env *env = env_new();
+	load_built_ins(env);
 
 	while (1) {
 		char *line;
@@ -49,14 +50,14 @@ int main(int argc, char **argv) {
 		if (is_whitespeace(line))
 			putchar('\n');
 		else if (ast->type == LVAL_ERR) {
-			sexpr_pprint(ast, 0);
+			sexpr_pprint(ast);
 			sexpr_free(ast);
 		}
 		else
 		{
-			sexpr *result = eval(env, ast);
+			sexpr *result = eval2(env, ast);
 
-			sexpr_pprint(result, 0);
+			sexpr_pprint(result);
 			putchar('\n');
 			sexpr_free(result);
 
