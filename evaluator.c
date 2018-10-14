@@ -191,8 +191,8 @@ sexpr* builtin_math_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 		if (n->type != LVAL_NUM)
 			result = sexpr_err("Expected number!");
 		else {
-			sexpr_num_sub(result, nodes[1]);
 			result = sexpr_num_s("0");
+			sexpr_num_sub(result, nodes[1]);
 		}
 		sexpr_free(n);
 
@@ -201,7 +201,7 @@ sexpr* builtin_math_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 
 	for (int j = 1; j < count; j++) {
 		sexpr *n = eval2(env, nodes[j]);
-		
+
 		if (n->type != LVAL_NUM) {
 			if (result) sexpr_free(result);
 			sexpr_free(n);
