@@ -182,6 +182,70 @@ sexpr* builtin_self_test(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return sexpr_bool(r);
 }
 
+sexpr *builtin_not(scheme_env *env, sexpr **nodes, int count, char *op) {
+	if (count != 2)
+		return sexpr_err("Just one parameter expected.");
+
+	sexpr *v = eval2(env, nodes[1]);
+	if (v->type != LVAL_BOOL)
+		return sexpr_err("Boolean value expected.");
+
+	sexpr *result = sexpr_bool(!v->bool);
+	sexpr_free(v);
+
+	return result;
+}
+
+/* I find Scheme's version of and pretty odd in how all non-booleans
+	are considered true. */
+sexpr* builtin_and(scheme_env *env, sexpr **nodes, int count, char *op) {
+	sexpr* result = sexpr_list();
+
+	/* and with no parameters returns true, apparently */
+	if (count == 1)
+		return sexpr_bool(1);
+
+	for (int j = 1; j < count; j++) {
+		sexpr *cp = eval2(env, nodes[j]);
+		if (cp->type == LVAL_ERR) {
+			sexpr_free(result);
+			return cp;
+		}
+
+		if (cp->type == LVAL_BOOL && !cp->bool)
+			return sexpr_bool(0);
+
+		result = sexpr_copy(cp);
+		sexpr_free(cp);
+	}
+
+	return result;
+}
+
+sexpr* builtin_or(scheme_env *env, sexpr **nodes, int count, char *op) {
+	sexpr* result = sexpr_list();
+
+	/* and with no parameters returns true, apparently */
+	if (count == 1)
+		return sexpr_bool(0);
+
+	for (int j = 1; j < count; j++) {
+		sexpr *cp = eval2(env, nodes[j]);
+		if (cp->type == LVAL_ERR) {
+			sexpr_free(result);
+			return cp;
+		}
+
+		if (cp->type != LVAL_BOOL || (cp->type == LVAL_BOOL && cp->bool))
+			return cp;
+
+		result = sexpr_copy(cp);
+		sexpr_free(cp);
+	}
+
+	return result;
+}
+
 sexpr *builtin_math_eq(scheme_env *env, sexpr **nodes, int count, char *op) {
 	if (count != 3) {
 		return sexpr_err("Just two parameters expected.");
@@ -761,6 +825,9 @@ void load_built_ins(scheme_env *env) {
 	env_insert_var(env, ">=", sexpr_fun_builtin(&builtin_math_gte, ">="));
 	env_insert_var(env, "<", sexpr_fun_builtin(&builtin_math_lt, "<"));
 	env_insert_var(env, "<=", sexpr_fun_builtin(&builtin_math_lte, "<="));
+	env_insert_var(env, "not", sexpr_fun_builtin(&builtin_not, "not"));
+	env_insert_var(env, "or", sexpr_fun_builtin(&builtin_or, "or"));
+	env_insert_var(env, "and", sexpr_fun_builtin(&builtin_and, "and"));
 	env_insert_var(env, "min", sexpr_fun_builtin(&builtin_min_op, "min"));
 	env_insert_var(env, "max", sexpr_fun_builtin(&builtin_max_op, "max"));
 	env_insert_var(env, "define", sexpr_fun_builtin(&define, "define"));
