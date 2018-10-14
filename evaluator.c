@@ -479,9 +479,8 @@ sexpr* define_var(scheme_env *env, sexpr **nodes, int count, char *op) {
 
 	ASSERT_PRIMITIVE(env, nodes[1]->sym);
 
-	if (is_quoted_val(nodes[2])) {
+	if (is_quoted_val(nodes[2]))
 		env_insert_var(env, nodes[1]->sym, sexpr_copy(nodes[2]->children[1]));
-	}
 	else
 		env_insert_var(env, nodes[1]->sym, sexpr_copy(nodes[2]));
 
@@ -509,7 +508,7 @@ sexpr* define_fun(scheme_env *env, sexpr **nodes, int count, char *op)  {
 		sexpr_append(params, sexpr_copy(header->children[j]));
 	}
 
-	sexpr *fun = sexpr_fun_user(params, body, fun_num);
+	sexpr *fun = sexpr_fun_user(params, sexpr_copy(body), fun_num);
 	env_insert_var(env, fun_num, fun);
 
 	return sexpr_null();
@@ -536,6 +535,29 @@ sexpr* resolve_symbol(scheme_env *env, sexpr *s) {
 	return r;
 }
 
+sexpr* eval_user_func(scheme_env *env, sexpr **operands, int count, sexpr *fun) {
+	if ((count - 1) < fun->params->count) {
+		return sexpr_err("Too few paramters passed to function.");
+	}
+
+	scheme_env *func_scope = env_new();
+	load_built_ins(func_scope);
+
+	func_scope->parent = env;
+
+	/* Map the operands to the function parameters and add them to the
+	 	local scope */
+	for (int j = 0; j < fun->params->count; j++) {
+		sexpr *var = sexpr_copy(operands[j + 1]);
+		env_insert_var(func_scope, fun->params->children[j]->sym, var);
+	}
+
+	sexpr *result = eval2(func_scope, fun->body);
+
+	env_free(func_scope);
+	return result;
+}
+
 sexpr* eval2(scheme_env *env, sexpr *v) {
 	sexpr *result = NULL;
 	switch (v->type) {
@@ -556,8 +578,12 @@ sexpr* eval2(scheme_env *env, sexpr *v) {
 				return sexpr_err("Expected function.");
 			}
 
-			/* Okay! We have our function! */
-			result = func->fun(env, v->children, v->count, func->sym);
+			/* Okay! We have our function! Is it a primitive or user-defined? */
+			if (func->builtin)
+				result = func->fun(env, v->children, v->count, func->sym);
+			else
+				result = eval_user_func(env, v->children, v->count, func);
+
 			sexpr_free(func);
 			return result;
 		case LVAL_SYM:

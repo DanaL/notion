@@ -18,6 +18,7 @@ void bucket_free(bucket*);
 
 struct scheme_env {
 	struct bucket *buckets[TABLE_SIZE];
+	scheme_env *parent;
 };
 
 scheme_env* env_new(void);

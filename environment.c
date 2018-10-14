@@ -35,6 +35,7 @@ void bucket_free(bucket* b) {
 
 scheme_env* env_new(void) {
 	scheme_env *e = malloc(sizeof(scheme_env));
+	e->parent = NULL;
 
 	/* I bet there's a fancy C trick to do this better/fast */
 	for (int j = 0; j < TABLE_SIZE; j++)
@@ -77,7 +78,7 @@ void env_insert_var(scheme_env* env, char *name, sexpr *s) {
 sexpr* env_fetch_var(scheme_env *env, char* key) {
 	int h = bt_hash(key);
 
-	if (env->buckets[h] == NULL)
+	if (!env->buckets[h])
 		return sexpr_err("Idenfifier not found.");
 
 	bucket *b = env->buckets[h];
@@ -86,11 +87,16 @@ sexpr* env_fetch_var(scheme_env *env, char* key) {
 			called again soon, it might be worth moving it to
 			the top of the chain. But that's more complicated
 			code */
-	while (b != NULL && strcmp(b->name, key) != 0)
+	while (b && strcmp(b->name, key) != 0)
 		b = b->next;
 
-	if (b == NULL)
-		return sexpr_err("Unbound symbol.");
+	if (!b) {
+		printf("foo %s\n", key);
+		if (env->parent)
+			return env_fetch_var(env->parent, key);
+		else
+			return sexpr_err("Unbound symbol.");
+	}
 
 	return sexpr_copy(b->val);
 }
