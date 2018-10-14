@@ -201,7 +201,7 @@ sexpr* builtin_math_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 
 	for (int j = 1; j < count; j++) {
 		sexpr *n = eval2(env, nodes[j]);
-
+		
 		if (n->type != LVAL_NUM) {
 			if (result) sexpr_free(result);
 			sexpr_free(n);
@@ -541,14 +541,17 @@ sexpr* eval_user_func(scheme_env *env, sexpr **operands, int count, sexpr *fun) 
 	}
 
 	scheme_env *func_scope = env_new();
-	load_built_ins(func_scope);
-
 	func_scope->parent = env;
 
 	/* Map the operands to the function parameters and add them to the
 	 	local scope */
 	for (int j = 0; j < fun->params->count; j++) {
-		sexpr *var = sexpr_copy(operands[j + 1]);
+		sexpr *var;
+		if (operands[j + 1]->type == LVAL_SYM)
+			var = resolve_symbol(env, operands[j + 1]);
+		else
+			var = sexpr_copy(operands[j + 1]);
+
 		env_insert_var(func_scope, fun->params->children[j]->sym, var);
 	}
 
@@ -571,11 +574,15 @@ sexpr* eval2(scheme_env *env, sexpr *v) {
 			else if (v->children[0]->type == LVAL_SYM)
 				func = resolve_symbol(env, v->children[0]);
 			else
-				return sexpr_err("Expected function.");
+				return sexpr_err("Expected function!!");
 
 			if (func->type != LVAL_FUN) {
-				sexpr_free(func);
-				return sexpr_err("Expected function.");
+				if (func->type == LVAL_ERR)
+					return func;
+				else {
+					sexpr_free(func);
+					return sexpr_err("Expected function.");
+				}
 			}
 
 			/* Okay! We have our function! Is it a primitive or user-defined? */

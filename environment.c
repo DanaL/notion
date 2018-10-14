@@ -78,9 +78,10 @@ void env_insert_var(scheme_env* env, char *name, sexpr *s) {
 sexpr* env_fetch_var(scheme_env *env, char* key) {
 	int h = bt_hash(key);
 
-	if (!env->buckets[h])
-		return sexpr_err("Idenfifier not found.");
-
+	if (!env->buckets[h]) {
+		sexpr *r = CHECK_PARENT_SCOPE(env, key);
+		return r;
+	}
 	bucket *b = env->buckets[h];
 
 	/* Assuming a variable called is probably going to be
@@ -90,13 +91,8 @@ sexpr* env_fetch_var(scheme_env *env, char* key) {
 	while (b && strcmp(b->name, key) != 0)
 		b = b->next;
 
-	if (!b) {
-		printf("foo %s\n", key);
-		if (env->parent)
-			return env_fetch_var(env->parent, key);
-		else
-			return sexpr_err("Unbound symbol.");
-	}
+	if (!b)
+		return CHECK_PARENT_SCOPE(env, key);
 
 	return sexpr_copy(b->val);
 }
@@ -110,13 +106,19 @@ void env_free(scheme_env *env) {
 	free(env);
 }
 
+void env_copy(scheme_env* dst, scheme_env* src) {
+	//for (int j = 0; j < TABLE_SIZE; j++)
+	//	dst[j]
+}
+
 void env_dump(scheme_env* env) {
 	bucket *b;
 
+	puts("Binding for current scope:");
 	for (int j = 0; j < TABLE_SIZE; j++) {
 		b = env->buckets[j];
 		if (b) {
-			printf("%s ", b->name);
+			printf("  %s ", b->name);
 			print_sexpr_type(b->val);
 			putchar(' ');
 			sexpr_pprint(b->val);
