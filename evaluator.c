@@ -458,52 +458,6 @@ sexpr* builtin_eval(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return f;
 }
 
-sexpr* builtin_op(scheme_env *env, sexpr **nodes, int count, sexpr *func) {
-	if (func->type != LVAL_SYM)
-		return sexpr_err("Expected symbol/built-in op!");
-
-	char *op = func->sym;
-	sexpr *result = NULL;
-
-	/* I am not going to be fussy about the difference between integers
-		and real numbers. If I am evaluating: + 1 2 14.0, then I'll just
-		convert the result type to float when I hit the real number */
-	if (strstr("+-*/%", op))
-		result = builtin_math_op(env, nodes, count, op);
-
-	if (strcmp(op, "min") == 0)
-		result = builtin_min_op(env, nodes, count, op);
-
-	if (strcmp(op, "max") == 0)
-		return builtin_max_op(env, nodes, count, op);
-
-	if (strcmp(op, "list") == 0)
-		return builtin_list(env, nodes, count, op);
-
-	if (strcmp(op, "car") == 0)
-		return builtin_car(env, nodes, count, op);
-
-	if (strcmp(op, "cdr") == 0)
-		return builtin_cdr(env, nodes, count, op);
-
-	if (strcmp(op, "cons") == 0)
-		return builtin_cons(env, nodes, count, op);
-
-	if (strcmp(op, "null?") == 0)
-		return builtin_nullq(env, nodes, count, op);
-
-	if (strcmp(op, "eq?") == 0)
-		return builtin_eq(env, nodes, count, op);
-
-	if (strcmp(op, "eval") == 0)
-		return builtin_eval(env, nodes, count, op);
-
-	if (strcmp(op, "self-test") == 0)
-		return builtin_self_test(env, nodes, count, op);
-
-	return result;
-}
-
 sexpr* quote_form(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return sexpr_copy(nodes[1]);
 }
