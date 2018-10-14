@@ -28,15 +28,6 @@ int main(int argc, char **argv) {
 	scheme_env *env = env_new();
 	load_built_ins(env);
 
-	int e = 0;
-	sexpr *f0 = parse("(define (sq x) (* x x))", &e);
-	eval2(env, f0);
-	e = 0;
-	sexpr *f1 = parse("(define (sum_of_sq x y) (+ (sq x) (sq y)))", &e);
-	eval2(env, f1);
-	sexpr_free(f0);
-	sexpr_free(f1);
-
 	while (1) {
 		char *line;
 
@@ -55,7 +46,7 @@ int main(int argc, char **argv) {
 #endif
 		int c = 0;
 		sexpr *ast = parse(line, &c);
-
+		
 		if (is_whitespeace(line))
 			putchar('\n');
 		else if (ast->type == LVAL_ERR) {

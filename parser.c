@@ -91,9 +91,16 @@ token* next_token(char *s, int *start) {
 	if (s[*start] == '\0')
 		return token_create(T_NULL);
 
-	if (s[*start] == '+' || s[*start] == '*' || s[*start] == '/' || s[*start] == '%') {
+	if (s[*start] == '+' || s[*start] == '*' || s[*start] == '/' || s[*start] == '%'
+			|| s[*start] == '=') {
 		t = token_create(T_SYM);
 		x = *start + 1;
+	}
+	else if (s[*start] == '<' || s[*start] == '>') {
+		t = token_create(T_SYM);
+		x = *start + 1;
+		if (s[x] && s[x] == '=')
+			++x;
 	}
 	else if (s[*start] == '\'') {
 		t = token_create(T_SINGLE_QUOTE);

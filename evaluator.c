@@ -182,6 +182,137 @@ sexpr* builtin_self_test(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return sexpr_bool(r);
 }
 
+sexpr *builtin_math_eq(scheme_env *env, sexpr **nodes, int count, char *op) {
+	if (count != 3) {
+		return sexpr_err("Just two parameters expected.");
+	}
+
+	sexpr *n0 = eval2(env, nodes[1]);
+	sexpr *n1 = eval2(env, nodes[2]);
+
+	if (n0->type != LVAL_NUM || n1->type != LVAL_NUM)
+		return sexpr_err("= operators on numbers or bools.");
+
+	int eq = 0;
+	if (n0->num_type == NUM_TYPE_INT && n1->num_type == NUM_TYPE_INT)
+		eq = n0->n.i_num == n1->n.i_num;
+	else if (n0->num_type == NUM_TYPE_DEC && n1->num_type == NUM_TYPE_DEC)
+		eq = fabsf(n0->n.d_num - n1->n.d_num) < 0.00000001;
+
+	sexpr_free(n0);
+	sexpr_free(n1);
+
+	return eq ? sexpr_bool(1) : sexpr_bool(0);
+}
+
+sexpr *builtin_math_gt(scheme_env *env, sexpr **nodes, int count, char *op) {
+	if (count != 3) {
+		return sexpr_err("Just two parameters expected.");
+	}
+
+	sexpr *n0 = eval2(env, nodes[1]);
+	sexpr *n1 = eval2(env, nodes[2]);
+
+	if (n0->type != LVAL_NUM || n1->type != LVAL_NUM)
+		return sexpr_err("= operators on numbers or bools.");
+
+	int eq = 0;
+	if (n0->num_type == NUM_TYPE_INT && n1->num_type == NUM_TYPE_INT)
+		eq = n0->n.i_num > n1->n.i_num;
+	else if (n0->num_type == NUM_TYPE_DEC || n1->num_type == NUM_TYPE_DEC) {
+		float f0, f1;
+		f0 = n0->num_type == NUM_TYPE_INT ? n0->n.i_num : n0->n.d_num;
+		f1 = n1->num_type == NUM_TYPE_INT ? n1->n.i_num : n1->n.d_num;
+		eq = f0 > f1;
+	}
+
+	sexpr_free(n0);
+	sexpr_free(n1);
+
+	return eq ? sexpr_bool(1) : sexpr_bool(0);
+}
+
+sexpr *builtin_math_lt(scheme_env *env, sexpr **nodes, int count, char *op) {
+	if (count != 3) {
+		return sexpr_err("Just two parameters expected.");
+	}
+
+	sexpr *n0 = eval2(env, nodes[1]);
+	sexpr *n1 = eval2(env, nodes[2]);
+
+	if (n0->type != LVAL_NUM || n1->type != LVAL_NUM)
+		return sexpr_err("= operators on numbers or bools.");
+
+	int eq = 0;
+	if (n0->num_type == NUM_TYPE_INT && n1->num_type == NUM_TYPE_INT)
+		eq = n0->n.i_num < n1->n.i_num;
+	else if (n0->num_type == NUM_TYPE_DEC || n1->num_type == NUM_TYPE_DEC) {
+		float f0, f1;
+		f0 = n0->num_type == NUM_TYPE_INT ? n0->n.i_num : n0->n.d_num;
+		f1 = n1->num_type == NUM_TYPE_INT ? n1->n.i_num : n1->n.d_num;
+		eq = f0 < f1;
+	}
+
+	sexpr_free(n0);
+	sexpr_free(n1);
+
+	return eq ? sexpr_bool(1) : sexpr_bool(0);
+}
+
+sexpr *builtin_math_gte(scheme_env *env, sexpr **nodes, int count, char *op) {
+	if (count != 3) {
+		return sexpr_err("Just two parameters expected.");
+	}
+
+	sexpr *n0 = eval2(env, nodes[1]);
+	sexpr *n1 = eval2(env, nodes[2]);
+
+	if (n0->type != LVAL_NUM || n1->type != LVAL_NUM)
+		return sexpr_err("= operators on numbers or bools.");
+
+	int eq = 0;
+	if (n0->num_type == NUM_TYPE_INT && n1->num_type == NUM_TYPE_INT)
+		eq = n0->n.i_num >= n1->n.i_num;
+	else if (n0->num_type == NUM_TYPE_DEC || n1->num_type == NUM_TYPE_DEC) {
+		float f0, f1;
+		f0 = n0->num_type == NUM_TYPE_INT ? n0->n.i_num : n0->n.d_num;
+		f1 = n1->num_type == NUM_TYPE_INT ? n1->n.i_num : n1->n.d_num;
+		eq = f0 >= f1;
+	}
+
+	sexpr_free(n0);
+	sexpr_free(n1);
+
+	return eq ? sexpr_bool(1) : sexpr_bool(0);
+}
+
+sexpr *builtin_math_lte(scheme_env *env, sexpr **nodes, int count, char *op) {
+	if (count != 3) {
+		return sexpr_err("Just two parameters expected.");
+	}
+
+	sexpr *n0 = eval2(env, nodes[1]);
+	sexpr *n1 = eval2(env, nodes[2]);
+
+	if (n0->type != LVAL_NUM || n1->type != LVAL_NUM)
+		return sexpr_err("= operators on numbers or bools.");
+
+	int eq = 0;
+	if (n0->num_type == NUM_TYPE_INT && n1->num_type == NUM_TYPE_INT)
+		eq = n0->n.i_num <= n1->n.i_num;
+	else if (n0->num_type == NUM_TYPE_DEC || n1->num_type == NUM_TYPE_DEC) {
+		float f0, f1;
+		f0 = n0->num_type == NUM_TYPE_INT ? n0->n.i_num : n0->n.d_num;
+		f1 = n1->num_type == NUM_TYPE_INT ? n1->n.i_num : n1->n.d_num;
+		eq = f0 <= f1;
+	}
+
+	sexpr_free(n0);
+	sexpr_free(n1);
+
+	return eq ? sexpr_bool(1) : sexpr_bool(0);
+}
+
 sexpr* builtin_math_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 	sexpr *result = NULL;
 
@@ -592,6 +723,7 @@ sexpr* eval2(scheme_env *env, sexpr *v) {
 				result = eval_user_func(env, v->children, v->count, func);
 
 			sexpr_free(func);
+
 			return result;
 		case LVAL_SYM:
 			result = resolve_symbol(env, v);
@@ -624,6 +756,11 @@ void load_built_ins(scheme_env *env) {
 	env_insert_var(env, "*", sexpr_fun_builtin(&builtin_math_op, "*"));
 	env_insert_var(env, "/", sexpr_fun_builtin(&builtin_math_op, "/"));
 	env_insert_var(env, "%", sexpr_fun_builtin(&builtin_math_op, "%"));
+	env_insert_var(env, "=", sexpr_fun_builtin(&builtin_math_eq, "="));
+	env_insert_var(env, ">", sexpr_fun_builtin(&builtin_math_gt, ">"));
+	env_insert_var(env, ">=", sexpr_fun_builtin(&builtin_math_gte, ">="));
+	env_insert_var(env, "<", sexpr_fun_builtin(&builtin_math_lt, "<"));
+	env_insert_var(env, "<=", sexpr_fun_builtin(&builtin_math_lte, "<="));
 	env_insert_var(env, "min", sexpr_fun_builtin(&builtin_min_op, "min"));
 	env_insert_var(env, "max", sexpr_fun_builtin(&builtin_max_op, "max"));
 	env_insert_var(env, "define", sexpr_fun_builtin(&define, "define"));
