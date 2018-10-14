@@ -474,16 +474,10 @@ int is_quoted_val(sexpr *v) {
 }
 
 sexpr* define_var(scheme_env *env, sexpr **nodes, int count, char *op) {
-	if (count != 3)
-		return sexpr_err("Define requires a name and a definition.");
-
 	if (nodes[1]->type != LVAL_SYM)
 		return sexpr_err("Expected variable name.");
 
-	/* Actually I don't actually know if you can redefine built-ins in Scheme... */
-	/* Will need to fix this for eval2() */
-	//if (is_built_in(nodes[1]))
-	//	return sexpr_err("Cannot redefine built-in function.");
+	ASSERT_NOT_PRIMITIVE(env, nodes[1]->sym);
 
 	if (is_quoted_val(nodes[2])) {
 		env_insert_var(env, nodes[1]->sym, sexpr_copy(nodes[2]->children[1]));
@@ -492,6 +486,13 @@ sexpr* define_var(scheme_env *env, sexpr **nodes, int count, char *op) {
 		env_insert_var(env, nodes[1]->sym, sexpr_copy(nodes[2]));
 
 	return sexpr_null();
+}
+
+sexpr* define(scheme_env *env, sexpr **nodes, int count, char *op) {
+	if (count != 3)
+		return sexpr_err("Invalid definition.");
+
+	return define_var(env, nodes, count, op);
 }
 
 sexpr* resolve_symbol(scheme_env *env, sexpr *s) {
@@ -547,21 +548,21 @@ sexpr* eval2(scheme_env *env, sexpr *v) {
 }
 
 void load_built_ins(scheme_env *env) {
-	env_insert_var(env, "car", sexpr_fun(&builtin_car, "car"));
-	env_insert_var(env, "cdr", sexpr_fun(&builtin_cdr, "cdr"));
-	env_insert_var(env, "cons", sexpr_fun(&builtin_cons, "cons"));
-	env_insert_var(env, "list", sexpr_fun(&builtin_list, "list"));
-	env_insert_var(env, "eq?", sexpr_fun(&builtin_eq, "eq?"));
-	env_insert_var(env, "null?", sexpr_fun(&builtin_nullq, "null?"));
-	env_insert_var(env, "eval", sexpr_fun(&builtin_eval, "eval"));
-	env_insert_var(env, "self-test", sexpr_fun(&builtin_self_test, "self-test"));
-	env_insert_var(env, "+", sexpr_fun(&builtin_math_op, "+"));
-	env_insert_var(env, "-", sexpr_fun(&builtin_math_op, "-"));
-	env_insert_var(env, "*", sexpr_fun(&builtin_math_op, "*"));
-	env_insert_var(env, "/", sexpr_fun(&builtin_math_op, "/"));
-	env_insert_var(env, "%", sexpr_fun(&builtin_math_op, "%"));
-	env_insert_var(env, "min", sexpr_fun(&builtin_min_op, "min"));
-	env_insert_var(env, "max", sexpr_fun(&builtin_max_op, "max"));
-	env_insert_var(env, "define", sexpr_fun(&define_var, "define"));
-	env_insert_var(env, "quote", sexpr_fun(&quote_form, "quote"));
+	env_insert_var(env, "car", sexpr_fun(&builtin_car, "car", 1));
+	env_insert_var(env, "cdr", sexpr_fun(&builtin_cdr, "cdr", 1));
+	env_insert_var(env, "cons", sexpr_fun(&builtin_cons, "cons", 1));
+	env_insert_var(env, "list", sexpr_fun(&builtin_list, "list", 1));
+	env_insert_var(env, "eq?", sexpr_fun(&builtin_eq, "eq?", 1));
+	env_insert_var(env, "null?", sexpr_fun(&builtin_nullq, "null?", 1));
+	env_insert_var(env, "eval", sexpr_fun(&builtin_eval, "eval", 1));
+	env_insert_var(env, "self-test", sexpr_fun(&builtin_self_test, "self-test", 1));
+	env_insert_var(env, "+", sexpr_fun(&builtin_math_op, "+", 1));
+	env_insert_var(env, "-", sexpr_fun(&builtin_math_op, "-", 1));
+	env_insert_var(env, "*", sexpr_fun(&builtin_math_op, "*", 1));
+	env_insert_var(env, "/", sexpr_fun(&builtin_math_op, "/", 1));
+	env_insert_var(env, "%", sexpr_fun(&builtin_math_op, "%", 1));
+	env_insert_var(env, "min", sexpr_fun(&builtin_min_op, "min", 1));
+	env_insert_var(env, "max", sexpr_fun(&builtin_max_op, "max", 1));
+	env_insert_var(env, "define", sexpr_fun(&define, "define", 1));
+	env_insert_var(env, "quote", sexpr_fun(&quote_form, "quote", 1));
 }

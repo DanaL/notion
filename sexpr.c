@@ -64,11 +64,12 @@ sexpr* sexpr_num_s(char *s) {
 	return v;
 }
 
-sexpr* sexpr_fun(builtinf fun, char *name) {
+sexpr* sexpr_fun(builtinf fun, char *name, int builtin) {
 	sexpr *v = malloc(sizeof(sexpr));
 	v->type = LVAL_FUN;
 	v->fun = fun;
 	v->sym = n_strcpy(v->sym, name);
+	v->builtin = builtin;
 
 	return v;
 }
@@ -151,7 +152,7 @@ sexpr* sexpr_copy_atom(sexpr* src) {
 		return sexpr_null();
 
 	if (src->type == LVAL_FUN)
-		return sexpr_fun(src->fun, src->sym);
+		return sexpr_fun(src->fun, src->sym, src->builtin);
 
 	return sexpr_err("Can only copy atoms.");
 }
