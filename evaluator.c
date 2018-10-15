@@ -402,6 +402,7 @@ sexpr* builtin_math_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 			sexpr_free(n);
 			return sexpr_err("Expected number!");
 		}
+
 		/* The first number value after the operator is result's starting value */
 		if (j == 1) {
 			result = sexpr_num(n);
@@ -678,20 +679,11 @@ sexpr* define_var(scheme_env *env, sexpr **nodes, int count, char *op) {
 		env_insert_var(env, nodes[1]->sym, sexpr_copy(nodes[2]->children[1]));
 	else
 		env_insert_var(env, nodes[1]->sym, eval2(env, nodes[2]));
-	
+
 	return sexpr_null();
 }
 
-sexpr* define_fun(scheme_env *env, sexpr **nodes, int count, char *op)  {
-	sexpr *header = nodes[1];
-	sexpr *body = nodes[2];
-
-	if (header->count == 0 || body->count == 0)
-		return sexpr_err("Invalid definition.");
-
-	ASSERT_PRIMITIVE(env, header->children[0]->sym);
-	char *fun_num = header->children[0]->sym;
-
+sexpr* build_func(sexpr *header, sexpr *body, char *name) {
 	/* Each parameter must be a symbol and be uniquely named
 		Note to self: there can be zero params of course */
 	sexpr *params = sexpr_list();
@@ -703,8 +695,48 @@ sexpr* define_fun(scheme_env *env, sexpr **nodes, int count, char *op)  {
 		sexpr_append(params, sexpr_copy(header->children[j]));
 	}
 
-	sexpr *fun = sexpr_fun_user(params, sexpr_copy(body), fun_num);
-	env_insert_var(env, fun_num, fun);
+	return sexpr_fun_user(params, sexpr_copy(body), name);
+}
+
+/* ((lambda (a b) (+ (* 2 a) b)) 5 6) (/) */
+// (lambda (a b) (+ (* 2 a) b))
+sexpr* builtin_lambda(scheme_env *env, sexpr **nodes, int count, char *op) {
+	if (count != 3)
+		return sexpr_err("Invalid lambda definition");
+
+	/* So function evaluation excepts the paramter list for function
+		calls to include the function name, so gotta add in a dummy
+		value for lambdas */
+	sexpr *params = sexpr_list();
+	sexpr_append(params, sexpr_null());
+	for (int j = 0; j < nodes[1]->count; j++)
+		sexpr_append(params, sexpr_copy(nodes[1]->children[j]));
+	sexpr *body = nodes[2];
+
+	if (params->count == 0 || body->count == 0)
+		return sexpr_err("Invalid definition.");
+
+	sexpr *lambda = build_func(params, body, "");
+
+	return lambda;
+}
+
+sexpr* define_fun(scheme_env *env, sexpr **nodes, int count, char *op)  {
+	sexpr *header = nodes[1];
+	sexpr *body = nodes[2];
+
+	if (header->count == 0 || body->count == 0)
+		return sexpr_err("Invalid definition.");
+
+	ASSERT_PRIMITIVE(env, header->children[0]->sym);
+	char *fun_name = header->children[0]->sym;
+
+	sexpr *fun = build_func(header, body, fun_name);
+
+	if (fun->type == LVAL_ERR)
+		return fun;
+
+	env_insert_var(env, fun_name, fun);
 
 	return sexpr_null();
 }
@@ -744,6 +776,8 @@ sexpr* eval_user_func(scheme_env *env, sexpr **operands, int count, sexpr *fun) 
 		sexpr *var;
 		if (operands[j + 1]->type == LVAL_SYM)
 			var = resolve_symbol(env, operands[j + 1]);
+		else if (operands[j + 1]->type == LVAL_LIST)
+			var = eval2(env, operands[j + 1]);
 		else
 			var = sexpr_copy(operands[j + 1]);
 
@@ -832,4 +866,5 @@ void load_built_ins(scheme_env *env) {
 	env_insert_var(env, "max", sexpr_fun_builtin(&builtin_max_op, "max"));
 	env_insert_var(env, "define", sexpr_fun_builtin(&define, "define"));
 	env_insert_var(env, "quote", sexpr_fun_builtin(&quote_form, "quote"));
+	env_insert_var(env, "lambda", sexpr_fun_builtin(&builtin_lambda, "lambda"));
 }
