@@ -319,11 +319,10 @@ sexpr* builtin_math_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 }
 
 sexpr* builtin_min_op(scheme_env *env, sexpr **nodes, int count, char *op) {
-	sexpr *result = NULL;
+	float curr_max, x;
 
 	for (int j = 1; j < count; j++) {
 		sexpr *n = eval2(env, nodes[j]);
-		/* This check can be macro-ized, I think */
 		if (n->type != LVAL_NUM) {
 			if (result)
 				sexpr_free(result);
@@ -332,35 +331,23 @@ sexpr* builtin_min_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 		}
 
 		if (j == 1) {
-			result = sexpr_num(n->num_type, NUM_CONVERT(n));
+			curr_max = NUM_CONVERT(n);
 			sexpr_free(n);
 			continue;
 		}
 
-		if (result->num_type == NUM_TYPE_INT) {
-			if (n->num_type == NUM_TYPE_INT && n->n.i_num < result->n.i_num)
-				result->n.i_num = n->n.i_num;
-			else if (n->num_type == NUM_TYPE_DEC && n->n.d_num < result->n.i_num) {
-				/* We need to switch the number type of result to be a real number in this case */
-				sexpr_convert_num_type(result);
-				result->n.d_num = n->n.d_num;
-			}
-		}
-		else {
-			if (n->num_type == NUM_TYPE_INT && n->n.i_num < result->n.d_num)
-				result->n.d_num = n->n.i_num;
-			else if (n->num_type == NUM_TYPE_DEC && n->n.d_num < result->n.d_num)
-				result->n.d_num = n->n.d_num;
-		}
+		x = NUM_CONVERT(n);
+		if (x < curr_max)
+			curr_max = x;
 
 		sexpr_free(n);
 	}
 
-	return result;
+	return sexpr_num(nodes[1]->num_type, curr_max);
 }
 
 sexpr* builtin_max_op(scheme_env *env, sexpr **nodes, int count, char *op) {
-	sexpr *result = NULL;
+	float curr_max, x;
 
 	for (int j = 1; j < count; j++) {
 		sexpr *n = eval2(env, nodes[j]);
@@ -372,30 +359,19 @@ sexpr* builtin_max_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 		}
 
 		if (j == 1) {
-			result = sexpr_num(n->num_type, NUM_CONVERT(n));
+			curr_max = NUM_CONVERT(n);
+			sexpr_free(n);
 			continue;
 		}
 
-		if (result->num_type == NUM_TYPE_INT) {
-			if (n->num_type == NUM_TYPE_INT && n->n.i_num > result->n.i_num)
-				result->n.i_num = n->n.i_num;
-			else if (n->num_type == NUM_TYPE_DEC && n->n.d_num > result->n.i_num) {
-				/* We need to switch the number type of result to be a real number in this case */
-				sexpr_convert_num_type(result);
-				result->n.d_num = n->n.d_num;
-			}
-		}
-		else {
-			if (n->num_type == NUM_TYPE_INT && n->n.i_num > result->n.d_num)
-				result->n.d_num = n->n.i_num;
-			else if (n->num_type == NUM_TYPE_DEC && n->n.d_num > result->n.d_num)
-				result->n.d_num = n->n.d_num;
-		}
+		x = NUM_CONVERT(n);
+		if (x > curr_max)
+			curr_max = x;
 
 		sexpr_free(n);
 	}
 
-	return result;
+	return sexpr_num(nodes[1]->num_type, curr_max);
 }
 
 sexpr* builtin_list(scheme_env *env, sexpr **nodes, int count, char *op) {
