@@ -319,13 +319,13 @@ sexpr* builtin_math_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 }
 
 sexpr* builtin_min_op(scheme_env *env, sexpr **nodes, int count, char *op) {
+	ASSET_PARAM_MIN(count, 2, "At least one parameter needed for min");
+
 	float curr_max, x;
 
 	for (int j = 1; j < count; j++) {
 		sexpr *n = eval2(env, nodes[j]);
 		if (n->type != LVAL_NUM) {
-			if (result)
-				sexpr_free(result);
 			sexpr_free(n);
 			return sexpr_err("Expected number!");
 		}
@@ -347,13 +347,13 @@ sexpr* builtin_min_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 }
 
 sexpr* builtin_max_op(scheme_env *env, sexpr **nodes, int count, char *op) {
+	ASSET_PARAM_MIN(count, 2, "At least one parameter needed for max");
+
 	float curr_max, x;
 
 	for (int j = 1; j < count; j++) {
 		sexpr *n = eval2(env, nodes[j]);
 		if (n->type != LVAL_NUM) {
-			if (result)
-				sexpr_free(result);
 			sexpr_free(n);
 			return sexpr_err("Expected number!");
 		}

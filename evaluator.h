@@ -15,4 +15,6 @@ void load_built_ins(scheme_env*);
 
 #endif
 
+#define ASSET_PARAM_MIN(c, e, err) if (c < e) return sexpr_err(err)
+
 typedef int(*cmpf)(float x, float y);
