@@ -14,3 +14,5 @@ void load_built_ins(scheme_env*);
                 return sexpr_err("Scheme primitives cannot be redefined."); }
 
 #endif
+
+typedef int(*cmpf)(float x, float y);

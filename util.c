@@ -11,8 +11,7 @@ char* n_strcpy(char *s, char *ct) {
         and I read so posts pooh-poohing strncpy so I'll just go with this. */
     int sz = strlen(ct);
     s = malloc(sz + 1);
-    memcpy(s, ct, sz);
-    s[sz] = '\0';
+    memcpy(s, ct, sz + 1);
 #else
     int sz = strlen(ct) + 1;
     s = malloc(sz);
