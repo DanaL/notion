@@ -563,7 +563,7 @@ sexpr* builtin_lambda(scheme_env *env, sexpr **nodes, int count, char *op) {
 		sexpr_append(params, sexpr_copy(nodes[1]->children[j]));
 	sexpr *body = nodes[2];
 
-	if (params->count == 0 || body->count == 0)
+	if (params->count == 0)
 		return sexpr_err("Invalid definition.");
 
 	sexpr *lambda = build_func(params, body, "");
@@ -575,7 +575,7 @@ sexpr* define_fun(scheme_env *env, sexpr **nodes, int count, char *op)  {
 	sexpr *header = nodes[1];
 	sexpr *body = nodes[2];
 
-	if (header->count == 0 || body->count == 0)
+	if (count < 3)
 		return sexpr_err("Invalid definition.");
 
 	ASSERT_PRIMITIVE(env, header->children[0]->sym);
