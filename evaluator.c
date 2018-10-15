@@ -671,6 +671,10 @@ sexpr* builtin_eval(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return f;
 }
 
+sexpr* builtin_quit(scheme_env *env, sexpr **nodes, int count, char *op) {
+	return sexpr_err("<quit>");
+}
+
 sexpr* quote_form(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return sexpr_copy(nodes[1]);
 }
@@ -882,6 +886,7 @@ void load_built_ins(scheme_env *env) {
 	env_insert_var(env, "and", sexpr_fun_builtin(&builtin_and, "and"));
 	env_insert_var(env, "min", sexpr_fun_builtin(&builtin_min_op, "min"));
 	env_insert_var(env, "max", sexpr_fun_builtin(&builtin_max_op, "max"));
+	env_insert_var(env, "quit", sexpr_fun_builtin(&builtin_quit, "quit"));
 	env_insert_var(env, "define", sexpr_fun_builtin(&define, "define"));
 	env_insert_var(env, "quote", sexpr_fun_builtin(&quote_form, "quote"));
 	env_insert_var(env, "lambda", sexpr_fun_builtin(&builtin_lambda, "lambda"));

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <string.h>
 
 #ifndef _WIN32
 #include <editline/readline.h>
@@ -56,12 +57,17 @@ int main(int argc, char **argv) {
 		else
 		{
 			sexpr *result = eval2(env, ast);
+			sexpr_free(ast);
+
+			if (result->type == LVAL_ERR && strcmp(result->err, "<quit>") == 0) {
+				puts("Notion exiting.");
+				sexpr_free(result);
+				break;
+			}
 
 			sexpr_pprint(result);
 			putchar('\n');
 			sexpr_free(result);
-
-			sexpr_free(ast);
 		}
 
 		free(line);
