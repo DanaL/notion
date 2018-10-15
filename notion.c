@@ -21,7 +21,7 @@ int is_whitespeace(char *s) {
 }
 
 int main(int argc, char **argv) {
-	puts("Notion (Dana's toy Scheme) 0.0.0.9");
+	puts("Notion (Dana's toy Scheme) 0.1.0");
 	puts("Press Ctrl-C to exit");
 
 	puts("Loading env...");
@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
 #endif
 		int c = 0;
 		sexpr *ast = parse(line, &c);
-		
+
 		if (is_whitespeace(line))
 			putchar('\n');
 		else if (ast->type == LVAL_ERR) {
