@@ -182,6 +182,23 @@ sexpr* builtin_self_test(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return sexpr_bool(r);
 }
 
+/* I think this is probably incorrect, or not totally correct because I haven't
+	yet learned about pairs in Scheme yet. But in the REPLs I've tried,
+	pair? returns false for atoms or an empty list */
+sexpr *builtin_pairq(scheme_env *env, sexpr **nodes, int count, char *op) {
+	if (count != 2)
+		return sexpr_err("Just one parameter expected.");
+
+	int pq = 0;
+	sexpr *v = eval2(env, nodes[1]);
+	if (v->type == LVAL_LIST && v->count > 0)
+		pq = 1;
+
+	sexpr_free(v);
+
+	return sexpr_bool(pq);
+}
+
 sexpr *builtin_not(scheme_env *env, sexpr **nodes, int count, char *op) {
 	if (count != 2)
 		return sexpr_err("Just one parameter expected.");
@@ -847,6 +864,7 @@ void load_built_ins(scheme_env *env) {
 	env_insert_var(env, "list", sexpr_fun_builtin(&builtin_list, "list"));
 	env_insert_var(env, "eq?", sexpr_fun_builtin(&builtin_eq, "eq?"));
 	env_insert_var(env, "null?", sexpr_fun_builtin(&builtin_nullq, "null?"));
+	env_insert_var(env, "pair?", sexpr_fun_builtin(&builtin_pairq, "pair?"));
 	env_insert_var(env, "eval", sexpr_fun_builtin(&builtin_eval, "eval"));
 	env_insert_var(env, "self-test", sexpr_fun_builtin(&builtin_self_test, "self-test"));
 	env_insert_var(env, "+", sexpr_fun_builtin(&builtin_math_op, "+"));
