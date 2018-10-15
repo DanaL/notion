@@ -32,16 +32,18 @@ void print_sexpr_type(sexpr *v) {
 	}
 }
 
-sexpr* sexpr_num(sexpr* j) {
+/* This is mathematically, philosophically terrible, but also so
+	terribly convenient */
+sexpr* sexpr_num(enum sexpr_num_type t, float n) {
 	sexpr *v = malloc(sizeof(sexpr));
 	v->type = LVAL_NUM;
-	v->num_type = j->num_type;
+	v->num_type = t;
 
-	if (j->num_type == NUM_TYPE_INT) {
-		v->n.i_num = j->n.i_num;
+	if (t == NUM_TYPE_INT) {
+		v->n.i_num = n;
 	}
 	else
-		v->n.d_num = j->n.d_num;
+		v->n.d_num = n;
 
 	return v;
 }
@@ -160,7 +162,7 @@ void sexpr_free(sexpr *v) {
 
 sexpr* sexpr_copy_atom(sexpr* src) {
 	if (src->type == LVAL_NUM)
-		return sexpr_num(src);
+		return sexpr_num(src->num_type, NUM_CONVERT(src));
 
 	if (src->type == LVAL_SYM)
 		return sexpr_sym(src->sym);

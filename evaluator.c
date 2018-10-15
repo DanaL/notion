@@ -15,54 +15,6 @@ void sexpr_convert_num_type(sexpr *v) {
 	v->num_type = NUM_TYPE_DEC;
 }
 
-void sexpr_num_add(sexpr *result, sexpr *v) {
-	if (result->num_type == NUM_TYPE_INT && v->num_type == NUM_TYPE_DEC)
-		sexpr_convert_num_type(result);
-
-	if (result->num_type == NUM_TYPE_DEC) {
-		result->n.d_num += v->num_type == NUM_TYPE_INT ? v->n.i_num : v->n.d_num;
-	}
-	else {
-		result->n.i_num += v->n.i_num;
-	}
-}
-
-void sexpr_num_sub(sexpr *result, sexpr *v) {
-	if (result->num_type == NUM_TYPE_INT && v->num_type == NUM_TYPE_DEC)
-		sexpr_convert_num_type(result);
-
-	if (result->num_type == NUM_TYPE_DEC) {
-		result->n.d_num -= v->num_type == NUM_TYPE_INT ? v->n.i_num : v->n.d_num;
-	}
-	else {
-		result->n.i_num -= v->n.i_num;
-	}
-}
-
-void sexpr_num_mul(sexpr *result, sexpr *v) {
-	if (result->num_type == NUM_TYPE_INT && v->num_type == NUM_TYPE_DEC)
-		sexpr_convert_num_type(result);
-
-	if (result->num_type == NUM_TYPE_DEC) {
-		result->n.d_num *= v->num_type == NUM_TYPE_INT ? v->n.i_num : v->n.d_num;
-	}
-	else {
-		result->n.i_num *= v->n.i_num;
-	}
-}
-
-void sexpr_num_div(sexpr *result, sexpr *v) {
-	if (result->num_type == NUM_TYPE_INT && v->num_type == NUM_TYPE_DEC)
-		sexpr_convert_num_type(result);
-
-	if (result->num_type == NUM_TYPE_DEC) {
-		result->n.d_num /= v->num_type == NUM_TYPE_INT ? v->n.i_num : v->n.d_num;
-	}
-	else {
-		result->n.i_num /= v->n.i_num;
-	}
-}
-
 int is_zero(sexpr *num) {
 	if (num->num_type == NUM_TYPE_INT)
 		return num->n.i_num == 0;
@@ -303,68 +255,67 @@ sexpr* builtin_math_cmp(scheme_env *env, sexpr **nodes, int count, char *op) {
 }
 
 sexpr* builtin_math_op(scheme_env *env, sexpr **nodes, int count, char *op) {
-	sexpr *result = NULL;
+	float result;
+	sexpr *r;
 
 	/* Unary subtraction */
 	if (strcmp(op, "-") == 0 && count == 2) {
 		sexpr *n = eval2(env, nodes[1]);
 		if (n->type != LVAL_NUM)
-			result = sexpr_err("Expected number!");
+			r = sexpr_err("Expected number!");
 		else {
-			result = sexpr_num_s("0");
-			sexpr_num_sub(result, nodes[1]);
+			result = - (NUM_CONVERT(nodes[1]));
+			r = sexpr_num(nodes[1]->num_type, result);
 		}
 		sexpr_free(n);
 
-		return result;
+		return r;
 	}
 
 	for (int j = 1; j < count; j++) {
 		sexpr *n = eval2(env, nodes[j]);
 
 		if (n->type != LVAL_NUM) {
-			if (result) sexpr_free(result);
 			sexpr_free(n);
 			return sexpr_err("Expected number!");
 		}
 
 		/* The first number value after the operator is result's starting value */
 		if (j == 1) {
-			result = sexpr_num(n);
+			result = NUM_CONVERT(n);
 			continue;
 		}
 
 		if (strcmp(op, "+") == 0)
-			sexpr_num_add(result, n);
+			result += NUM_CONVERT(n);
 		else if (strcmp(op, "-") == 0)
-			sexpr_num_sub(result, n);
+			result -= NUM_CONVERT(n);
 		else if (strcmp(op, "*") == 0)
-			sexpr_num_mul(result, n);
+			result *= NUM_CONVERT(n);
 		else if (strcmp(op, "/") == 0) {
 			/* Let's make sure we're not trying to divide by zero */
 			if (is_zero(n)) {
 				sexpr_free(n);
-				sexpr_free(result);
 				return sexpr_err("Division by zero!");
 			}
-			sexpr_num_div(result, n);
+			result /= NUM_CONVERT(n);
 		}
 		else if (strcmp(op, "%") == 0) {
 			if (n->num_type != NUM_TYPE_INT || nodes[1]->num_type != NUM_TYPE_INT) {
 				sexpr_free(n);
-				sexpr_free(result);
 				return sexpr_err("Can only calculate the remainder for integers.");
 			}
 			else if (is_zero(n)) {
 				sexpr_free(n);
-				sexpr_free(result);
 				return sexpr_err("Division by zero!");
 			}
-			result->n.i_num %= n->n.i_num;
+			result = nodes[1]->n.i_num % n->n.i_num;
 		}
 	}
 
-	return result;
+	r = sexpr_num(nodes[1]->num_type, result);
+
+	return r;
 }
 
 sexpr* builtin_min_op(scheme_env *env, sexpr **nodes, int count, char *op) {
@@ -381,7 +332,7 @@ sexpr* builtin_min_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 		}
 
 		if (j == 1) {
-			result = sexpr_num(n);
+			result = sexpr_num(n->num_type, NUM_CONVERT(n));
 			sexpr_free(n);
 			continue;
 		}
@@ -421,7 +372,7 @@ sexpr* builtin_max_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 		}
 
 		if (j == 1) {
-			result = sexpr_num(n);
+			result = sexpr_num(n->num_type, NUM_CONVERT(n));
 			continue;
 		}
 

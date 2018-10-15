@@ -33,7 +33,7 @@ struct sexpr {
 
 sexpr* sexpr_err(char*);
 sexpr* sexpr_num_s(char*);
-sexpr* sexpr_num(sexpr*);
+sexpr* sexpr_num(enum sexpr_num_type, float);
 sexpr* sexpr_null(void);
 sexpr* sexpr_sym(char*);
 sexpr* sexpr_list(void);
@@ -53,5 +53,7 @@ void sexpr_pprint(sexpr*);
 
 #define IS_ATOM(a) (a->type == LVAL_NUM || a->type == LVAL_SYM || \
 	a->type == LVAL_NULL || a->type == LVAL_BOOL || a->type == LVAL_FUN) ? 1 : 0
+
+#define NUM_CONVERT(x) x->num_type == NUM_TYPE_INT ? x->n.i_num : x->n.d_num
 
 #endif
