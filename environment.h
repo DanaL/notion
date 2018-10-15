@@ -25,13 +25,12 @@ scheme_env* env_new(void);
 void env_free(scheme_env*);
 void env_insert_var(scheme_env*, char*, sexpr*);
 sexpr* env_fetch_var(scheme_env*, char*);
-void env_copy(scheme_env*, scheme_env*);
 void env_dump(scheme_env*);
 
 #define IS_FUNC(f) (f->type == LVAL_LIST && f->count > 0) ? 1 : 0
 
 #define CHECK_PARENT_SCOPE(e, k) (e->parent) \
 		? env_fetch_var(e->parent, k) \
-		: sexpr_err("Idenfifier not found.")
+		: sexpr_err("Identifier not found.")
 
 #endif

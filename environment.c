@@ -106,11 +106,6 @@ void env_free(scheme_env *env) {
 	free(env);
 }
 
-void env_copy(scheme_env* dst, scheme_env* src) {
-	//for (int j = 0; j < TABLE_SIZE; j++)
-	//	dst[j]
-}
-
 void env_dump(scheme_env* env) {
 	bucket *b;
 
