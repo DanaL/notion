@@ -1,8 +1,8 @@
 #ifndef sexpr_h
 #define sexpr_h
 
-#import "fwd.h"
-#import "environment.h"
+#include "fwd.h"
+#include "environment.h"
 
 enum sexpr_type { LVAL_NUM, LVAL_ERR, LVAL_SYM, LVAL_LIST, LVAL_NULL,
 	LVAL_BOOL, LVAL_FUN };
