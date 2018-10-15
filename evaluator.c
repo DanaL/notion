@@ -9,12 +9,6 @@
 #include "parser.h"
 #include "util.h"
 
-void sexpr_convert_num_type(sexpr *v) {
-	long x = v->n.i_num;
-	v->n.d_num = x;
-	v->num_type = NUM_TYPE_DEC;
-}
-
 int is_zero(sexpr *num) {
 	if (num->num_type == NUM_TYPE_INT)
 		return num->n.i_num == 0;
