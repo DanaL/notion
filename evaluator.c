@@ -644,8 +644,9 @@ sexpr* eval2(scheme_env *env, sexpr *v) {
 	sexpr *result = NULL;
 	switch (v->type) {
 		case LVAL_LIST:
+			/* An empty list evals to an empty list */
 			if (v->count == 0)
-				return sexpr_err("Expected operator or function");
+				return sexpr_list();
 
 			sexpr *func;
 			if (v->children[0]->type == LVAL_LIST)
@@ -653,7 +654,7 @@ sexpr* eval2(scheme_env *env, sexpr *v) {
 			else if (v->children[0]->type == LVAL_SYM)
 				func = resolve_symbol(env, v->children[0]);
 			else
-				return sexpr_err("Expected function!!");
+				return sexpr_err("Expected function.");
 
 			if (func->type != LVAL_FUN) {
 				if (func->type == LVAL_ERR)
