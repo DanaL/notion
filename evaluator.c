@@ -624,14 +624,11 @@ sexpr* define(scheme_env *env, sexpr **nodes, int count, char *op) {
 sexpr* resolve_symbol(scheme_env *env, sexpr *s) {
 	sexpr *r = env_fetch_var(env, s->sym);
 
-	/*
 	if (r->type == LVAL_SYM) {
-		puts("flag 0");
-		sexpr *r2 = resolve_symbol(env, r);
+		sexpr *r2 = env_fetch_var(env, r->sym);
 		sexpr_free(r);
 		return r2;
 	}
-	*/
 
 	return r;
 }
@@ -699,7 +696,7 @@ sexpr* eval2(scheme_env *env, sexpr *v) {
 
 			return result;
 		case LVAL_SYM:
-			return env_fetch_var(env, v->sym);
+			return resolve_symbol(env, v);
 		case LVAL_FUN:
 			break;
 		case LVAL_ERR:
