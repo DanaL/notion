@@ -15,6 +15,10 @@ void load_built_ins(scheme_env*);
 
 #endif
 
-#define ASSET_PARAM_MIN(c, e, err) if (c < e) return sexpr_err(err)
+#define ASSERT_PARAM_MIN(c, e, err) if (c < e) return sexpr_err(err)
+#define ASSERT_PARAM_EQ(c, e, err) if (c != e) return sexpr_err(err)
+
+#define IS_ELSE_CLAUSE(n, c, cond) n == (c - 1) && cond->type == LVAL_SYM \
+                                    && strcmp("else", cond->sym) == 0
 
 typedef int(*cmpf)(float x, float y);

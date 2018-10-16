@@ -325,7 +325,7 @@ sexpr* builtin_math_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 }
 
 sexpr* builtin_min_op(scheme_env *env, sexpr **nodes, int count, char *op) {
-	ASSET_PARAM_MIN(count, 2, "At least one parameter needed for min");
+	ASSERT_PARAM_MIN(count, 2, "At least one parameter needed for min");
 
 	float curr_max, x;
 
@@ -357,7 +357,7 @@ sexpr* builtin_min_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 }
 
 sexpr* builtin_max_op(scheme_env *env, sexpr **nodes, int count, char *op) {
-	ASSET_PARAM_MIN(count, 2, "At least one parameter needed for max");
+	ASSERT_PARAM_MIN(count, 2, "At least one parameter needed for max");
 
 	float curr_max, x;
 	enum sexpr_num_type rt = NUM_TYPE_INT;
@@ -568,11 +568,48 @@ sexpr* build_func(sexpr *header, sexpr *body, char *name) {
 	return sexpr_fun_user(params, sexpr_copy(body), name);
 }
 
-/* ((lambda (a b) (+ (* 2 a) b)) 5 6) (/) */
-// (lambda (a b) (+ (* 2 a) b))
+sexpr* builtin_cond(scheme_env *env, sexpr **nodes, int count, char *op) {
+	ASSERT_PARAM_MIN(count, 2, "Cond requires at least one expression.");
+
+	for (int j = 1; j < count; j++) {
+		/* Each item in the cond expression must be a list containing a test
+			and a result. If the test resolves to neither #t or #f then we have
+			an error condition.
+
+			An easy way to do the else clause is to make it a function that
+			always returns true, but the else clause can only be the final item.
+		*/
+		if (nodes[j]->type == LVAL_LIST) {
+			sexpr *cond = nodes[j];
+			ASSERT_PARAM_EQ(cond->count, 2, "Invalid cond expression.");
+
+			if (IS_ELSE_CLAUSE(j, count, cond->children[0]))
+			{
+				return eval2(env, cond->children[1]);
+			}
+
+			sexpr *result = eval2(env, cond->children[0]);
+			if (result->type == LVAL_ERR)
+				return result;
+			else if (result->type != LVAL_BOOL) {
+				sexpr_free(result);
+				return sexpr_err("Invalid boolean test.");
+			}
+
+			if (result->bool) {
+				sexpr_free(result);
+				return eval2(env, cond->children[1]);
+			}
+		}
+		else
+			return sexpr_err("Cond tests must be an expression.");
+	}
+
+	return sexpr_null();
+}
+
 sexpr* builtin_lambda(scheme_env *env, sexpr **nodes, int count, char *op) {
-	if (count != 3)
-		return sexpr_err("Invalid lambda definition");
+	ASSERT_PARAM_EQ(count, 3, "Invalid lambda definition.");
 
 	/* So function evaluation excepts the paramter list for function
 		calls to include the function name, so gotta add in a dummy
@@ -741,4 +778,5 @@ void load_built_ins(scheme_env *env) {
 	env_insert_var(env, "quote", sexpr_fun_builtin(&quote_form, "quote"));
 	env_insert_var(env, "lambda", sexpr_fun_builtin(&builtin_lambda, "lambda"));
 	env_insert_var(env, "dump", sexpr_fun_builtin(&builtin_mem_dump, "dump"));
+	env_insert_var(env, "cond", sexpr_fun_builtin(&builtin_cond, "cond"));
 }
