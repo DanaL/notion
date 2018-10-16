@@ -496,6 +496,14 @@ sexpr* builtin_eq(scheme_env *env, sexpr **nodes, int count, char *op) {
 		result = sexpr_bool(1);
 	else if (a->type == LVAL_SYM && b->type == LVAL_SYM && strcmp(a->sym, b->sym) == 0)
 		result = sexpr_bool(1);
+	else if (a->type == LVAL_NUM && b->type == LVAL_NUM && a->num_type == b->num_type) {
+		if (a->num_type == NUM_TYPE_INT && a->n.i_num == b->n.i_num)
+			result = sexpr_bool(1);
+		else if (a->num_type == NUM_TYPE_DEC && fabs(a->n.d_num - b->n.d_num) < 0.0000001)
+			result = sexpr_bool(1);
+		else
+			result = sexpr_bool(0);
+	}
 	else
 		result = sexpr_bool(0);
 
