@@ -621,21 +621,6 @@ sexpr* define(scheme_env *env, sexpr **nodes, int count, char *op) {
 		return define_var(env, nodes, count, op);
 }
 
-sexpr* resolve_symbol(scheme_env *env, sexpr *s) {
-	sexpr *r = env_fetch_var(env, s->sym);
-
-	/*
-	if (r->type == LVAL_SYM) {
-		puts("flag 0");
-		sexpr *r2 = resolve_symbol(env, r);
-		sexpr_free(r);
-		return r2;
-	}
-	*/
-
-	return r;
-}
-
 sexpr* eval_user_func(scheme_env *env, sexpr **operands, int count, sexpr *fun) {
 	if ((count - 1) < fun->params->count) {
 		return sexpr_err("Too few paramters passed to function.");
@@ -649,7 +634,7 @@ sexpr* eval_user_func(scheme_env *env, sexpr **operands, int count, sexpr *fun) 
 	for (int j = 0; j < fun->params->count; j++) {
 		sexpr *var;
 		if (operands[j + 1]->type == LVAL_SYM)
-			var = resolve_symbol(env, operands[j + 1]);
+			var = env_fetch_var(env, operands[j + 1]->sym);
 		else if (operands[j + 1]->type == LVAL_LIST)
 			var = eval2(env, operands[j + 1]);
 		else
@@ -676,7 +661,7 @@ sexpr* eval2(scheme_env *env, sexpr *v) {
 			if (v->children[0]->type == LVAL_LIST)
 				func = eval2(env, v->children[0]);
 			else if (v->children[0]->type == LVAL_SYM)
-				func = resolve_symbol(env, v->children[0]);
+				func = env_fetch_var(env, v->children[0]->sym);
 			else
 				return sexpr_err("Expected function.");
 
