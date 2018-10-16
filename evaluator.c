@@ -663,8 +663,17 @@ sexpr* resolve_symbol(scheme_env *env, sexpr *s) {
 
 	if (r->type == LVAL_SYM) {
 		sexpr *r2 = env_fetch_var(env, r->sym);
-		sexpr_free(r);
-		return r2;
+		/* If the symbol isn't found, just return the original result.
+			(This is for cases like (define x 'aaa) where aaa is a meaningless
+			symbol) */
+		if (r2->type == LVAL_ERR) {
+			sexpr_free(r2);
+			return r;
+		}
+		else {
+			sexpr_free(r);
+			return r2;
+		}
 	}
 
 	return r;
