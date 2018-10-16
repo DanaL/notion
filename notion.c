@@ -51,7 +51,6 @@ int main(int argc, char **argv) {
 		if (is_whitespeace(line))
 			putchar('\n');
 		else if (ast->type == LVAL_ERR) {
-			sexpr_pprint(ast);
 			sexpr_free(ast);
 		}
 		else

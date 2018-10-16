@@ -81,6 +81,12 @@ int test_sexpr(scheme_env *env, char *s, sexpr *expected) {
 	return r;
 }
 
+sexpr* builtin_mem_dump(scheme_env *env, sexpr **nodes, int count, char *op) {
+	env_dump(env);
+
+	return sexpr_null();
+}
+
 sexpr* builtin_self_test(scheme_env *env, sexpr **nodes, int count, char *op) {
 	scheme_env *test_env = env_new(); /* We'll test in a fresh environment */
 	load_built_ins(test_env);
@@ -266,6 +272,7 @@ sexpr* builtin_math_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 		return r;
 	}
 
+	enum sexpr_num_type rt = NUM_TYPE_INT;
 	for (int j = 1; j < count; j++) {
 		sexpr *n = eval2(env, nodes[j]);
 
@@ -273,6 +280,9 @@ sexpr* builtin_math_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 			sexpr_free(n);
 			return sexpr_err("Expected number!");
 		}
+
+		if (n->num_type == NUM_TYPE_DEC)
+			rt = NUM_TYPE_DEC;
 
 		/* The first number value after the operator is result's starting value */
 		if (j == 1) {
@@ -305,9 +315,11 @@ sexpr* builtin_math_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 			}
 			result = nodes[1]->n.i_num % n->n.i_num;
 		}
+
+		sexpr_free(n);
 	}
 
-	r = sexpr_num(nodes[1]->num_type, result);
+	r = sexpr_num(rt, result);
 
 	return r;
 }
@@ -317,12 +329,16 @@ sexpr* builtin_min_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 
 	float curr_max, x;
 
+	enum sexpr_num_type rt = NUM_TYPE_INT;
 	for (int j = 1; j < count; j++) {
 		sexpr *n = eval2(env, nodes[j]);
 		if (n->type != LVAL_NUM) {
 			sexpr_free(n);
 			return sexpr_err("Expected number!");
 		}
+
+		if (n->num_type == NUM_TYPE_DEC)
+			rt = NUM_TYPE_DEC;
 
 		if (j == 1) {
 			curr_max = NUM_CONVERT(n);
@@ -337,13 +353,14 @@ sexpr* builtin_min_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 		sexpr_free(n);
 	}
 
-	return sexpr_num(nodes[1]->num_type, curr_max);
+	return sexpr_num(rt, curr_max);
 }
 
 sexpr* builtin_max_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 	ASSET_PARAM_MIN(count, 2, "At least one parameter needed for max");
 
 	float curr_max, x;
+	enum sexpr_num_type rt = NUM_TYPE_INT;
 
 	for (int j = 1; j < count; j++) {
 		sexpr *n = eval2(env, nodes[j]);
@@ -351,6 +368,9 @@ sexpr* builtin_max_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 			sexpr_free(n);
 			return sexpr_err("Expected number!");
 		}
+
+		if (n->num_type == NUM_TYPE_DEC)
+			rt = NUM_TYPE_DEC;
 
 		if (j == 1) {
 			curr_max = NUM_CONVERT(n);
@@ -365,7 +385,7 @@ sexpr* builtin_max_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 		sexpr_free(n);
 	}
 
-	return sexpr_num(nodes[1]->num_type, curr_max);
+	return sexpr_num(rt, curr_max);
 }
 
 sexpr* builtin_list(scheme_env *env, sexpr **nodes, int count, char *op) {
@@ -603,11 +623,15 @@ sexpr* define(scheme_env *env, sexpr **nodes, int count, char *op) {
 
 sexpr* resolve_symbol(scheme_env *env, sexpr *s) {
 	sexpr *r = env_fetch_var(env, s->sym);
+
+	/*
 	if (r->type == LVAL_SYM) {
+		puts("flag 0");
 		sexpr *r2 = resolve_symbol(env, r);
 		sexpr_free(r);
 		return r2;
 	}
+	*/
 
 	return r;
 }
@@ -675,8 +699,7 @@ sexpr* eval2(scheme_env *env, sexpr *v) {
 
 			return result;
 		case LVAL_SYM:
-			result = resolve_symbol(env, v);
-			return result;
+			return env_fetch_var(env, v->sym);
 		case LVAL_FUN:
 			break;
 		case LVAL_ERR:
@@ -720,4 +743,5 @@ void load_built_ins(scheme_env *env) {
 	env_insert_var(env, "define", sexpr_fun_builtin(&define, "define"));
 	env_insert_var(env, "quote", sexpr_fun_builtin(&quote_form, "quote"));
 	env_insert_var(env, "lambda", sexpr_fun_builtin(&builtin_lambda, "lambda"));
+	env_insert_var(env, "dump", sexpr_fun_builtin(&builtin_mem_dump, "dump"));
 }
