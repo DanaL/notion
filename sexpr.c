@@ -37,7 +37,7 @@ void print_sexpr_type(sexpr *v) {
 sexpr* sexpr_num(enum sexpr_num_type t, float n) {
 	sexpr *v = malloc(sizeof(sexpr));
 	v->type = LVAL_NUM;
-	v->num_type = NUM_TYPE_INT;
+	v->num_type = t;
 
 	if (t == NUM_TYPE_INT) {
 		v->n.i_num = n;

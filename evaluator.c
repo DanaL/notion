@@ -261,6 +261,7 @@ sexpr* builtin_math_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 	/* Unary subtraction */
 	if (strcmp(op, "-") == 0 && count == 2) {
 		sexpr *n = eval2(env, nodes[1]);
+		
 		if (n->type != LVAL_NUM)
 			r = sexpr_err("Expected number!");
 		else {
