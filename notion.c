@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
 #endif
 		int c = 0;
 		sexpr *ast = parse(line, &c);
-
+		
 		if (is_whitespeace(line))
 			putchar('\n');
 		else if (ast->type == LVAL_ERR) {

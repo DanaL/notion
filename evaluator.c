@@ -55,6 +55,8 @@ int sexpr_cmp(sexpr *s1, sexpr *s2) {
 			if (s1->fun != s2->fun)
 				return 0;
 			break;
+		case LVAL_STR:
+			return strcmp(s1->str, s2->str) == 0 ? 1 : 0;
 		case LVAL_NULL:
 			return 1;
 	}
@@ -764,6 +766,7 @@ sexpr* eval2(scheme_env *env, sexpr *v) {
 		case LVAL_NUM:
 		case LVAL_BOOL:
 		case LVAL_NULL:
+		case LVAL_STR:
 			return sexpr_copy(v);
 			break;
 	}

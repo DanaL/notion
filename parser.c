@@ -5,6 +5,7 @@
 
 #include "parser.h"
 #include "sexpr.h"
+#include "util.h"
 
 token* token_create(enum token_type type) {
 	token *t = malloc(sizeof(token));
@@ -30,6 +31,9 @@ int skip_whitespace(char *s, int x) {
 
 void print_token(token *t) {
 	switch (t->type) {
+		case T_ERR:
+			printf("Error: %s\n", t->val);
+			break;
 		case T_LIST_START:
 			puts("(");
 			break;
@@ -82,6 +86,49 @@ int is_valid_in_symbol(char c)
 	return 0;
 }
 
+token* parse_str_token(char *s, int *start) {
+	token *t = NULL;
+	int len, x = *start + 1;
+
+	while (s[x] != '\0' && s[x] != '"') {
+		if (s[x] == '\'') {
+			/* The only escape characters I'm going to escape for now */
+			switch (s[x+1]) {
+				case '"':
+					++x;
+					break;
+				case 'n':
+					s[x+1] = '\n';
+					++x;
+					break;
+				default:
+					t = token_create(T_ERR);
+					goto err;
+			}
+ 		}
+		++x;
+	}
+
+err:
+	if (t && t->type == T_ERR) {
+		t->val = NULL;
+		t->val = n_strcpy(t->val, "Invalid escape character.");
+		return t;
+	}
+
+	len = x - *start;
+	t = token_create(T_STR);
+
+	t->val = malloc(1 + len * sizeof(char));
+	memcpy(t->val, &s[*start + 1], len);
+
+	t->val[len - 1] = '\0';
+
+	(*start) = x;
+
+	return t;
+}
+
 token* next_token(char *s, int *start) {
 	token *t = NULL;
 	int len, x = 0;
@@ -95,6 +142,9 @@ token* next_token(char *s, int *start) {
 			|| s[*start] == '=') {
 		t = token_create(T_SYM);
 		x = *start + 1;
+	}
+	else if (s[*start] == '"') {
+		return parse_str_token(s, start);
 	}
 	else if (s[*start] == '<' || s[*start] == '>') {
 		t = token_create(T_SYM);
@@ -175,13 +225,17 @@ sexpr* sexpr_from_token(token *t) {
 			else
 				expr = sexpr_err("Unknown constant.");
 			break;
+		case T_STR:
+			expr = sexpr_str(t->val);
+			break;
+		case T_ERR:
+			expr = sexpr_err(t->val);
+			break;
 		case T_LIST_START:
 		case T_LIST_END:
-		case T_STR:
 		case T_NULL:
 		case T_UNKNOWN:
 		case T_SINGLE_QUOTE:
-			printf("\"%s\"\n", t->val);
 			expr = sexpr_err("Unexpeted token.");
 			break;
 	}
@@ -247,8 +301,9 @@ sexpr* parse(char *s, int *curr) {
 		sexpr_append(expr, sexpr_sym("quote"));
 		sexpr_append(expr, parse(s, curr));
 	}
-	else
+	else {
 		expr = sexpr_from_token(nt);
+	}
 
 	token_free(nt);
 

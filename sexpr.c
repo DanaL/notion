@@ -11,6 +11,9 @@ void print_sexpr_type(sexpr *v) {
 		case LVAL_NUM:
 			printf("number");
 			break;
+		case LVAL_STR:
+			printf("string (%s)", v->str);
+			break;
 		case LVAL_SYM:
 			printf("symbol (%s)", v->sym);
 			break;
@@ -90,6 +93,14 @@ sexpr* sexpr_fun_user(sexpr *params, sexpr *body, char *name) {
 	return v;
 }
 
+sexpr* sexpr_str(char *s) {
+	sexpr *v = malloc(sizeof(sexpr));
+	v->type = LVAL_STR;
+	v->str = n_strcpy(v->str, s);
+
+	return v;
+}
+
 sexpr* sexpr_err(char *s) {
 	sexpr *v = malloc(sizeof(sexpr));
 	v->type = LVAL_ERR;
@@ -151,6 +162,9 @@ void sexpr_free(sexpr *v) {
 		case LVAL_SYM:
 			free(v->sym);
 			break;
+		case LVAL_STR:
+			free(v->str);
+			break;
 		case LVAL_LIST:
 			for (int j = 0; j < v->count; j++)
 				sexpr_free(v->children[j]);
@@ -180,6 +194,9 @@ sexpr* sexpr_copy_atom(sexpr* src) {
 			return sexpr_fun_user(sexpr_copy(src->params),
 						sexpr_copy(src->body), src->sym);
 	}
+
+	if (src->type == LVAL_STR)
+		return sexpr_str(src->str);
 
 	return sexpr_err("Can only copy atoms.");
 }
@@ -239,6 +256,9 @@ void sexpr_pprint(sexpr *v) {
 			break;
 		case LVAL_SYM:
 			printf("%s", v->sym);
+			break;
+		case LVAL_STR:
+			printf("%s", v->str);
 			break;
 		case LVAL_NUM:
 			if (v->num_type == NUM_TYPE_INT)
