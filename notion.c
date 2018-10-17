@@ -29,9 +29,8 @@ int main(int argc, char **argv) {
 	scheme_env *env = env_new();
 	load_built_ins(env);
 
+	char *line;
 	while (1) {
-		char *line;
-
 #ifdef _WIN32
 		line = malloc(sizeof(char) * 1000);
 		printf("> ");
@@ -47,7 +46,14 @@ int main(int argc, char **argv) {
 #endif
 		int c = 0;
 		sexpr *ast = parse(line, &c);
-		
+
+		if (ast->type == LVAL_ERR) {
+			sexpr_pprint(ast);
+			putchar('\n');
+			sexpr_free(ast);
+			continue;
+		}
+
 		if (is_whitespeace(line))
 			putchar('\n');
 		else if (ast->type == LVAL_ERR) {

@@ -91,7 +91,7 @@ token* parse_str_token(char *s, int *start) {
 	int len, x = *start + 1;
 
 	while (s[x] != '\0' && s[x] != '"') {
-		if (s[x] == '\'') {
+		if (s[x] == '\\') {
 			/* The only escape characters I'm going to escape for now */
 			switch (s[x+1]) {
 				case '"':
@@ -108,6 +108,7 @@ token* parse_str_token(char *s, int *start) {
  		}
 		++x;
 	}
+	++x;
 
 err:
 	if (t && t->type == T_ERR) {
@@ -116,13 +117,20 @@ err:
 		return t;
 	}
 
-	len = x - *start;
 	t = token_create(T_STR);
-
+	len = x - *start - 2; // Skip the quotes
 	t->val = malloc(1 + len * sizeof(char));
-	memcpy(t->val, &s[*start + 1], len);
 
-	t->val[len - 1] = '\0';
+	/* Copy string, skipping backslashes */
+	int j, k;
+	for (j = *start + 1, k = 0; k < len; j++) {
+		if (s[j] != '\\') {
+			t->val[k++] = s[j];
+		}
+		else
+			--len;
+	}
+	t->val[len] = '\0';
 
 	(*start) = x;
 
@@ -144,7 +152,8 @@ token* next_token(char *s, int *start) {
 		x = *start + 1;
 	}
 	else if (s[*start] == '"') {
-		return parse_str_token(s, start);
+		t = parse_str_token(s, start);
+		return t;
 	}
 	else if (s[*start] == '<' || s[*start] == '>') {
 		t = token_create(T_SYM);
@@ -269,7 +278,6 @@ sexpr* parse(char *s, int *curr) {
 		nt = next_token(s, curr);
 		while (nt->type != T_LIST_END) {
 			sexpr *child = NULL;
-
 			/* Single quote form, so I want to transform, say, 'Q into
 				(quote Q) or '(1 2 3) into (quote (1 2 3)) */
 			if (nt->type == T_SINGLE_QUOTE) {
@@ -281,14 +289,14 @@ sexpr* parse(char *s, int *curr) {
 				(*curr)--; /* Back up the token otherwise we skip past the start of the list in the recursive call */
 				child = parse(s, curr);
 			}
+			else if (nt->type == T_ERR) {
+				sexpr_free(expr);
+				expr = sexpr_from_token(nt);
+				token_free(nt);
+				return expr;
+			}
 			else {
 				child = sexpr_from_token(nt);
-			}
-
-			if (child->type == LVAL_ERR) {
-				token_free(nt);
-				sexpr_free(expr);
-				return child;
 			}
 
 			sexpr_append(expr, child);
@@ -300,6 +308,14 @@ sexpr* parse(char *s, int *curr) {
 		expr = sexpr_list();
 		sexpr_append(expr, sexpr_sym("quote"));
 		sexpr_append(expr, parse(s, curr));
+	}
+	else if (nt->type == T_ERR) {
+		if (expr)
+			sexpr_free(expr);
+		expr = sexpr_from_token(nt);
+		token_free(nt);
+
+		return expr;
 	}
 	else {
 		expr = sexpr_from_token(nt);
