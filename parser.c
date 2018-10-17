@@ -151,6 +151,12 @@ token* next_token(char *s, int *start) {
 		t = token_create(T_SYM);
 		x = *start + 1;
 	}
+	else if (s[*start] == '\\') {
+		t = token_create(T_ERR);
+		t->val = NULL;
+		t->val = n_strcpy(t->val, "Invalid token.");
+		return t;
+	}
 	else if (s[*start] == '"') {
 		t = parse_str_token(s, start);
 		return t;
