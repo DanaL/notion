@@ -29,8 +29,8 @@ void env_dump(scheme_env*);
 
 #define IS_FUNC(f) (f->type == LVAL_LIST && f->count > 0) ? 1 : 0
 
-#define CHECK_PARENT_SCOPE(e, k) (e->parent) \
+#define CHECK_PARENT_SCOPE(e, k, msg) (e->parent) \
 		? env_fetch_var(e->parent, k) \
-		: sexpr_err("Identifier not found.")
+		: sexpr_err(msg)
 
 #endif
