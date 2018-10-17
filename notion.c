@@ -22,7 +22,7 @@ int is_whitespeace(char *s) {
 }
 
 int main(int argc, char **argv) {
-	puts("Notion (Dana's toy Scheme) 0.1.0");
+	puts("Notion (Dana's toy Scheme) 0.2.0");
 	puts("Press Ctrl-C to exit");
 
 	puts("Loading env...");
