@@ -261,7 +261,7 @@ sexpr* builtin_math_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 	/* Unary subtraction */
 	if (strcmp(op, "-") == 0 && count == 2) {
 		sexpr *n = eval2(env, nodes[1]);
-		
+
 		if (n->type != LVAL_NUM)
 			r = sexpr_err("Expected number!");
 		else {
@@ -484,14 +484,16 @@ sexpr* builtin_nullq(scheme_env *env, sexpr **nodes, int count, char *op) {
 		but Scheme implementations I've seen accept broader inputs. I'm going to
 		stick to the Little Schemer "standard" for now */
 sexpr* builtin_eq(scheme_env *env, sexpr **nodes, int count, char *op) {
-	if (count != 3)
-		return sexpr_err("eq? expects exactly 2 arguments.");
+	ASSERT_PARAM_EQ(count, 3, "eq? expects exactly 2 arguments.");
 
 	sexpr *a = eval2(env, nodes[1]);
+	ASSERT_NOT_ERR(a);
 	sexpr *b = eval2(env, nodes[2]);
+	if (b->type == LVAL_ERR) {
+		sexpr_free(a);
+		return b;
+	}
 
-	/* Note, this actually hides errors that occurred in resolving the two
-			inputs, which is maybe not the most ideal behaviour */
 	sexpr *result = NULL;
 	if (a->type == LVAL_BOOL && b->type == LVAL_BOOL && a->bool == b->bool)
 		result = sexpr_bool(1);
@@ -706,6 +708,9 @@ sexpr* eval_user_func(scheme_env *env, sexpr **operands, int count, sexpr *fun) 
 			var = eval2(env, operands[j + 1]);
 		else
 			var = sexpr_copy(operands[j + 1]);
+
+		if (var->type == LVAL_ERR)
+			return var;
 
 		env_insert_var(func_scope, fun->params->children[j]->sym, var);
 	}

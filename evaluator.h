@@ -17,6 +17,7 @@ void load_built_ins(scheme_env*);
 
 #define ASSERT_PARAM_MIN(c, e, err) if (c < e) return sexpr_err(err)
 #define ASSERT_PARAM_EQ(c, e, err) if (c != e) return sexpr_err(err)
+#define ASSERT_NOT_ERR(e) if (e->type == LVAL_ERR) return e
 
 #define IS_ELSE_CLAUSE(n, c, cond) n == (c - 1) && cond->type == LVAL_SYM \
                                     && strcmp("else", cond->sym) == 0
