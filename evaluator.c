@@ -680,14 +680,14 @@ sexpr* builtin_stringappend(scheme_env *env, sexpr **nodes, int count, char *op)
 	}
 	else {
 		/* s1 and s2 are strings, but their values could be NULL */
-		int len = 1 + s1 ? strlen(s1->str) : 0;
+		int len = 1 + (s1 ? strlen(s1->str) : 0);
 		len += s2 ? strlen(s2->str) : 0;
 
 		/* Competent C coders are probably recoiling in horror
 			from this next bit... */
 		result = sexpr_str(NULL);
 		result->str = malloc(len);
-		result->str[len] = '\0';
+		result->str[len - 1] = '\0';
 
 		int j = 0;
 		char *c = s1->str;
