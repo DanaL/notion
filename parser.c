@@ -94,11 +94,10 @@ token* parse_str_token(char *s, int *start) {
 		if (s[x] == '\\') {
 			/* The only escape characters I'm going to escape for now */
 			switch (s[x+1]) {
+				case '\\':
 				case '"':
 					++x;
 					break;
-				case 'n':
-					s[x+1] = '\n';
 					++x;
 					break;
 				default:
@@ -124,9 +123,8 @@ err:
 	/* Copy string, skipping backslashes */
 	int j, k;
 	for (j = *start + 1, k = 0; k < len; j++) {
-		if (s[j] != '\\') {
-			t->val[k++] = s[j];
-		}
+		if (s[j] != '\\' || (s[j] == '\\' && s[j+1] == '\\'))
+			t->val[k++] = s[j];		
 		else
 			--len;
 	}
