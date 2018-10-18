@@ -22,8 +22,8 @@ int is_whitespeace(char *s) {
 }
 
 int main(int argc, char **argv) {
-	puts("Notion (Dana's toy Scheme) 0.2.0");
-	puts("Press Ctrl-C to exit");
+	puts("Notion (Dana's toy Scheme) 0.2.1");
+	puts("Press Ctrl-C or (quit) to exit");
 
 	puts("Loading env...");
 	scheme_env *env = env_new();

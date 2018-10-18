@@ -124,7 +124,7 @@ err:
 	int j, k;
 	for (j = *start + 1, k = 0; k < len; j++) {
 		if (s[j] != '\\' || (s[j] == '\\' && s[j+1] == '\\'))
-			t->val[k++] = s[j];		
+			t->val[k++] = s[j];
 		else
 			--len;
 	}
@@ -298,6 +298,11 @@ sexpr* parse(char *s, int *curr) {
 				expr = sexpr_from_token(nt);
 				token_free(nt);
 				return expr;
+			}
+			else if (nt->type == T_NULL) {
+				sexpr_free(expr);
+				token_free(nt);
+				return sexpr_err("Unterminated s-expr. Get your parantheses in order!");				
 			}
 			else {
 				child = sexpr_from_token(nt);
