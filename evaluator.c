@@ -706,6 +706,22 @@ sexpr* builtin_stringappend(scheme_env *env, sexpr **nodes, int count, char *op)
 	return result;
 }
 
+sexpr* builtin_stringcopy(scheme_env *env, sexpr **nodes, int count, char *op) {
+	ASSERT_PARAM_EQ(count, 2, "String-append takse just one paramter");
+
+	sexpr *s1 = eval2(env, nodes[1]);
+	ASSERT_NOT_ERR(s1);
+
+	if (s1->type != LVAL_STR) {
+		sexpr_free(s1);
+		return sexpr_err("String copy only copies strings.");
+	}
+
+	/* Eval returns a copy of its input for atoms so we don't need to do
+		anything else. */
+	return s1;
+}
+
 sexpr* builtin_lambda(scheme_env *env, sexpr **nodes, int count, char *op) {
 	ASSERT_PARAM_EQ(count, 3, "Invalid lambda definition.");
 
@@ -894,4 +910,5 @@ void load_built_ins(scheme_env *env) {
 	env_insert_var(env, "string-length", sexpr_fun_builtin(&builtin_stringlen, "string-length"));
 	env_insert_var(env, "string", sexpr_fun_builtin(&builtin_string, "string"));
 	env_insert_var(env, "string-append", sexpr_fun_builtin(&builtin_stringappend, "string-append"));
+	env_insert_var(env, "string-copy", sexpr_fun_builtin(&builtin_stringcopy, "string-copy"));
 }
