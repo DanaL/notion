@@ -55,6 +55,8 @@ int sexpr_cmp(sexpr *s1, sexpr *s2) {
 			if (s1->fun != s2->fun)
 				return 0;
 			break;
+		case LVAL_STR:
+			return strcmp(s1->str, s2->str) == 0 ? 1 : 0;
 		case LVAL_NULL:
 			return 1;
 	}
@@ -261,6 +263,7 @@ sexpr* builtin_math_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 	/* Unary subtraction */
 	if (strcmp(op, "-") == 0 && count == 2) {
 		sexpr *n = eval2(env, nodes[1]);
+
 		if (n->type != LVAL_NUM)
 			r = sexpr_err("Expected number!");
 		else {
@@ -325,7 +328,7 @@ sexpr* builtin_math_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 }
 
 sexpr* builtin_min_op(scheme_env *env, sexpr **nodes, int count, char *op) {
-	ASSET_PARAM_MIN(count, 2, "At least one parameter needed for min");
+	ASSERT_PARAM_MIN(count, 2, "At least one parameter needed for min");
 
 	float curr_max, x;
 
@@ -357,7 +360,7 @@ sexpr* builtin_min_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 }
 
 sexpr* builtin_max_op(scheme_env *env, sexpr **nodes, int count, char *op) {
-	ASSET_PARAM_MIN(count, 2, "At least one parameter needed for max");
+	ASSERT_PARAM_MIN(count, 2, "At least one parameter needed for max");
 
 	float curr_max, x;
 	enum sexpr_num_type rt = NUM_TYPE_INT;
@@ -483,19 +486,31 @@ sexpr* builtin_nullq(scheme_env *env, sexpr **nodes, int count, char *op) {
 		but Scheme implementations I've seen accept broader inputs. I'm going to
 		stick to the Little Schemer "standard" for now */
 sexpr* builtin_eq(scheme_env *env, sexpr **nodes, int count, char *op) {
-	if (count != 3)
-		return sexpr_err("eq? expects exactly 2 arguments.");
+	ASSERT_PARAM_EQ(count, 3, "eq? expects exactly 2 arguments.");
 
 	sexpr *a = eval2(env, nodes[1]);
+	ASSERT_NOT_ERR(a);
 	sexpr *b = eval2(env, nodes[2]);
+	if (b->type == LVAL_ERR) {
+		sexpr_free(a);
+		return b;
+	}
 
-	/* Note, this actually hides errors that occurred in resolving the two
-			inputs, which is maybe not the most ideal behaviour */
 	sexpr *result = NULL;
 	if (a->type == LVAL_BOOL && b->type == LVAL_BOOL && a->bool == b->bool)
 		result = sexpr_bool(1);
 	else if (a->type == LVAL_SYM && b->type == LVAL_SYM && strcmp(a->sym, b->sym) == 0)
 		result = sexpr_bool(1);
+	else if (a->type == LVAL_STR && b->type == LVAL_STR && strcmp(a->str, b->str) == 0)
+		result = sexpr_bool(1);
+	else if (a->type == LVAL_NUM && b->type == LVAL_NUM && a->num_type == b->num_type) {
+		if (a->num_type == NUM_TYPE_INT && a->n.i_num == b->n.i_num)
+			result = sexpr_bool(1);
+		else if (a->num_type == NUM_TYPE_DEC && fabs(a->n.d_num - b->n.d_num) < 0.0000001)
+			result = sexpr_bool(1);
+		else
+			result = sexpr_bool(0);
+	}
 	else
 		result = sexpr_bool(0);
 
@@ -568,11 +583,48 @@ sexpr* build_func(sexpr *header, sexpr *body, char *name) {
 	return sexpr_fun_user(params, sexpr_copy(body), name);
 }
 
-/* ((lambda (a b) (+ (* 2 a) b)) 5 6) (/) */
-// (lambda (a b) (+ (* 2 a) b))
+sexpr* builtin_cond(scheme_env *env, sexpr **nodes, int count, char *op) {
+	ASSERT_PARAM_MIN(count, 2, "Cond requires at least one expression.");
+
+	for (int j = 1; j < count; j++) {
+		/* Each item in the cond expression must be a list containing a test
+			and a result. If the test resolves to neither #t or #f then we have
+			an error condition.
+
+			An easy way to do the else clause is to make it a function that
+			always returns true, but the else clause can only be the final item.
+		*/
+		if (nodes[j]->type == LVAL_LIST) {
+			sexpr *cond = nodes[j];
+			ASSERT_PARAM_EQ(cond->count, 2, "Invalid cond expression.");
+
+			if (IS_ELSE_CLAUSE(j, count, cond->children[0]))
+			{
+				return eval2(env, cond->children[1]);
+			}
+
+			sexpr *result = eval2(env, cond->children[0]);
+			if (result->type == LVAL_ERR)
+				return result;
+			else if (result->type != LVAL_BOOL) {
+				sexpr_free(result);
+				return sexpr_err("Invalid boolean test.");
+			}
+
+			if (result->bool) {
+				sexpr_free(result);
+				return eval2(env, cond->children[1]);
+			}
+		}
+		else
+			return sexpr_err("Cond tests must be an expression.");
+	}
+
+	return sexpr_null();
+}
+
 sexpr* builtin_lambda(scheme_env *env, sexpr **nodes, int count, char *op) {
-	if (count != 3)
-		return sexpr_err("Invalid lambda definition");
+	ASSERT_PARAM_EQ(count, 3, "Invalid lambda definition.");
 
 	/* So function evaluation excepts the paramter list for function
 		calls to include the function name, so gotta add in a dummy
@@ -621,6 +673,30 @@ sexpr* define(scheme_env *env, sexpr **nodes, int count, char *op) {
 		return define_var(env, nodes, count, op);
 }
 
+<<<<<<< HEAD
+=======
+sexpr* resolve_symbol(scheme_env *env, sexpr *s) {
+	sexpr *r = env_fetch_var(env, s->sym);
+
+	if (r->type == LVAL_SYM) {
+		sexpr *r2 = env_fetch_var(env, r->sym);
+		/* If the symbol isn't found, just return the original result.
+			(This is for cases like (define x 'aaa) where aaa is a meaningless
+			symbol) */
+		if (r2->type == LVAL_ERR) {
+			sexpr_free(r2);
+			return r;
+		}
+		else {
+			sexpr_free(r);
+			return r2;
+		}
+	}
+
+	return r;
+}
+
+>>>>>>> b2273287628e22a5a8e304d04b10dd52a205971d
 sexpr* eval_user_func(scheme_env *env, sexpr **operands, int count, sexpr *fun) {
 	if ((count - 1) < fun->params->count) {
 		return sexpr_err("Too few paramters passed to function.");
@@ -639,6 +715,9 @@ sexpr* eval_user_func(scheme_env *env, sexpr **operands, int count, sexpr *fun) 
 			var = eval2(env, operands[j + 1]);
 		else
 			var = sexpr_copy(operands[j + 1]);
+
+		if (var->type == LVAL_ERR)
+			return var;
 
 		env_insert_var(func_scope, fun->params->children[j]->sym, var);
 	}
@@ -684,7 +763,7 @@ sexpr* eval2(scheme_env *env, sexpr *v) {
 
 			return result;
 		case LVAL_SYM:
-			return env_fetch_var(env, v->sym);
+			return resolve_symbol(env, v);
 		case LVAL_FUN:
 			break;
 		case LVAL_ERR:
@@ -692,6 +771,7 @@ sexpr* eval2(scheme_env *env, sexpr *v) {
 		case LVAL_NUM:
 		case LVAL_BOOL:
 		case LVAL_NULL:
+		case LVAL_STR:
 			return sexpr_copy(v);
 			break;
 	}
@@ -729,4 +809,5 @@ void load_built_ins(scheme_env *env) {
 	env_insert_var(env, "quote", sexpr_fun_builtin(&quote_form, "quote"));
 	env_insert_var(env, "lambda", sexpr_fun_builtin(&builtin_lambda, "lambda"));
 	env_insert_var(env, "dump", sexpr_fun_builtin(&builtin_mem_dump, "dump"));
+	env_insert_var(env, "cond", sexpr_fun_builtin(&builtin_cond, "cond"));
 }

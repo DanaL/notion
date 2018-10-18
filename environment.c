@@ -79,7 +79,9 @@ sexpr* env_fetch_var(scheme_env *env, char* key) {
 	int h = bt_hash(key);
 
 	if (!env->buckets[h]) {
-		sexpr *r = CHECK_PARENT_SCOPE(env, key);
+		char msg[256];
+		snprintf(msg, sizeof msg, "%s%s", "Unbound symbol: ", key);
+		sexpr *r = CHECK_PARENT_SCOPE(env, key, msg);
 		return r;
 	}
 	bucket *b = env->buckets[h];
@@ -91,8 +93,11 @@ sexpr* env_fetch_var(scheme_env *env, char* key) {
 	while (b && strcmp(b->name, key) != 0)
 		b = b->next;
 
-	if (!b)
-		return CHECK_PARENT_SCOPE(env, key);
+	if (!b) {
+		char msg[256];
+		snprintf(msg, sizeof msg, "%s%s", "Unbound symbol: ", key);
+		return CHECK_PARENT_SCOPE(env, key, msg);
+	}
 
 	return sexpr_copy(b->val);
 }
