@@ -96,7 +96,10 @@ sexpr* sexpr_fun_user(sexpr *params, sexpr *body, char *name) {
 sexpr* sexpr_str(char *s) {
 	sexpr *v = malloc(sizeof(sexpr));
 	v->type = LVAL_STR;
-	v->str = n_strcpy(v->str, s);
+	if (s)
+		v->str = n_strcpy(v->str, s);
+	else
+		v-> str = NULL;
 
 	return v;
 }
@@ -163,7 +166,8 @@ void sexpr_free(sexpr *v) {
 			free(v->sym);
 			break;
 		case LVAL_STR:
-			free(v->str);
+			if (v->str)
+				free(v->str);
 			break;
 		case LVAL_LIST:
 			for (int j = 0; j < v->count; j++)

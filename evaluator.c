@@ -623,6 +623,89 @@ sexpr* builtin_cond(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return sexpr_null();
 }
 
+sexpr* builtin_stringq(scheme_env *env, sexpr **nodes, int count, char *op) {
+	ASSERT_PARAM_EQ(count, 2, "String? takes just one paramter.");
+
+	sexpr *s = eval2(env, nodes[1]);
+	sexpr *result = sexpr_bool(s->type == LVAL_STR ? 1 : 0);
+	sexpr_free(s);
+
+	return result;
+}
+
+sexpr* builtin_stringlen(scheme_env *env, sexpr **nodes, int count, char *op) {
+	ASSERT_PARAM_EQ(count, 2, "String? takes just one paramter.");
+
+	sexpr *s = eval2(env, nodes[1]);
+	if (s->type != LVAL_STR) {
+		sexpr_free(s);
+		return sexpr_err("That was not a string.");
+	}
+
+	sexpr *result = sexpr_num(NUM_TYPE_INT, strlen(s->str));
+	sexpr_free(s);
+
+	return result;
+}
+
+sexpr* builtin_string(scheme_env *env, sexpr **nodes, int count, char *op) {
+	ASSERT_PARAM_EQ(count, 2, "String takes just one parameter.");
+
+	sexpr *src = eval2(env, nodes[1]);
+	if (src->type != LVAL_STR) {
+		sexpr_free(src);
+		return sexpr_err("String takes a string type for its parameter.");
+	}
+
+	sexpr *result = sexpr_copy(src);
+	sexpr_free(src);
+
+	return result;
+}
+
+sexpr* builtin_stringappend(scheme_env *env, sexpr **nodes, int count, char *op) {
+	ASSERT_PARAM_EQ(count, 3, "String-append takse just two paramters");
+
+	sexpr *s1 = eval2(env, nodes[1]);
+	ASSERT_NOT_ERR(s1);
+	sexpr *s2 = eval2(env, nodes[2]);
+	if (s2->type == LVAL_ERR) {
+		sexpr_free(s1);
+		return s2;
+	}
+
+	sexpr *result;
+	if (s1->type != LVAL_STR || s2->type != LVAL_STR) {
+		result = sexpr_err("String-append requiers two strings.");
+	}
+	else {
+		/* s1 and s2 are strings, but their values could be NULL */
+		int len = 1 + s1 ? strlen(s1->str) : 0;
+		len += s2 ? strlen(s2->str) : 0;
+
+		result = sexpr_str(NULL);
+		result->str = malloc(len);
+		result->str[len] = '\0';
+
+		int j = 0;
+		char *c = s1->str;
+		while (c && *c != '\0') {
+			result->str[j++] = *c;
+			++c;
+		}
+		c = s2->str;
+		while (c && *c != '\0') {
+			result->str[j++] = *c;
+			++c;
+		}
+
+		sexpr_free(s1);
+		sexpr_free(s2);
+	}
+
+	return result;
+}
+
 sexpr* builtin_lambda(scheme_env *env, sexpr **nodes, int count, char *op) {
 	ASSERT_PARAM_EQ(count, 3, "Invalid lambda definition.");
 
@@ -807,4 +890,8 @@ void load_built_ins(scheme_env *env) {
 	env_insert_var(env, "lambda", sexpr_fun_builtin(&builtin_lambda, "lambda"));
 	env_insert_var(env, "dump", sexpr_fun_builtin(&builtin_mem_dump, "dump"));
 	env_insert_var(env, "cond", sexpr_fun_builtin(&builtin_cond, "cond"));
+	env_insert_var(env, "string?", sexpr_fun_builtin(&builtin_stringq, "string?"));
+	env_insert_var(env, "string-length", sexpr_fun_builtin(&builtin_stringlen, "string-length"));
+	env_insert_var(env, "string", sexpr_fun_builtin(&builtin_string, "string"));
+	env_insert_var(env, "string-append", sexpr_fun_builtin(&builtin_stringappend, "string-append"));
 }
