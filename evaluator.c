@@ -408,8 +408,7 @@ sexpr* builtin_list(scheme_env *env, sexpr **nodes, int count, char *op) {
 }
 
 sexpr* builtin_cdr(scheme_env *env, sexpr **nodes, int count, char *op) {
-	if (count != 2)
-		return sexpr_err("cdr expects only one argument");
+	ASSERT_PARAM_EQ(count, 2, "cdr expects only one argument");
 
 	sexpr *l = eval2(env, nodes[1]);
 	if (l->type != LVAL_LIST || l->count == 0) {
@@ -427,8 +426,7 @@ sexpr* builtin_cdr(scheme_env *env, sexpr **nodes, int count, char *op) {
 }
 
 sexpr* builtin_car(scheme_env *env, sexpr **nodes, int count, char *op) {
-	if (count != 2)
-		return sexpr_err("car expects only one argument");
+	ASSERT_PARAM_EQ(count, 2, "car expects only one argument");
 
 	sexpr *l = eval2(env, nodes[1]);
 
@@ -445,8 +443,7 @@ sexpr* builtin_car(scheme_env *env, sexpr **nodes, int count, char *op) {
 }
 
 sexpr* builtin_cons(scheme_env *env, sexpr **nodes, int count, char *op) {
-	if (count != 3)
-		return sexpr_err("cons expects two aruments");
+	ASSERT_PARAM_EQ(count, 3, "cons expects two aruments");
 
 	sexpr *a2 = eval2(env, nodes[2]);
 
@@ -468,8 +465,7 @@ sexpr* builtin_cons(scheme_env *env, sexpr **nodes, int count, char *op) {
 }
 
 sexpr* builtin_nullq(scheme_env *env, sexpr **nodes, int count, char *op) {
-	if (count != 2)
-		return sexpr_err("null? expects just 1 argument");
+	ASSERT_PARAM_EQ(count, 2, "null? expects just 1 argument");
 
 	sexpr *a = eval2(env, nodes[1]);
 	if (a->type == LVAL_ERR)
@@ -521,9 +517,8 @@ sexpr* builtin_eq(scheme_env *env, sexpr **nodes, int count, char *op) {
 }
 
 sexpr* builtin_eval(scheme_env *env, sexpr **nodes, int count, char *op) {
-	if (count != 2)
-		return sexpr_err("Eval requires just one parameter.");
-
+	ASSERT_PARAM_EQ(count, 2, "eval expects just 1 argument");
+	
 	sexpr *f = eval2(env, nodes[1]);
 
 	if (IS_FUNC(f)) {
