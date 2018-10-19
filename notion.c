@@ -21,8 +21,10 @@ int is_whitespeace(char *s) {
 	return 1;
 }
 
+#define MAX_LINE_LENGTH 999
+
 int main(int argc, char **argv) {
-	puts("Notion (Dana's toy Scheme) 0.2.1");
+	puts("Notion (Dana's toy Scheme) 0.3.0");
 	puts("Press Ctrl-C or (quit) to exit");
 
 	puts("Loading env...");
@@ -32,9 +34,9 @@ int main(int argc, char **argv) {
 	char *line;
 	while (1) {
 #ifdef _WIN32
-		line = malloc(sizeof(char) * 1000);
+		line = malloc(sizeof(char) * (MAX_LINE_LENGTH + 1));
 		printf("> ");
-		fgets(line, 200, stdin);
+		fgets(line, MAX_LINE_LENGTH, stdin);
 		char *p = strchr(line, '\n');
 		if (p) {
 			*p = '\0';
