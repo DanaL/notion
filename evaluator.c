@@ -774,8 +774,6 @@ sexpr* define(scheme_env *env, sexpr **nodes, int count, char *op) {
 		return define_var(env, nodes, count, op);
 }
 
-<<<<<<< HEAD
-=======
 sexpr* resolve_symbol(scheme_env *env, sexpr *s) {
 	sexpr *r = env_fetch_var(env, s->sym);
 
@@ -797,7 +795,6 @@ sexpr* resolve_symbol(scheme_env *env, sexpr *s) {
 	return r;
 }
 
->>>>>>> b2273287628e22a5a8e304d04b10dd52a205971d
 sexpr* eval_user_func(scheme_env *env, sexpr **operands, int count, sexpr *fun) {
 	if ((count - 1) < fun->params->count) {
 		return sexpr_err("Too few paramters passed to function.");
