@@ -121,11 +121,11 @@ sexpr* sexpr_sym(char *s) {
 }
 
 sexpr* sexpr_bool(int v) {
-		sexpr *b = malloc(sizeof(sexpr));
-		b->type = LVAL_BOOL;
-		b->bool = v;
+	sexpr *b = malloc(sizeof(sexpr));
+	b->type = LVAL_BOOL;
+	b->bool = v;
 
-		return b;
+	return b;
 }
 
 sexpr* sexpr_list(void) {
