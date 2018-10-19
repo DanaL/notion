@@ -94,11 +94,10 @@ token* parse_str_token(char *s, int *start) {
 		if (s[x] == '\\') {
 			/* The only escape characters I'm going to escape for now */
 			switch (s[x+1]) {
+				case '\\':
 				case '"':
 					++x;
 					break;
-				case 'n':
-					s[x+1] = '\n';
 					++x;
 					break;
 				default:
@@ -124,9 +123,8 @@ err:
 	/* Copy string, skipping backslashes */
 	int j, k;
 	for (j = *start + 1, k = 0; k < len; j++) {
-		if (s[j] != '\\') {
+		if (s[j] != '\\' || (s[j] == '\\' && s[j+1] == '\\'))
 			t->val[k++] = s[j];
-		}
 		else
 			--len;
 	}
@@ -300,6 +298,11 @@ sexpr* parse(char *s, int *curr) {
 				expr = sexpr_from_token(nt);
 				token_free(nt);
 				return expr;
+			}
+			else if (nt->type == T_NULL) {
+				sexpr_free(expr);
+				token_free(nt);
+				return sexpr_err("Unterminated s-expr. Get your parantheses in order!");				
 			}
 			else {
 				child = sexpr_from_token(nt);
