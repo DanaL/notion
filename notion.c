@@ -7,10 +7,11 @@
 #include <editline/readline.h>
 #endif
 
-#include "parser.h"
 #include "environment.h"
 #include "evaluator.h"
+#include "parser.h"
 #include "sexpr.h"
+#include "tokenizer.h"
 
 int is_whitespeace(char *s) {
 	while (*s) {
@@ -24,12 +25,16 @@ int is_whitespeace(char *s) {
 #define MAX_LINE_LENGTH 999
 
 int main(int argc, char **argv) {
-	puts("Notion (Dana's toy Scheme) 0.3.0");
+	puts("Notion (Dana's toy Scheme) 0.3.1 BETA 1 Final Prologue");
 	puts("Press Ctrl-C or (quit) to exit");
 
 	puts("Loading env...");
 	scheme_env *env = env_new();
 	load_built_ins(env);
+	tokenizer *tz = tokenizer_create();
+	parser *p = parser_create();
+	token *nt;
+	int okay;
 
 	char *line;
 	while (1) {
@@ -46,40 +51,57 @@ int main(int argc, char **argv) {
 
 		add_history(line);
 #endif
-		int c = 0;
-		sexpr *ast = parse(line, &c);
-
-		if (ast->type == LVAL_ERR) {
-			sexpr_pprint(ast);
+		/* Read in an expression from the user */
+		okay = 1;
+		if (is_whitespeace(line)) {
+			free(line);
 			putchar('\n');
-			sexpr_free(ast);
 			continue;
 		}
 
-		if (is_whitespeace(line))
-			putchar('\n');
-		else if (ast->type == LVAL_ERR) {
-			sexpr_free(ast);
+		tokenizer_feed_line(tz, line);
+		nt = next_token(tz);
+		while (nt) {
+			parser_feed_token(p, nt);
+			token_free(nt);
+			nt = next_token(tz);
 		}
-		else
-		{
-			sexpr *result = eval2(env, ast);
-			sexpr_free(ast);
+		token_free(nt);
 
-			if (result->type == LVAL_ERR && strcmp(result->err, "<quit>") == 0) {
-				puts("Notion exiting.");
-				sexpr_free(result);
-				break;
-			}
-
-			sexpr_pprint(result);
-			putchar('\n');
-			sexpr_free(result);
+		if (!p->complete) {
+			puts("Incomplete expression. Did you type all your )s?");
+			parser_clear(p);
+			okay = 0;
 		}
-
+		else if (p->head->type == LVAL_ERR) {
+			sexpr_pprint(p->head);
+			parser_clear(p);
+			okay = 0;
+		}
 		free(line);
+
+		if (!okay)
+			continue;
+
+		sexpr *ast = sexpr_copy(p->head);
+		parser_clear(p);
+
+		sexpr *result = eval2(env, ast);
+		sexpr_free(ast);
+
+		if (result->type == LVAL_ERR && strcmp(result->err, "<quit>") == 0) {
+			puts("Notion exiting.");
+			sexpr_free(result);
+			break;
+		}
+
+		sexpr_pprint(result);
+		putchar('\n');
+		sexpr_free(result);
 	}
 
+	tokenizer_free(tz);
+	parser_free(p);
 	env_free(env);
 
 	return 0;

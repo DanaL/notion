@@ -1,3 +1,10 @@
+/* The parser accpets tokens one at a time via parser_feed_token()
+	and builds up an expression one token at a time. Parser is probably
+	too strong a word for it at the moment. Is only significant checking is
+	making sure the open and close parantheses add up.
+
+	It is not yet checking to see if a valid scheme expression is being made */
+
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,6 +42,7 @@ sexpr* sexpr_from_token(token *t) {
 		case T_LIST_END:
 		case T_NULL:
 		case T_UNKNOWN:
+		case T_COMMENT:
 		case T_SINGLE_QUOTE:
 			expr = sexpr_err("Unexpeted token.");
 			break;
@@ -43,81 +51,100 @@ sexpr* sexpr_from_token(token *t) {
 	return expr;
 }
 
-void dump_tokens(char *s) {
-		int c = 0;
+parser* parser_create(void) {
+	parser *p = malloc(sizeof(parser));
+	p->complete = 0;
+	p->open_p = 0;
+	p->closed_p = 0;
+	p->curr = NULL;
+	p->head = NULL;
 
-		token *nt = next_token(s, &c);
-		while (nt && nt->type != T_NULL) {
-			print_token(nt);
-			nt = next_token(s, &c);
-		}
+	return p;
 }
 
-/* Either return an atom, or if we find the start of a list,
-	keep pulling the next token until we hit the end of the list or
-	run out of tokens (which is an error condition).
+void parser_free(parser *p) {
+	if (p->curr)
+		sexpr_free(p->curr);
+	free(p);
+}
 
-	If we encounter a nested list, it's recursion time! */
-sexpr* parse(char *s, int *curr) {
-	sexpr *expr = NULL;
+void parser_clear(parser* p) {
+	if (p->curr)
+		sexpr_free(p->curr);
+	p->curr = NULL;
+	p->head = NULL;
+	p->complete = 0;
+	p->open_p = 0;
+	p->closed_p = 0;
+}
 
-	token *nt = next_token(s, curr);
-	if (nt->type == T_LIST_START) {
-		expr = sexpr_list();
+void parser_feed_token(parser* p, token* t) {
+	/* If we have a open parenthesis, start a new list and make it our current
+		head. If head is an existing list, we append the new list to its lists
+		if children. */
+	if (t->type == T_LIST_START) {
+		sexpr *list = sexpr_list();
 
-		token_free(nt);
-		nt = next_token(s, curr);
-		while (nt->type != T_LIST_END) {
-			sexpr *child = NULL;
-			/* Single quote form, so I want to transform, say, 'Q into
-				(quote Q) or '(1 2 3) into (quote (1 2 3)) */
-			if (nt->type == T_SINGLE_QUOTE) {
-				child = sexpr_list();
-				sexpr_append(child, sexpr_sym("quote"));
-				sexpr_append(child, parse(s, curr));
-			}
-			else if (nt->type == T_LIST_START) {
-				(*curr)--; /* Back up the token otherwise we skip past the start of the list in the recursive call */
-				child = parse(s, curr);
-			}
-			else if (nt->type == T_ERR) {
-				sexpr_free(expr);
-				expr = sexpr_from_token(nt);
-				token_free(nt);
-				return expr;
-			}
-			else if (nt->type == T_NULL) {
-				sexpr_free(expr);
-				token_free(nt);
-				return sexpr_err("Unterminated s-expr. Get your parantheses in order!");
-			}
-			else {
-				child = sexpr_from_token(nt);
-			}
+		/* Are we at the start of a brand new expression? */
+		if (!p->head)
+			p->head = list;
 
-			sexpr_append(expr, child);
-			token_free(nt);
-			nt = next_token(s, curr);
-		}
+		list->parent = p->curr;
+
+		if (p->curr)
+			sexpr_append(p->curr, list);
+
+		p->curr = list;
+		p->open_p++;
 	}
-	else if (nt->type == T_SINGLE_QUOTE) {
-		expr = sexpr_list();
-		sexpr_append(expr, sexpr_sym("quote"));
-		sexpr_append(expr, parse(s, curr));
-	}
-	else if (nt->type == T_ERR) {
-		if (expr)
-			sexpr_free(expr);
-		expr = sexpr_from_token(nt);
-		token_free(nt);
+	else if (t->type == T_SINGLE_QUOTE) {
+		/* This is the case of: (car '(1 2 3)), which I want to expand to:
+			(car (quote (1 2 3)))
 
-		return expr;
+			So start a new list, add a quote symbol to it and make that the
+			new curr pointer.
+		 */
+		sexpr *quote = sexpr_list();
+		sexpr_append(quote, sexpr_sym("quote"));
+		/* I don't really need to increment the counts but I know sometime in
+			the future I'll be debugging and manually counting them and panic
+			when they don't match what the program has */
+		p->open_p++;
+		p->closed_p++;
+
+		quote->parent = p->curr;
+		sexpr_append(p->curr, quote);
+		p->curr = quote;
+	}
+	else if (t->type == T_LIST_END) {
+		/* Pop up the chain to the parent */
+		p->curr = p->curr->parent;
+		p->closed_p++;
+
+		if (p->open_p == p->closed_p)
+			p->complete = 1;
 	}
 	else {
-		expr = sexpr_from_token(nt);
+		sexpr *e = sexpr_from_token(t);
+
+		if (e->type == LVAL_ERR) {
+			parser_clear(p);
+			sexpr_free(p->head);
+			p->head = e;
+			p->complete = 1;
+			return;
+		}
+
+		/* Okay, if we have an atom and the head is empty, our s-expression
+		 	is just a single atom, otherwise we want to append it to curr */
+		if (!p->head && IS_ATOM(e)) {
+			p->head = e;
+			p->complete = 1;
+
+			return;
+		}
+		else {
+			sexpr_append(p->curr, e);
+		}
 	}
-
-	token_free(nt);
-
-	return expr;
 }

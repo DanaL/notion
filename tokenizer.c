@@ -15,7 +15,10 @@ token* token_create(enum token_type type) {
 }
 
 void token_free(token *t) {
-	if (t->val != NULL)
+	if (!t)
+		return;
+		
+    if (t->val != NULL)
 		free(t->val);
 
 	free(t);
@@ -95,7 +98,7 @@ void tokenizer_free(tokenizer* t) {
     free(t);
 }
 
-void feed_line(tokenizer* t, char* line) {
+void tokenizer_feed_line(tokenizer* t, char* line) {
     if (t->curr_line)
         free(t->curr_line);
     t->curr_line = n_strcpy(t->curr_line, line);
@@ -171,7 +174,7 @@ token* next_token(tokenizer* t) {
 
     if (t->curr_line[t->pos] == '(') {
         tk = token_create(T_LIST_START);
-        tk->val = "(";
+        tk->val =  n_strcpy(tk->val, "(");
         t->pos++;
 
         return tk;

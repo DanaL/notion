@@ -20,7 +20,7 @@ typedef struct tokenizer {
 
 tokenizer* tokenizer_create(void);
 void tokenizer_free(tokenizer*);
-void feed_line(tokenizer*, char*);
+void tokenizer_feed_line(tokenizer*, char*);
 token* next_token(tokenizer*);
 void print_token(token*);
 

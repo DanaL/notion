@@ -64,76 +64,10 @@ int sexpr_cmp(sexpr *s1, sexpr *s2) {
 	return 1;
 }
 
-int test_sexpr(scheme_env *env, char *s, sexpr *expected) {
-	int c = 0;
-	char *line = NULL;
-	line = n_strcpy(line, s);
-	sexpr *ast = parse(line, &c);
-	printf("Checking: %s\n", line);
-	sexpr *result = eval2(env, ast);
-
-	int r = sexpr_cmp(result, expected);
-	sexpr_free(result);
-	sexpr_free(ast);
-	free(line);
-
-	if (!r)
-		printf("** Test %s failed T_T\n", s);
-
-	return r;
-}
-
 sexpr* builtin_mem_dump(scheme_env *env, sexpr **nodes, int count, char *op) {
 	env_dump(env);
 
 	return sexpr_null();
-}
-
-sexpr* builtin_self_test(scheme_env *env, sexpr **nodes, int count, char *op) {
-	scheme_env *test_env = env_new(); /* We'll test in a fresh environment */
-	load_built_ins(test_env);
-	sexpr *null_e = sexpr_null();
-	int r = 1;
-
-	sexpr *p = sexpr_num_s("4");
-	if (!test_sexpr(test_env, "(/ (car (cdr (cdr(list(car (car (cdr (list 1 (list 2 3) (list (list 4)))))) 4 8)))) 2)", p))
-		r = 0;
-	sexpr_free(p);
-
-	if (!test_sexpr(test_env, "(define f 'list)", null_e))
-		r = 0;
-	if (!test_sexpr(test_env, "(define f2 '((eval f) x y))", null_e))
-		r = 0;
-	if (!test_sexpr(test_env, "(define x 4)", null_e))
-		r = 0;
-	if (!test_sexpr(test_env, "(define y 5)", null_e))
-		r = 0;
-
-	int c = 0;
-	p = parse("(list 4 5)", &c);
-	sexpr *expected = eval2(test_env, p);
-	if (!test_sexpr(test_env, "(eval f2)", expected))
-		r = 0;
-	sexpr_free(p);
-	sexpr_free(expected);
-
-	if (!test_sexpr(test_env, "(define a #t)", null_e))
-		r = 0;
-
-	p = sexpr_bool(1);
-	if (!test_sexpr(test_env, "(eq? a #t)", p))
-		r = 0;
-	sexpr_free(p);
-
-	p = sexpr_bool(0);
-	if (!test_sexpr(test_env, "(eq? a #f)", p))
-		r = 0;
-	sexpr_free(p);
-
-	sexpr_free(null_e);
-	env_free(test_env);
-
-	return sexpr_bool(r);
 }
 
 /* I think this is probably incorrect, or not totally correct because I haven't
@@ -518,7 +452,7 @@ sexpr* builtin_eq(scheme_env *env, sexpr **nodes, int count, char *op) {
 
 sexpr* builtin_eval(scheme_env *env, sexpr **nodes, int count, char *op) {
 	ASSERT_PARAM_EQ(count, 2, "eval expects just 1 argument");
-	
+
 	sexpr *f = eval2(env, nodes[1]);
 
 	if (IS_FUNC(f)) {
@@ -881,7 +815,6 @@ void load_built_ins(scheme_env *env) {
 	env_insert_var(env, "null?", sexpr_fun_builtin(&builtin_nullq, "null?"));
 	env_insert_var(env, "pair?", sexpr_fun_builtin(&builtin_pairq, "pair?"));
 	env_insert_var(env, "eval", sexpr_fun_builtin(&builtin_eval, "eval"));
-	env_insert_var(env, "self-test", sexpr_fun_builtin(&builtin_self_test, "self-test"));
 	env_insert_var(env, "+", sexpr_fun_builtin(&builtin_math_op, "+"));
 	env_insert_var(env, "-", sexpr_fun_builtin(&builtin_math_op, "-"));
 	env_insert_var(env, "*", sexpr_fun_builtin(&builtin_math_op, "*"));

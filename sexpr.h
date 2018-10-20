@@ -30,6 +30,8 @@ struct sexpr {
 
 	int count;
 	struct sexpr **children;
+
+	struct sexpr *parent;
 };
 
 sexpr* sexpr_err(char*);
