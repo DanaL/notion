@@ -80,6 +80,8 @@ int is_valid_in_symbol(char c)
 		case '.':
 		case '_':
 		case '-':
+		case '+':
+		case '*':
 			return 1;
 	}
 
@@ -302,7 +304,7 @@ sexpr* parse(char *s, int *curr) {
 			else if (nt->type == T_NULL) {
 				sexpr_free(expr);
 				token_free(nt);
-				return sexpr_err("Unterminated s-expr. Get your parantheses in order!");				
+				return sexpr_err("Unterminated s-expr. Get your parantheses in order!");
 			}
 			else {
 				child = sexpr_from_token(nt);
