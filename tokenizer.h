@@ -2,7 +2,7 @@
 #define tokenizer_h
 
 enum token_type { T_NUM, T_SYM, T_STR, T_NULL, T_LIST_START, T_LIST_END,
-	T_UNKNOWN, T_CONSTANT, T_SINGLE_QUOTE, T_ERR };
+	T_UNKNOWN, T_CONSTANT, T_SINGLE_QUOTE, T_ERR, T_COMMENT };
 
 typedef struct token {
 	enum token_type type;

@@ -53,6 +53,8 @@ void print_token(token *t) {
 		case T_SINGLE_QUOTE:
 			printf("Single quote\n");
 			break;
+        case T_COMMENT:
+            break;
 	}
 }
 
@@ -94,6 +96,8 @@ void tokenizer_free(tokenizer* t) {
 }
 
 void feed_line(tokenizer* t, char* line) {
+    if (t->curr_line)
+        free(t->curr_line);
     t->curr_line = n_strcpy(t->curr_line, line);
     t->pos = 0;
 }
@@ -198,6 +202,11 @@ token* next_token(tokenizer* t) {
 		tk = token_create(T_SINGLE_QUOTE);
 		x = t->pos + 1;
 	}
+    else if (s[t->pos] == ';') {
+        /* We're at a comment so we can just ignore the rest of the line */
+        t->pos = strlen(t->curr_line);
+        return token_create(T_COMMENT);
+    }
 	else if(s[t->pos] == ')') {
 		tk = token_create(T_LIST_END);
 		x = t->pos + 1;
