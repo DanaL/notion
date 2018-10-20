@@ -113,7 +113,8 @@ void parser_feed_token(parser* p, token* t) {
 		p->closed_p++;
 
 		quote->parent = p->curr;
-		sexpr_append(p->curr, quote);
+		if (p->curr)
+			sexpr_append(p->curr, quote);
 		p->curr = quote;
 	}
 	else if (t->type == T_LIST_END) {
