@@ -64,6 +64,79 @@ int sexpr_cmp(sexpr *s1, sexpr *s2) {
 	return 1;
 }
 
+/* Read in a file of Scheme source code. It expects one parameter -- the
+	file name as a string. I guess the parameter could be a calculated/evaled
+	string but I can't imagine myself needing that over the course of working
+	through the Little Schemer
+
+	Note: it's actually possible to call load in a nested function. Eg:
+		(define f (lambda () (load "atomq.scm")))
+
+	I'm not sure that's a problem or not. The functions loaded and variables
+	bound will disappear once that scope is exited.
+
+	I could always seek out the global scope when load is called, but tbh
+	I'm not sure which behaviour is correct/better.
+*/
+sexpr* builtin_load(scheme_env *env, sexpr **nodes, int count, char *op) {
+	ASSERT_PARAM_EQ(count, 2, "Load expects only the filename to be loaded.");
+
+	if (nodes[1]->type != LVAL_STR)
+		return sexpr_err("Filename must be a string constant.");
+
+	char buffer[1024];
+	FILE *infile = fopen(nodes[1]->str, "r");
+
+    parser *p = parser_create();
+    tokenizer *t = tokenizer_create();
+
+	if (!infile) {
+		puts("File not found.");
+	}
+	else {
+		sexpr *expr = NULL;
+
+		while (fgets(buffer, 1024, infile)) {
+            tokenizer_feed_line(t, buffer);
+            token *nt;
+            while (1) {
+				nt = next_token(t);
+
+                if (!nt)
+                    break;
+				else if (nt->type == T_COMMENT) {
+					token_free(nt);
+					continue;
+				}
+				else {
+					parser_feed_token(p, nt);
+					token_free(nt);
+                    if (p->open_p == p->closed_p) {
+                        expr = sexpr_copy(p->head);
+						parser_clear(p);
+                        sexpr *result = eval2(env, expr);
+						sexpr_free(expr);
+
+						if (result->type != LVAL_NULL) {
+							sexpr_pprint(result);
+							putchar('\n');
+						}
+						sexpr_free(result);
+                    }
+                }
+            }
+			if (nt)
+				token_free(nt);
+		}
+	}
+
+	tokenizer_free(t);
+	parser_free(p);
+	fclose(infile);
+
+	return sexpr_null();
+}
+
 sexpr* builtin_mem_dump(scheme_env *env, sexpr **nodes, int count, char *op) {
 	env_dump(env);
 
@@ -74,8 +147,7 @@ sexpr* builtin_mem_dump(scheme_env *env, sexpr **nodes, int count, char *op) {
 	yet learned about pairs in Scheme yet. But in the REPLs I've tried,
 	pair? returns false for atoms or an empty list */
 sexpr *builtin_pairq(scheme_env *env, sexpr **nodes, int count, char *op) {
-	if (count != 2)
-		return sexpr_err("Just one parameter expected.");
+	ASSERT_PARAM_EQ(count, 2, "Just one parameter expected.");
 
 	int pq = 0;
 	sexpr *v = eval2(env, nodes[1]);
@@ -841,4 +913,5 @@ void load_built_ins(scheme_env *env) {
 	env_insert_var(env, "string", sexpr_fun_builtin(&builtin_string, "string"));
 	env_insert_var(env, "string-append", sexpr_fun_builtin(&builtin_stringappend, "string-append"));
 	env_insert_var(env, "string-copy", sexpr_fun_builtin(&builtin_stringcopy, "string-copy"));
+	env_insert_var(env, "load", sexpr_fun_builtin(&builtin_load, "load"));
 }

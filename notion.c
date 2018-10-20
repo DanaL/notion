@@ -25,7 +25,7 @@ int is_whitespeace(char *s) {
 #define MAX_LINE_LENGTH 999
 
 int main(int argc, char **argv) {
-	puts("Notion (Dana's toy Scheme) 0.3.1 BETA 1 Final Prologue");
+	puts("Notion (Dana's toy Scheme) 0.3.2 BETA 1 Final Prologue");
 	puts("Press Ctrl-C or (quit) to exit");
 
 	puts("Loading env...");
