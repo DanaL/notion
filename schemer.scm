@@ -94,12 +94,6 @@
     )
 ))
 
-(define rempick (lambda (l n)
-    (cond ((null? l)   '())
-            ((eq? (sub1 n) 0) (cdr l))
-            (else (cons (car l) (rempick (cdr l) (sub1 n))))
-    )
-))
 
 (define no-nums (lambda (l)
     (cond ((null? l)  '() )
@@ -123,7 +117,25 @@
 ; of scheme implementations I tried also did it that way
 (define eqan? (lambda (a b)
     (cond ( (and (number? a)(number? b)) (= a b) )
-        ((or (number? a) (number? b)) 'bad)
+        ((or (number? a) (number? b)) #f)
         (else (eq? a b))
+    )
+))
+
+(define occurs (lambda (a l)
+    (cond ((null? l) 0)
+            (else (cond
+                    ((eqan? a (car l)) (add1 (occurs a (cdr l)) ))
+                    (else (occurs a (cdr l)))
+            ))
+    )
+))
+
+(define one? (lambda (n) (eq? n 1)))
+
+(define rempick (lambda (l n)
+    (cond ((null? l)   '())
+            ((one? n) (cdr l))
+            (else (cons (car l) (rempick (cdr l) (sub1 n))))
     )
 ))

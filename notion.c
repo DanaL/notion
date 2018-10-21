@@ -63,6 +63,8 @@ int main(int argc, char **argv) {
 		nt = next_token(tz);
 		while (nt) {
 			parser_feed_token(p, nt);
+			if (p->complete)
+				break;
 			token_free(nt);
 			nt = next_token(tz);
 		}
