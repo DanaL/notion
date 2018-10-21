@@ -809,9 +809,7 @@ sexpr* resolve_symbol(scheme_env *env, sexpr *s) {
 }
 
 sexpr* eval_user_func(scheme_env *env, sexpr **operands, int count, sexpr *fun) {
-	if ((count - 1) < fun->params->count) {
-		return sexpr_err("Too few paramters passed to function.");
-	}
+	ASSERT_PARAM_MIN(count - 1, fun->params->count, "Too few paramters passed to function.");
 
 	scheme_env *func_scope = env_new(CLOSURE_TABLE_SIZE);
 	func_scope->parent = env;
@@ -864,7 +862,6 @@ sexpr* eval2(scheme_env *env, sexpr *v) {
 				}
 			}
 
-			/* Okay! We have our function! Is it a primitive or user-defined? */
 			if (func->builtin)
 				result = func->fun(env, v->children, v->count, func->sym);
 			else
