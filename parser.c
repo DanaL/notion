@@ -105,7 +105,14 @@ void parser_feed_token(parser* p, token* t) {
 			new curr pointer.
 		 */
 		sexpr *quote = sexpr_list();
+
+		/* This is a bit kludgy :( If this, the single quoted item we are
+			expanding in a (quote ...) expression contains a list, when we
+			hit its ending paranthesis, we will need to pop out two levels
+			instead of one, so track that with the sq_list field */
+		quote->sq_list = 1;
 		sexpr_append(quote, sexpr_sym("quote"));
+
 		/* I don't really need to increment the counts but I know sometime in
 			the future I'll be debugging and manually counting them and panic
 			when they don't match what the program has */
@@ -115,13 +122,19 @@ void parser_feed_token(parser* p, token* t) {
 		quote->parent = p->curr;
 		if (p->curr)
 			sexpr_append(p->curr, quote);
+		else
+			p->head = quote;
+
 		p->curr = quote;
 	}
 	else if (t->type == T_LIST_END) {
-		/* Pop up the chain to the parent */
+		/* Pop up the chain to the parent, or the grandparent if we are
+		 	finishing a list that was single quoted, ie., '(1 2 3) */
 		p->curr = p->curr->parent;
-		p->closed_p++;
+		if (p->curr && p->curr->sq_list)
+			p->curr = p->curr->parent;
 
+		p->closed_p++;
 		if (p->open_p == p->closed_p)
 			p->complete = 1;
 	}

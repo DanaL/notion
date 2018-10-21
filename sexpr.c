@@ -133,6 +133,7 @@ sexpr* sexpr_list(void) {
 	v->type = LVAL_LIST;
 	v->count = 0;
 	v->children = NULL;
+	v->sq_list = 0;
 
 	return v;
 }
@@ -207,7 +208,8 @@ sexpr* sexpr_copy_atom(sexpr* src) {
 
 sexpr* sexpr_copy_list(sexpr* src) {
 	sexpr *dst = sexpr_list();
-
+	dst->sq_list = src->sq_list;
+	
 	for (int j = 0; j < src->count; j++) {
 		if (IS_ATOM(src->children[j])) {
 			sexpr *cp = sexpr_copy_atom(src->children[j]);
@@ -271,10 +273,14 @@ void sexpr_pprint(sexpr *v) {
 				printf("%f", v->n.d_num);
 			break;
 		case LVAL_BOOL:
-			printf("%s", v->bool ? "true" : "false");
+			printf("%s", v->bool ? "#t" : "#f");
 			break;
 		case LVAL_FUN:
 			printf("Function type");
+			sexpr_pprint(v->params);
+			putchar('\n');
+			sexpr_pprint(v->body);
+			putchar('\n');
 		case LVAL_NULL:
 			/* Don't need to do anything */
 			break;

@@ -48,10 +48,9 @@
 
 ; Alternatively, I could do mults by generating a tuple and then sending
 ; it to addtup
-(define maketup (lambda (x n)
-    (cond ((eq? n 0) (quote ())
-        (else (cons x (maketup x (sub1 n))))
-    )
+(define maketup (lambda (x n)  
+     (cond ((eq? n 0) '() )
+     (else (cons x (maketup x (sub1 n)))))
 ))
 
 (define mults-alt (lambda (x y) (addtup (maketup x y)) ))

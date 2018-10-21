@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
 			*p = '\0';
 		}
 #else
-		line = readline(">");
+		line = readline("> ");
 
 		add_history(line);
 #endif
@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
 
 		sexpr *ast = sexpr_copy(p->head);
 		parser_clear(p);
-
+		
 		sexpr *result = eval2(env, ast);
 		sexpr_free(ast);
 
