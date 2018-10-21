@@ -33,31 +33,33 @@ void bucket_free(bucket* b) {
 	free(b);
 }
 
-scheme_env* env_new(void) {
+scheme_env* env_new(unsigned int size) {
 	scheme_env *e = malloc(sizeof(scheme_env));
+	e->buckets = malloc(size * sizeof(bucket*));
+	e->size = size;
 	e->parent = NULL;
 
 	/* I bet there's a fancy C trick to do this better/fast */
-	for (int j = 0; j < TABLE_SIZE; j++)
+	for (int j = 0; j < size; j++)
 		e->buckets[j] = NULL;
 
 	return e;
 }
 
-int bt_hash(char *s) {
+int bt_hash(unsigned int size, char *s) {
 	long h = 0;
 	int len = strlen(s);
 
 	for (int j = 0; j < len; j++) {
 		h += (long)pow(163, len - (j+1)) * s[j];
-		h %= TABLE_SIZE;
+		h %= size;
 	}
 
 	return h;
 }
 
 void env_insert_var(scheme_env* env, char *name, sexpr *s) {
-	int h = bt_hash(name);
+	unsigned int h = bt_hash(env->size, name);
 	bucket *b = bucket_new(name, s);
 
 	if (env->buckets[h] == NULL) {
@@ -76,7 +78,7 @@ void env_insert_var(scheme_env* env, char *name, sexpr *s) {
 }
 
 sexpr* env_fetch_var(scheme_env *env, char* key) {
-	int h = bt_hash(key);
+	int h = bt_hash(env->size, key);
 
 	if (!env->buckets[h]) {
 		char msg[256];
@@ -103,7 +105,7 @@ sexpr* env_fetch_var(scheme_env *env, char* key) {
 }
 
 void env_free(scheme_env *env) {
-	for (int j = 0; j < TABLE_SIZE; j++) {
+	for (int j = 0; j < env->size; j++) {
 		if (env->buckets[j])
 			bucket_free(env->buckets[j]);
 	}
@@ -115,7 +117,7 @@ void env_dump(scheme_env* env) {
 	bucket *b;
 
 	puts("Binding for current scope:");
-	for (int j = 0; j < TABLE_SIZE; j++) {
+	for (int j = 0; j < env->size; j++) {
 		b = env->buckets[j];
 		if (b) {
 			printf("  %s ", b->name);

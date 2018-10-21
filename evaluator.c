@@ -9,6 +9,8 @@
 #include "parser.h"
 #include "util.h"
 
+#define CLOSURE_TABLE_SIZE 89
+
 int is_zero(sexpr *num) {
 	if (num->num_type == NUM_TYPE_INT)
 		return num->n.i_num == 0;
@@ -811,7 +813,7 @@ sexpr* eval_user_func(scheme_env *env, sexpr **operands, int count, sexpr *fun) 
 		return sexpr_err("Too few paramters passed to function.");
 	}
 
-	scheme_env *func_scope = env_new();
+	scheme_env *func_scope = env_new(CLOSURE_TABLE_SIZE);
 	func_scope->parent = env;
 
 	/* Map the operands to the function parameters and add them to the

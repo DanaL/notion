@@ -4,8 +4,6 @@
 #include "fwd.h"
 #include "sexpr.h"
 
-#define TABLE_SIZE 1019
-
 typedef struct bucket {
 	int hash_val;
 	char *name;
@@ -17,11 +15,12 @@ bucket* bucket_new(char*, sexpr*);
 void bucket_free(bucket*);
 
 struct scheme_env {
-	struct bucket *buckets[TABLE_SIZE];
+	struct bucket **buckets;
 	scheme_env *parent;
+	unsigned int size;
 };
 
-scheme_env* env_new(void);
+scheme_env* env_new(unsigned int size);
 void env_free(scheme_env*);
 void env_insert_var(scheme_env*, char*, sexpr*);
 sexpr* env_fetch_var(scheme_env*, char*);

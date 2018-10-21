@@ -23,14 +23,16 @@ int is_whitespeace(char *s) {
 }
 
 #define MAX_LINE_LENGTH 999
+#define DEFAULT_TABLE_SIZE 1019
 
 int main(int argc, char **argv) {
 	puts("Notion (Dana's toy Scheme) 0.4.0");
 	puts("Press Ctrl-C or (quit) to exit");
 
 	puts("Loading env...");
-	scheme_env *env = env_new();
+	scheme_env *env = env_new(DEFAULT_TABLE_SIZE);
 	load_built_ins(env);
+	
 	tokenizer *tz = tokenizer_create();
 	parser *p = parser_create();
 	token *nt;
