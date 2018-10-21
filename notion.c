@@ -30,9 +30,9 @@ int main(int argc, char **argv) {
 	puts("Press Ctrl-C or (quit) to exit");
 
 	puts("Loading env...");
-	scheme_env *env = env_new(DEFAULT_TABLE_SIZE);
-	load_built_ins(env);
-	
+	scope *global = scope_new(DEFAULT_TABLE_SIZE);
+	load_built_ins(global);
+
 	tokenizer *tz = tokenizer_create();
 	parser *p = parser_create();
 	token *nt;
@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
 		sexpr *ast = sexpr_copy(p->head);
 		parser_clear(p);
 
-		sexpr *result = eval2(env, ast);
+		sexpr *result = eval2(global, ast);
 		sexpr_free(ast);
 
 		if (result->type == LVAL_ERR && strcmp(result->err, "<quit>") == 0) {
@@ -106,7 +106,7 @@ int main(int argc, char **argv) {
 
 	tokenizer_free(tz);
 	parser_free(p);
-	env_free(env);
+	scope_free(global);
 
 	return 0;
 }

@@ -33,8 +33,8 @@ void bucket_free(bucket* b) {
 	free(b);
 }
 
-scheme_env* env_new(unsigned int size) {
-	scheme_env *e = malloc(sizeof(scheme_env));
+scope* scope_new(unsigned int size) {
+	scope *e = malloc(sizeof(scope));
 	e->buckets = malloc(size * sizeof(bucket*));
 	e->size = size;
 	e->parent = NULL;
@@ -58,13 +58,13 @@ int bt_hash(unsigned int size, char *s) {
 	return h;
 }
 
-void env_insert_var(scheme_env* env, char *name, sexpr *s) {
-	unsigned int h = bt_hash(env->size, name);
+void scope_insert_var(scope* sc, char *name, sexpr *s) {
+	unsigned int h = bt_hash(sc->size, name);
 	bucket *b = bucket_new(name, s);
 
-	if (env->buckets[h] == NULL) {
+	if (sc->buckets[h] == NULL) {
 		/* Easy case! Just create the new bucket and stick it there */
-		env->buckets[h] = b;
+		sc->buckets[h] = b;
 	}
 	else {
 		/* Collision! I am going to make the assumption that a variable added will
@@ -72,21 +72,21 @@ void env_insert_var(scheme_env* env, char *name, sexpr *s) {
 
 		/* Note that I am curently in no way handling what to do when a variable with the same name is added */
 		/* Or scope...I bet scope is going to be a huge pain... */
-		b->next = env->buckets[h];
-		env->buckets[h] = b;
+		b->next = sc->buckets[h];
+		sc->buckets[h] = b;
 	}
 }
 
-sexpr* env_fetch_var(scheme_env *env, char* key) {
-	int h = bt_hash(env->size, key);
+sexpr* scope_fetch_var(scope *sc, char* key) {
+	int h = bt_hash(sc->size, key);
 
-	if (!env->buckets[h]) {
+	if (!sc->buckets[h]) {
 		char msg[256];
 		snprintf(msg, sizeof msg, "%s%s", "Unbound symbol: ", key);
-		sexpr *r = CHECK_PARENT_SCOPE(env, key, msg);
+		sexpr *r = CHECK_PARENT_SCOPE(sc, key, msg);
 		return r;
 	}
-	bucket *b = env->buckets[h];
+	bucket *b = sc->buckets[h];
 
 	/* Assuming a variable called is probably going to be
 			called again soon, it might be worth moving it to
@@ -98,22 +98,22 @@ sexpr* env_fetch_var(scheme_env *env, char* key) {
 	if (!b) {
 		char msg[256];
 		snprintf(msg, sizeof msg, "%s%s", "Unbound symbol: ", key);
-		return CHECK_PARENT_SCOPE(env, key, msg);
+		return CHECK_PARENT_SCOPE(sc, key, msg);
 	}
 
 	return sexpr_copy(b->val);
 }
 
-void env_free(scheme_env *env) {
-	for (int j = 0; j < env->size; j++) {
-		if (env->buckets[j])
-			bucket_free(env->buckets[j]);
+void scope_free(scope *sc) {
+	for (int j = 0; j < sc->size; j++) {
+		if (sc->buckets[j])
+			bucket_free(sc->buckets[j]);
 	}
 
-	free(env);
+	free(sc);
 }
 
-void env_dump(scheme_env* env) {
+void env_dump(scope* env) {
 	bucket *b;
 
 	puts("Binding for current scope:");
