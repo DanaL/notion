@@ -174,6 +174,15 @@ void parser_feed_token(parser* p, token* t) {
 		}
 		else {
 			sexpr_append(p->curr, e);
+
+			/* I hate Scheme's '(1 2 3) and 'foo special form :/
+				If we are an atom and our parent was marked as a single-quoted
+				list, we want to set curr equal to its parent (because with the
+				faked list for the special form, we never get the end-of-list
+				token) */
+			if (p->curr && p->curr->sq_list) {
+				p->curr = p->curr->parent;
+			}
 		}
 	}
 }

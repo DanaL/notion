@@ -123,10 +123,7 @@
 ; of scheme implementations I tried also did it that way
 (define eqan? (lambda (a b)
     (cond ( (and (number? a)(number? b)) (= a b) )
-        ((or (number? a) (number? b)) (quote bad))
+        ((or (number? a) (number? b)) 'bad)
         (else (eq? a b))
     )
 ))
-
-;(cond ((and (number? a)(number? b)) (= a b)) ((or (number? a) (number? b)) 'bad)(else (eq? a b)))
-;(cond ((and (number? a)(number? b)) (= a b)) ((or (number? a) (number? b)) (quote bad) (else (eq? a b))))
