@@ -276,11 +276,15 @@ void sexpr_pprint(sexpr *v) {
 			printf("%s", v->bool ? "#t" : "#f");
 			break;
 		case LVAL_FUN:
-			printf("Function type");
-			sexpr_pprint(v->params);
-			putchar('\n');
-			sexpr_pprint(v->body);
-			putchar('\n');
+			if (v->builtin)
+				printf("Built-in function");
+			else {
+				printf("User-defined function type");
+				putchar('\n');
+				sexpr_pprint(v->params);
+				putchar('\n');
+				sexpr_pprint(v->body);
+			}
 		case LVAL_NULL:
 			/* Don't need to do anything */
 			break;
