@@ -1,5 +1,5 @@
 CC=cc
-CFLAGS= -std=c99 -Wall -g3
+CFLAGS= -std=c99 -g3 -Werror -Wall -Wpedantic 
 LIBS= -ledit
 FILES= parser.c environment.c tokenizer.c evaluator.c sexpr.c util.c
 OUTPUT= notion
