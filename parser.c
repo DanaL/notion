@@ -128,6 +128,17 @@ void parser_feed_token(parser* p, token* t) {
 		p->curr = quote;
 	}
 	else if (t->type == T_LIST_END) {
+		/* the parent appears to be NULL, it's because an extra close
+			parenthesis was typed. Ie,  (+ (list 1 2 3)) (list 3 2 1))
+			So flag that as an error condition. */
+		if (!p->curr) {
+			sexpr_free(p->head);
+			parser_clear(p);
+			p->head = sexpr_err("Unexpected end of list. Too many )s?");
+			p->complete = 1;
+			return;
+		}
+
 		/* Pop up the chain to the parent, or the grandparent if we are
 		 	finishing a list that was single quoted, ie., '(1 2 3) */
 		p->curr = p->curr->parent;
