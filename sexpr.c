@@ -209,7 +209,7 @@ sexpr* sexpr_copy_atom(sexpr* src) {
 sexpr* sexpr_copy_list(sexpr* src) {
 	sexpr *dst = sexpr_list();
 	dst->sq_list = src->sq_list;
-	
+
 	for (int j = 0; j < src->count; j++) {
 		if (IS_ATOM(src->children[j])) {
 			sexpr *cp = sexpr_copy_atom(src->children[j]);
@@ -264,7 +264,7 @@ void sexpr_pprint(sexpr *v) {
 			printf("%s", v->sym);
 			break;
 		case LVAL_STR:
-			printf("%s", v->str);
+			printf("\"%s\"", v->str);
 			break;
 		case LVAL_NUM:
 			if (v->num_type == NUM_TYPE_INT)
