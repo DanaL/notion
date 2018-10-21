@@ -122,8 +122,12 @@ void parser_feed_token(parser* p, token* t) {
 		quote->parent = p->curr;
 		if (p->curr)
 			sexpr_append(p->curr, quote);
-		else
+		else {
+			/* Case where a single quoted value is by itself, mark as complete
+				ie., 'foo */
 			p->head = quote;
+			p->complete = 1;
+		}
 
 		p->curr = quote;
 	}

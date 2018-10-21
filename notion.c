@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
 
 		sexpr *ast = sexpr_copy(p->head);
 		parser_clear(p);
-		
+
 		sexpr *result = eval2(env, ast);
 		sexpr_free(ast);
 

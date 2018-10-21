@@ -81,9 +81,9 @@
     )
 ))
 
-(define llen (lambda (l)
+(define length (lambda (l)
     (cond  ((null? l)   0)
-            (else (add1 (llen (cdr l))   ))
+            (else (add1 (length (cdr l))   ))
     )
 ))
 
@@ -100,3 +100,33 @@
             (else (cons (car l) (rempick (cdr l) (sub1 n))))
     )
 ))
+
+(define no-nums (lambda (l)
+    (cond ((null? l)  '() )
+    (else (cond
+            ((number? (car l)) (no-nums (cdr l)))
+            (else (cons (car l) (no-nums (cdr l))  ))
+        )
+    ))
+))
+
+(define all-nums (lambda (l)
+    (cond ((null? l)  '() )
+    (else (cond
+            ((number? (car l)) (cons (car l) (all-nums (cdr l))))
+            (else  (all-nums (cdr l)))
+        )
+    ))
+))
+
+; A bit redundant because I wrote my eq? to work on numbers since a couple
+; of scheme implementations I tried also did it that way
+(define eqan? (lambda (a b)
+    (cond ( (and (number? a)(number? b)) (= a b) )
+        ((or (number? a) (number? b)) (quote bad))
+        (else (eq? a b))
+    )
+))
+
+;(cond ((and (number? a)(number? b)) (= a b)) ((or (number? a) (number? b)) 'bad)(else (eq? a b)))
+;(cond ((and (number? a)(number? b)) (= a b)) ((or (number? a) (number? b)) (quote bad) (else (eq? a b))))
