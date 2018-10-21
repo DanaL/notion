@@ -474,12 +474,22 @@ sexpr* builtin_nullq(scheme_env *env, sexpr **nodes, int count, char *op) {
 	ASSERT_PARAM_EQ(count, 2, "null? expects just 1 argument");
 
 	sexpr *a = eval2(env, nodes[1]);
-	if (a->type == LVAL_ERR)
-		return a;
+	ASSERT_NOT_ERR(a);
 
 	sexpr *result = sexpr_bool(a->type == LVAL_LIST && a->count == 0 ? 1 :0);
 
 	sexpr_free(a);
+
+	return result;
+}
+
+sexpr* builtin_numberq(scheme_env *env, sexpr **nodes, int count, char *op) {
+	ASSERT_PARAM_EQ(count, 2, "number? expects just 1 argument");
+
+	sexpr *n = eval2(env, nodes[1]);
+	ASSERT_NOT_ERR(n);
+
+	sexpr *result = sexpr_bool(n->type == LVAL_NUM);
 
 	return result;
 }
@@ -886,6 +896,7 @@ void load_built_ins(scheme_env *env) {
 	env_insert_var(env, "eq?", sexpr_fun_builtin(&builtin_eq, "eq?"));
 	env_insert_var(env, "null?", sexpr_fun_builtin(&builtin_nullq, "null?"));
 	env_insert_var(env, "pair?", sexpr_fun_builtin(&builtin_pairq, "pair?"));
+	env_insert_var(env, "number?", sexpr_fun_builtin(&builtin_numberq, "number?"));
 	env_insert_var(env, "eval", sexpr_fun_builtin(&builtin_eval, "eval"));
 	env_insert_var(env, "+", sexpr_fun_builtin(&builtin_math_op, "+"));
 	env_insert_var(env, "-", sexpr_fun_builtin(&builtin_math_op, "-"));
