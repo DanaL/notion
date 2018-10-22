@@ -117,13 +117,11 @@ sexpr* builtin_load(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op)
                         expr = sexpr_copy(p->head);
 						parser_clear(p);
                         sexpr *result = eval2(vm, env, expr);
-						sexpr_free(expr);
 
 						if (result->type != LVAL_NULL) {
 							sexpr_pprint(result);
 							putchar('\n');
 						}
-						sexpr_free(result);
                     }
                 }
             }
@@ -163,8 +161,6 @@ sexpr *builtin_pairq(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op
 	if (v->type == LVAL_LIST && v->count > 0)
 		pq = 1;
 
-	sexpr_free(v);
-
 	return sexpr_bool(pq);
 }
 
@@ -177,7 +173,6 @@ sexpr *builtin_not(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) 
 		return sexpr_err("Boolean value expected.");
 
 	sexpr *result = sexpr_bool(!v->bool);
-	sexpr_free(v);
 
 	return result;
 }
@@ -194,7 +189,6 @@ sexpr* builtin_and(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) 
 	for (int j = 1; j < count; j++) {
 		sexpr *cp = eval2(vm, env, nodes[j]);
 		if (cp->type == LVAL_ERR) {
-			sexpr_free(result);
 			return cp;
 		}
 
@@ -202,7 +196,6 @@ sexpr* builtin_and(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) 
 			return sexpr_bool(0);
 
 		result = sexpr_copy(cp);
-		sexpr_free(cp);
 	}
 
 	return result;
@@ -218,7 +211,6 @@ sexpr* builtin_or(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
 	for (int j = 1; j < count; j++) {
 		sexpr *cp = eval2(vm, env, nodes[j]);
 		if (cp->type == LVAL_ERR) {
-			sexpr_free(result);
 			return cp;
 		}
 
@@ -226,7 +218,6 @@ sexpr* builtin_or(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
 			return cp;
 
 		result = sexpr_copy(cp);
-		sexpr_free(cp);
 	}
 
 	return result;
@@ -265,9 +256,6 @@ sexpr* builtin_math_cmp(vm_heap *vm, scope *env, sexpr **nodes, int count, char 
 	else if (strcmp("<=", op) == 0)
 		eq = f0 < f1 || fabsf(f0 - f1) < 0.000000001;
 
-	sexpr_free(n0);
-	sexpr_free(n1);
-
 	return eq ? sexpr_bool(1) : sexpr_bool(0);
 }
 
@@ -285,7 +273,6 @@ sexpr* builtin_math_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *
 			result = - (NUM_CONVERT(nodes[1]));
 			r = sexpr_num(nodes[1]->num_type, result);
 		}
-		sexpr_free(n);
 
 		return r;
 	}
@@ -295,7 +282,6 @@ sexpr* builtin_math_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *
 		sexpr *n = eval2(vm, env, nodes[j]);
 
 		if (n->type != LVAL_NUM) {
-			sexpr_free(n);
 			return sexpr_err("Expected number!");
 		}
 
@@ -317,24 +303,19 @@ sexpr* builtin_math_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *
 		else if (strcmp(op, "/") == 0) {
 			/* Let's make sure we're not trying to divide by zero */
 			if (is_zero(n)) {
-				sexpr_free(n);
 				return sexpr_err("Division by zero!");
 			}
 			result /= NUM_CONVERT(n);
 		}
 		else if (strcmp(op, "%") == 0) {
 			if (n->num_type != NUM_TYPE_INT || nodes[1]->num_type != NUM_TYPE_INT) {
-				sexpr_free(n);
 				return sexpr_err("Can only calculate the remainder for integers.");
 			}
 			else if (is_zero(n)) {
-				sexpr_free(n);
 				return sexpr_err("Division by zero!");
 			}
 			result = nodes[1]->i_num % n->i_num;
 		}
-
-		sexpr_free(n);
 	}
 
 	r = sexpr_num(rt, result);
@@ -351,7 +332,6 @@ sexpr* builtin_min_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *o
 	for (int j = 1; j < count; j++) {
 		sexpr *n = eval2(vm, env, nodes[j]);
 		if (n->type != LVAL_NUM) {
-			sexpr_free(n);
 			return sexpr_err("Expected number!");
 		}
 
@@ -360,15 +340,12 @@ sexpr* builtin_min_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *o
 
 		if (j == 1) {
 			curr_max = NUM_CONVERT(n);
-			sexpr_free(n);
 			continue;
 		}
 
 		x = NUM_CONVERT(n);
 		if (x < curr_max)
 			curr_max = x;
-
-		sexpr_free(n);
 	}
 
 	return sexpr_num(rt, curr_max);
@@ -383,7 +360,6 @@ sexpr* builtin_max_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *o
 	for (int j = 1; j < count; j++) {
 		sexpr *n = eval2(vm, env, nodes[j]);
 		if (n->type != LVAL_NUM) {
-			sexpr_free(n);
 			return sexpr_err("Expected number!");
 		}
 
@@ -392,15 +368,12 @@ sexpr* builtin_max_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *o
 
 		if (j == 1) {
 			curr_max = NUM_CONVERT(n);
-			sexpr_free(n);
 			continue;
 		}
 
 		x = NUM_CONVERT(n);
 		if (x > curr_max)
 			curr_max = x;
-
-		sexpr_free(n);
 	}
 
 	return sexpr_num(rt, curr_max);
@@ -412,7 +385,6 @@ sexpr* builtin_list(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op)
 	for (int j = 1; j < count; j++) {
 		sexpr *cp = eval2(vm, env, nodes[j]);
 		if (cp->type == LVAL_ERR) {
-			sexpr_free(result);
 			return cp;
 		}
 
@@ -427,7 +399,6 @@ sexpr* builtin_cdr(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) 
 
 	sexpr *l = eval2(vm, env, nodes[1]);
 	if (l->type != LVAL_LIST || l->count == 0) {
-		sexpr_free(l);
 		return sexpr_err("cdr is defined only for non-empty lists.");
 	}
 
@@ -435,7 +406,6 @@ sexpr* builtin_cdr(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) 
 	for (int j = 1; j < l->count; j++) {
 		sexpr_list_insert(result, sexpr_copy(l->children[j]));
 	}
-	sexpr_free(l);
 
 	return result;
 }
@@ -446,13 +416,10 @@ sexpr* builtin_car(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) 
 	sexpr *l = eval2(vm, env, nodes[1]);
 
 	if (l->type != LVAL_LIST || l->count == 0) {
-		sexpr_free(l);
 		return sexpr_err("car is defined only for non-empty lists.");
 	}
 
 	sexpr *result = sexpr_copy(l->children[0]);
-
-	sexpr_free(l);
 
 	return result;
 }
@@ -463,7 +430,6 @@ sexpr* builtin_cons(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op)
 	sexpr *a2 = eval2(vm, env, nodes[2]);
 
 	if (a2->type != LVAL_LIST) {
-		sexpr_free(a2);
 		return sexpr_err("The second argument of cons must be a list.");
 	}
 
@@ -473,8 +439,6 @@ sexpr* builtin_cons(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op)
 	for (int j = 0; j < a2->count; j++) {
 		sexpr_list_insert(result, sexpr_copy(a2->children[j]));
 	}
-
-	sexpr_free(a2);
 
 	return result;
 }
@@ -486,8 +450,6 @@ sexpr* builtin_nullq(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op
 	ASSERT_NOT_ERR(a);
 
 	sexpr *result = sexpr_bool(a->type == LVAL_LIST && a->count == 0 ? 1 :0);
-
-	sexpr_free(a);
 
 	return result;
 }
@@ -513,7 +475,6 @@ sexpr* builtin_eq(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
 	ASSERT_NOT_ERR(a);
 	sexpr *b = eval2(vm, env, nodes[2]);
 	if (b->type == LVAL_ERR) {
-		sexpr_free(a);
 		return b;
 	}
 
@@ -535,9 +496,6 @@ sexpr* builtin_eq(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
 	else
 		result = sexpr_bool(0);
 
-	sexpr_free(a);
-	sexpr_free(b);
-
 	return result;
 }
 
@@ -548,7 +506,6 @@ sexpr* builtin_eval(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op)
 
 	if (IS_FUNC(f)) {
 		sexpr *f2 = eval2(vm, env, f);
-		sexpr_free(f);
 		f = f2;
 	}
 
@@ -594,7 +551,6 @@ sexpr* build_func(vm_heap *vm, sexpr *header, sexpr *body, char *name) {
 	sexpr *params = sexpr_list();
 	for (int j = 1; j < header->count; j++) {
 		if (header->children[j]->type != LVAL_SYM) {
-			sexpr_free(params);
 			return sexpr_err("Paramter names must be symbols.");
 		}
 		sexpr_append(params, sexpr_copy(header->children[j]));
@@ -627,14 +583,11 @@ sexpr* builtin_cond(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op)
 			if (result->type == LVAL_ERR)
 				return result;
 			else if (result->type != LVAL_BOOL) {
-				sexpr_free(result);
 				return sexpr_err("Invalid boolean test.");
 			}
 
-			if (result->bool) {
-				sexpr_free(result);
+			if (result->bool)
 				return eval2(vm, env, cond->children[1]);
-			}
 		}
 		else
 			return sexpr_err("Cond tests must be an expression.");
@@ -648,7 +601,6 @@ sexpr* builtin_stringq(vm_heap *vm, scope *env, sexpr **nodes, int count, char *
 
 	sexpr *s = eval2(vm, env, nodes[1]);
 	sexpr *result = sexpr_bool(s->type == LVAL_STR ? 1 : 0);
-	sexpr_free(s);
 
 	return result;
 }
@@ -658,12 +610,10 @@ sexpr* builtin_stringlen(vm_heap *vm, scope *env, sexpr **nodes, int count, char
 
 	sexpr *s = eval2(vm, env, nodes[1]);
 	if (s->type != LVAL_STR) {
-		sexpr_free(s);
 		return sexpr_err("That was not a string.");
 	}
 
 	sexpr *result = sexpr_num(NUM_TYPE_INT, strlen(s->str));
-	sexpr_free(s);
 
 	return result;
 }
@@ -673,13 +623,11 @@ sexpr* builtin_string(vm_heap *vm, scope *env, sexpr **nodes, int count, char *o
 
 	sexpr *src = eval2(vm, env, nodes[1]);
 	if (src->type != LVAL_STR) {
-		sexpr_free(src);
 		return sexpr_err("String takes a string type for its parameter.");
 	}
 
 	sexpr *result = sexpr_copy(src);
-	sexpr_free(src);
-
+	
 	return result;
 }
 
@@ -690,7 +638,6 @@ sexpr* builtin_stringappend(vm_heap *vm, scope *env, sexpr **nodes, int count, c
 	ASSERT_NOT_ERR(s1);
 	sexpr *s2 = eval2(vm, env, nodes[2]);
 	if (s2->type == LVAL_ERR) {
-		sexpr_free(s1);
 		return s2;
 	}
 
@@ -720,9 +667,6 @@ sexpr* builtin_stringappend(vm_heap *vm, scope *env, sexpr **nodes, int count, c
 			result->str[j++] = *c;
 			++c;
 		}
-
-		sexpr_free(s1);
-		sexpr_free(s2);
 	}
 
 	return result;
@@ -735,7 +679,6 @@ sexpr* builtin_stringcopy(vm_heap *vm, scope *env, sexpr **nodes, int count, cha
 	ASSERT_NOT_ERR(s1);
 
 	if (s1->type != LVAL_STR) {
-		sexpr_free(s1);
 		return sexpr_err("String copy only copies strings.");
 	}
 
@@ -802,14 +745,7 @@ sexpr* resolve_symbol(scope *sc, sexpr *s) {
 		/* If the symbol isn't found, just return the original result.
 			(This is for cases like (define x 'aaa) where aaa is a meaningless
 			symbol) */
-		if (r2->type == LVAL_ERR) {
-			sexpr_free(r2);
-			return r;
-		}
-		else {
-			sexpr_free(r);
-			return r2;
-		}
+		return r2->type == LVAL_ERR ? r : r2;
 	}
 
 	return r;
@@ -865,21 +801,13 @@ sexpr* eval2(vm_heap *vm, scope *sc, sexpr *v) {
 			else
 				return sexpr_err("Expected function.");
 
-			if (func->type != LVAL_FUN) {
-				if (func->type == LVAL_ERR)
-					return func;
-				else {
-					sexpr_free(func);
-					return sexpr_err("Expected function.");
-				}
-			}
+			if (func->type != LVAL_FUN)
+				return sexpr_err("Expected function.");
 
 			if (func->builtin)
 				result = func->fun(vm, sc, v->children, v->count, func->sym);
 			else
 				result = eval_user_func(vm, sc, v->children, v->count, func);
-
-			sexpr_free(func);
 
 			return result;
 		case LVAL_SYM:

@@ -127,6 +127,9 @@ void env_dump(vm_heap *vm, scope* env) {
 			putchar('\n');
 		}
 	}
+
+	printf("\nHeap items:\n");
+	printf("Heap count: %ld\n", vm->count);
 }
 
 vm_heap* vm_new(void) {
