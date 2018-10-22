@@ -20,6 +20,18 @@
                 (else (cons (car lat) (insertR old new (cdr lat)))))
 ))))
 
+(define multisubst
+    (lambda (new old lat)
+        (cond
+            ((null? lat) '())
+            (else (cond
+                    ((eq? (car lat) old) (cons new (multisubst new old (cdr lat))))
+                    (else (cons (car lat) (multisubst new old (cdr lat)) ))
+            ))
+        )
+    )
+)
+
 ; Chapter 4 has us re-implementing basic arithmetic :P
 (define add1 (lambda (x) (+ x 1)))
 (define sub1 (lambda (x) (- x 1)))
