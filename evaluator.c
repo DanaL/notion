@@ -80,7 +80,7 @@ int sexpr_cmp(sexpr *s1, sexpr *s2) {
 	I could always seek out the global scope when load is called, but tbh
 	I'm not sure which behaviour is correct/better.
 */
-sexpr* builtin_load(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr* builtin_load(scope *env, sexpr **nodes, int count, char *op) {
 	ASSERT_PARAM_EQ(count, 2, "Load expects only the filename to be loaded.");
 
 	if (nodes[1]->type != LVAL_STR)
@@ -139,7 +139,7 @@ sexpr* builtin_load(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return sexpr_null();
 }
 
-sexpr* builtin_mem_dump(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr* builtin_mem_dump(scope *env, sexpr **nodes, int count, char *op) {
 	env_dump(env);
 
 	return sexpr_null();
@@ -148,7 +148,7 @@ sexpr* builtin_mem_dump(scheme_env *env, sexpr **nodes, int count, char *op) {
 /* I think this is probably incorrect, or not totally correct because I haven't
 	yet learned about pairs in Scheme yet. But in the REPLs I've tried,
 	pair? returns false for atoms or an empty list */
-sexpr *builtin_pairq(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr *builtin_pairq(scope *env, sexpr **nodes, int count, char *op) {
 	ASSERT_PARAM_EQ(count, 2, "Just one parameter expected.");
 
 	int pq = 0;
@@ -161,7 +161,7 @@ sexpr *builtin_pairq(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return sexpr_bool(pq);
 }
 
-sexpr *builtin_not(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr *builtin_not(scope *env, sexpr **nodes, int count, char *op) {
 	if (count != 2)
 		return sexpr_err("Just one parameter expected.");
 
@@ -177,7 +177,7 @@ sexpr *builtin_not(scheme_env *env, sexpr **nodes, int count, char *op) {
 
 /* I find Scheme's version of and pretty odd in how all non-booleans
 	are considered true. */
-sexpr* builtin_and(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr* builtin_and(scope *env, sexpr **nodes, int count, char *op) {
 	sexpr* result = sexpr_list();
 
 	/* and with no parameters returns true, apparently */
@@ -201,7 +201,7 @@ sexpr* builtin_and(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return result;
 }
 
-sexpr* builtin_or(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr* builtin_or(scope *env, sexpr **nodes, int count, char *op) {
 	sexpr* result = sexpr_list();
 
 	/* and with no parameters returns true, apparently */
@@ -232,7 +232,7 @@ sexpr* builtin_or(scheme_env *env, sexpr **nodes, int count, char *op) {
 	It should be sufficiently fast and accurate for anything I might want to
 	use notion for.
  */
-sexpr* builtin_math_cmp(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr* builtin_math_cmp(scope *env, sexpr **nodes, int count, char *op) {
 	if (count != 3) {
 		return sexpr_err("Just two parameters expected.");
 	}
@@ -264,7 +264,7 @@ sexpr* builtin_math_cmp(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return eq ? sexpr_bool(1) : sexpr_bool(0);
 }
 
-sexpr* builtin_math_op(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr* builtin_math_op(scope *env, sexpr **nodes, int count, char *op) {
 	float result;
 	sexpr *r;
 
@@ -335,7 +335,7 @@ sexpr* builtin_math_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return r;
 }
 
-sexpr* builtin_min_op(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr* builtin_min_op(scope *env, sexpr **nodes, int count, char *op) {
 	ASSERT_PARAM_MIN(count, 2, "At least one parameter needed for min");
 
 	float curr_max, x;
@@ -367,7 +367,7 @@ sexpr* builtin_min_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return sexpr_num(rt, curr_max);
 }
 
-sexpr* builtin_max_op(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr* builtin_max_op(scope *env, sexpr **nodes, int count, char *op) {
 	ASSERT_PARAM_MIN(count, 2, "At least one parameter needed for max");
 
 	float curr_max, x;
@@ -399,7 +399,7 @@ sexpr* builtin_max_op(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return sexpr_num(rt, curr_max);
 }
 
-sexpr* builtin_list(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr* builtin_list(scope *env, sexpr **nodes, int count, char *op) {
 	sexpr* result = sexpr_list();
 
 	for (int j = 1; j < count; j++) {
@@ -415,7 +415,7 @@ sexpr* builtin_list(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return result;
 }
 
-sexpr* builtin_cdr(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr* builtin_cdr(scope *env, sexpr **nodes, int count, char *op) {
 	ASSERT_PARAM_EQ(count, 2, "cdr expects only one argument");
 
 	sexpr *l = eval2(env, nodes[1]);
@@ -433,7 +433,7 @@ sexpr* builtin_cdr(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return result;
 }
 
-sexpr* builtin_car(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr* builtin_car(scope *env, sexpr **nodes, int count, char *op) {
 	ASSERT_PARAM_EQ(count, 2, "car expects only one argument");
 
 	sexpr *l = eval2(env, nodes[1]);
@@ -450,7 +450,7 @@ sexpr* builtin_car(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return result;
 }
 
-sexpr* builtin_cons(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr* builtin_cons(scope *env, sexpr **nodes, int count, char *op) {
 	ASSERT_PARAM_EQ(count, 3, "cons expects two aruments");
 
 	sexpr *a2 = eval2(env, nodes[2]);
@@ -472,7 +472,7 @@ sexpr* builtin_cons(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return result;
 }
 
-sexpr* builtin_nullq(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr* builtin_nullq(scope *env, sexpr **nodes, int count, char *op) {
 	ASSERT_PARAM_EQ(count, 2, "null? expects just 1 argument");
 
 	sexpr *a = eval2(env, nodes[1]);
@@ -485,7 +485,7 @@ sexpr* builtin_nullq(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return result;
 }
 
-sexpr* builtin_numberq(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr* builtin_numberq(scope *env, sexpr **nodes, int count, char *op) {
 	ASSERT_PARAM_EQ(count, 2, "number? expects just 1 argument");
 
 	sexpr *n = eval2(env, nodes[1]);
@@ -499,7 +499,7 @@ sexpr* builtin_numberq(scheme_env *env, sexpr **nodes, int count, char *op) {
 /* eq? as defined in the Little Schemer operates only on non-numeric atoms,
 		but Scheme implementations I've seen accept broader inputs. I'm going to
 		stick to the Little Schemer "standard" for now */
-sexpr* builtin_eq(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr* builtin_eq(scope *env, sexpr **nodes, int count, char *op) {
 	ASSERT_PARAM_EQ(count, 3, "eq? expects exactly 2 arguments.");
 
 	sexpr *a = eval2(env, nodes[1]);
@@ -534,7 +534,7 @@ sexpr* builtin_eq(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return result;
 }
 
-sexpr* builtin_eval(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr* builtin_eval(scope *env, sexpr **nodes, int count, char *op) {
 	ASSERT_PARAM_EQ(count, 2, "eval expects just 1 argument");
 
 	sexpr *f = eval2(env, nodes[1]);
@@ -548,11 +548,11 @@ sexpr* builtin_eval(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return f;
 }
 
-sexpr* builtin_quit(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr* builtin_quit(scope *env, sexpr **nodes, int count, char *op) {
 	return sexpr_err("<quit>");
 }
 
-sexpr* quote_form(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr* quote_form(scope *env, sexpr **nodes, int count, char *op) {
 	return sexpr_copy(nodes[1]);
 }
 
@@ -567,16 +567,16 @@ int is_quoted_val(sexpr *v) {
 	return 0;
 }
 
-sexpr* define_var(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr* define_var(scope *sc, sexpr **nodes, int count, char *op) {
 	if (nodes[1]->type != LVAL_SYM)
 		return sexpr_err("Expected variable name.");
 
-	ASSERT_PRIMITIVE(env, nodes[1]->sym);
+	ASSERT_PRIMITIVE(sc, nodes[1]->sym);
 
 	if (is_quoted_val(nodes[2]))
-		env_insert_var(env, nodes[1]->sym, sexpr_copy(nodes[2]->children[1]));
+		scope_insert_var(sc, nodes[1]->sym, sexpr_copy(nodes[2]->children[1]));
 	else
-		env_insert_var(env, nodes[1]->sym, eval2(env, nodes[2]));
+		scope_insert_var(sc, nodes[1]->sym, eval2(sc, nodes[2]));
 
 	return sexpr_null();
 }
@@ -596,7 +596,7 @@ sexpr* build_func(sexpr *header, sexpr *body, char *name) {
 	return sexpr_fun_user(params, sexpr_copy(body), name);
 }
 
-sexpr* builtin_cond(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr* builtin_cond(scope *env, sexpr **nodes, int count, char *op) {
 	ASSERT_PARAM_MIN(count, 2, "Cond requires at least one expression.");
 
 	for (int j = 1; j < count; j++) {
@@ -636,7 +636,7 @@ sexpr* builtin_cond(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return sexpr_null();
 }
 
-sexpr* builtin_stringq(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr* builtin_stringq(scope *env, sexpr **nodes, int count, char *op) {
 	ASSERT_PARAM_EQ(count, 2, "String? takes just one paramter.");
 
 	sexpr *s = eval2(env, nodes[1]);
@@ -646,7 +646,7 @@ sexpr* builtin_stringq(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return result;
 }
 
-sexpr* builtin_stringlen(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr* builtin_stringlen(scope *env, sexpr **nodes, int count, char *op) {
 	ASSERT_PARAM_EQ(count, 2, "String? takes just one paramter.");
 
 	sexpr *s = eval2(env, nodes[1]);
@@ -661,7 +661,7 @@ sexpr* builtin_stringlen(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return result;
 }
 
-sexpr* builtin_string(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr* builtin_string(scope *env, sexpr **nodes, int count, char *op) {
 	ASSERT_PARAM_EQ(count, 2, "String takes just one parameter.");
 
 	sexpr *src = eval2(env, nodes[1]);
@@ -676,7 +676,7 @@ sexpr* builtin_string(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return result;
 }
 
-sexpr* builtin_stringappend(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr* builtin_stringappend(scope *env, sexpr **nodes, int count, char *op) {
 	ASSERT_PARAM_EQ(count, 3, "String-append takse just two paramters");
 
 	sexpr *s1 = eval2(env, nodes[1]);
@@ -721,7 +721,7 @@ sexpr* builtin_stringappend(scheme_env *env, sexpr **nodes, int count, char *op)
 	return result;
 }
 
-sexpr* builtin_stringcopy(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr* builtin_stringcopy(scope *env, sexpr **nodes, int count, char *op) {
 	ASSERT_PARAM_EQ(count, 2, "String-append takse just one paramter");
 
 	sexpr *s1 = eval2(env, nodes[1]);
@@ -737,7 +737,7 @@ sexpr* builtin_stringcopy(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return s1;
 }
 
-sexpr* builtin_lambda(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr* builtin_lambda(scope *env, sexpr **nodes, int count, char *op) {
 	ASSERT_PARAM_EQ(count, 3, "Invalid lambda definition.");
 
 	/* So function evaluation excepts the paramter list for function
@@ -757,14 +757,14 @@ sexpr* builtin_lambda(scheme_env *env, sexpr **nodes, int count, char *op) {
 	return lambda;
 }
 
-sexpr* define_fun(scheme_env *env, sexpr **nodes, int count, char *op)  {
+sexpr* define_fun(scope *sc, sexpr **nodes, int count, char *op)  {
 	sexpr *header = nodes[1];
 	sexpr *body = nodes[2];
 
 	if (count < 3)
 		return sexpr_err("Invalid definition.");
 
-	ASSERT_PRIMITIVE(env, header->children[0]->sym);
+	ASSERT_PRIMITIVE(sc, header->children[0]->sym);
 	char *fun_name = header->children[0]->sym;
 
 	sexpr *fun = build_func(header, body, fun_name);
@@ -772,26 +772,26 @@ sexpr* define_fun(scheme_env *env, sexpr **nodes, int count, char *op)  {
 	if (fun->type == LVAL_ERR)
 		return fun;
 
-	env_insert_var(env, fun_name, fun);
+	scope_insert_var(sc, fun_name, fun);
 
 	return sexpr_null();
 }
 
-sexpr* define(scheme_env *env, sexpr **nodes, int count, char *op) {
+sexpr* define(scope *sc, sexpr **nodes, int count, char *op) {
 	if (count != 3)
 		return sexpr_err("Invalid definition.");
 
 	if (nodes[1]->type == LVAL_LIST)
-		return define_fun(env, nodes, count, op);
+		return define_fun(sc, nodes, count, op);
 	else
-		return define_var(env, nodes, count, op);
+		return define_var(sc, nodes, count, op);
 }
 
-sexpr* resolve_symbol(scheme_env *env, sexpr *s) {
-	sexpr *r = env_fetch_var(env, s->sym);
+sexpr* resolve_symbol(scope *sc, sexpr *s) {
+	sexpr *r = scope_fetch_var(sc, s->sym);
 
 	if (r->type == LVAL_SYM) {
-		sexpr *r2 = env_fetch_var(env, r->sym);
+		sexpr *r2 = scope_fetch_var(sc, r->sym);
 		/* If the symbol isn't found, just return the original result.
 			(This is for cases like (define x 'aaa) where aaa is a meaningless
 			symbol) */
@@ -808,36 +808,45 @@ sexpr* resolve_symbol(scheme_env *env, sexpr *s) {
 	return r;
 }
 
+<<<<<<< HEAD
 sexpr* eval_user_func(scheme_env *env, sexpr **operands, int count, sexpr *fun) {
+=======
+sexpr* eval_user_func(scope *sc, sexpr **operands, int count, sexpr *fun) {
+>>>>>>> closures
 	ASSERT_PARAM_MIN(count - 1, fun->params->count, "Too few paramters passed to function.");
 
-	scheme_env *func_scope = env_new(CLOSURE_TABLE_SIZE);
-	func_scope->parent = env;
+	scope *func_scope = scope_new(CLOSURE_TABLE_SIZE);
+	func_scope->parent = sc;
 
 	/* Map the operands to the function parameters and add them to the
 	 	local scope */
 	for (int j = 0; j < fun->params->count; j++) {
 		sexpr *var;
 		if (operands[j + 1]->type == LVAL_SYM)
-			var = env_fetch_var(env, operands[j + 1]->sym);
+			var = scope_fetch_var(sc, operands[j + 1]->sym);
 		else if (operands[j + 1]->type == LVAL_LIST)
-			var = eval2(env, operands[j + 1]);
+			var = eval2(sc, operands[j + 1]);
 		else
 			var = sexpr_copy(operands[j + 1]);
 
 		if (var->type == LVAL_ERR)
 			return var;
 
-		env_insert_var(func_scope, fun->params->children[j]->sym, var);
+		printf("%s -> ", fun->params->children[j]->sym);
+		sexpr_pprint(var);
+		putchar('\n');
+		scope_insert_var(func_scope, fun->params->children[j]->sym, var);
 	}
 
+	sexpr_pprint(fun->body);
+	putchar('\n');
 	sexpr *result = eval2(func_scope, fun->body);
+	scope_free(func_scope);
 
-	env_free(func_scope);
 	return result;
 }
 
-sexpr* eval2(scheme_env *env, sexpr *v) {
+sexpr* eval2(scope *sc, sexpr *v) {
 	sexpr *result = NULL;
 	switch (v->type) {
 		case LVAL_LIST:
@@ -847,9 +856,9 @@ sexpr* eval2(scheme_env *env, sexpr *v) {
 
 			sexpr *func;
 			if (v->children[0]->type == LVAL_LIST)
-				func = eval2(env, v->children[0]);
+				func = eval2(sc, v->children[0]);
 			else if (v->children[0]->type == LVAL_SYM)
-				func = env_fetch_var(env, v->children[0]->sym);
+				func = scope_fetch_var(sc, v->children[0]->sym);
 			else
 				return sexpr_err("Expected function.");
 
@@ -863,15 +872,15 @@ sexpr* eval2(scheme_env *env, sexpr *v) {
 			}
 
 			if (func->builtin)
-				result = func->fun(env, v->children, v->count, func->sym);
+				result = func->fun(sc, v->children, v->count, func->sym);
 			else
-				result = eval_user_func(env, v->children, v->count, func);
+				result = eval_user_func(sc, v->children, v->count, func);
 
 			sexpr_free(func);
 
 			return result;
 		case LVAL_SYM:
-			return resolve_symbol(env, v);
+			return resolve_symbol(sc, v);
 		case LVAL_FUN:
 			break;
 		case LVAL_ERR:
@@ -887,41 +896,41 @@ sexpr* eval2(scheme_env *env, sexpr *v) {
 	return sexpr_err("Something hasn't been implemented yet");
 }
 
-void load_built_ins(scheme_env *env) {
-	env_insert_var(env, "car", sexpr_fun_builtin(&builtin_car, "car"));
-	env_insert_var(env, "cdr", sexpr_fun_builtin(&builtin_cdr, "cdr"));
-	env_insert_var(env, "cons", sexpr_fun_builtin(&builtin_cons, "cons"));
-	env_insert_var(env, "list", sexpr_fun_builtin(&builtin_list, "list"));
-	env_insert_var(env, "eq?", sexpr_fun_builtin(&builtin_eq, "eq?"));
-	env_insert_var(env, "null?", sexpr_fun_builtin(&builtin_nullq, "null?"));
-	env_insert_var(env, "pair?", sexpr_fun_builtin(&builtin_pairq, "pair?"));
-	env_insert_var(env, "number?", sexpr_fun_builtin(&builtin_numberq, "number?"));
-	env_insert_var(env, "eval", sexpr_fun_builtin(&builtin_eval, "eval"));
-	env_insert_var(env, "+", sexpr_fun_builtin(&builtin_math_op, "+"));
-	env_insert_var(env, "-", sexpr_fun_builtin(&builtin_math_op, "-"));
-	env_insert_var(env, "*", sexpr_fun_builtin(&builtin_math_op, "*"));
-	env_insert_var(env, "/", sexpr_fun_builtin(&builtin_math_op, "/"));
-	env_insert_var(env, "%", sexpr_fun_builtin(&builtin_math_op, "%"));
-	env_insert_var(env, "=", sexpr_fun_builtin(&builtin_math_cmp, "="));
-	env_insert_var(env, ">", sexpr_fun_builtin(&builtin_math_cmp, ">"));
-	env_insert_var(env, ">=", sexpr_fun_builtin(&builtin_math_cmp, ">="));
-	env_insert_var(env, "<", sexpr_fun_builtin(&builtin_math_cmp, "<"));
-	env_insert_var(env, "<=", sexpr_fun_builtin(&builtin_math_cmp, "<="));
-	env_insert_var(env, "not", sexpr_fun_builtin(&builtin_not, "not"));
-	env_insert_var(env, "or", sexpr_fun_builtin(&builtin_or, "or"));
-	env_insert_var(env, "and", sexpr_fun_builtin(&builtin_and, "and"));
-	env_insert_var(env, "min", sexpr_fun_builtin(&builtin_min_op, "min"));
-	env_insert_var(env, "max", sexpr_fun_builtin(&builtin_max_op, "max"));
-	env_insert_var(env, "quit", sexpr_fun_builtin(&builtin_quit, "quit"));
-	env_insert_var(env, "define", sexpr_fun_builtin(&define, "define"));
-	env_insert_var(env, "quote", sexpr_fun_builtin(&quote_form, "quote"));
-	env_insert_var(env, "lambda", sexpr_fun_builtin(&builtin_lambda, "lambda"));
-	env_insert_var(env, "dump", sexpr_fun_builtin(&builtin_mem_dump, "dump"));
-	env_insert_var(env, "cond", sexpr_fun_builtin(&builtin_cond, "cond"));
-	env_insert_var(env, "string?", sexpr_fun_builtin(&builtin_stringq, "string?"));
-	env_insert_var(env, "string-length", sexpr_fun_builtin(&builtin_stringlen, "string-length"));
-	env_insert_var(env, "string", sexpr_fun_builtin(&builtin_string, "string"));
-	env_insert_var(env, "string-append", sexpr_fun_builtin(&builtin_stringappend, "string-append"));
-	env_insert_var(env, "string-copy", sexpr_fun_builtin(&builtin_stringcopy, "string-copy"));
-	env_insert_var(env, "load", sexpr_fun_builtin(&builtin_load, "load"));
+void load_built_ins(scope *sc) {
+   	scope_insert_var(sc, "car", sexpr_fun_builtin(&builtin_car, "car"));
+	scope_insert_var(sc, "cdr", sexpr_fun_builtin(&builtin_cdr, "cdr"));
+	scope_insert_var(sc, "cons", sexpr_fun_builtin(&builtin_cons, "cons"));
+	scope_insert_var(sc, "list", sexpr_fun_builtin(&builtin_list, "list"));
+	scope_insert_var(sc, "eq?", sexpr_fun_builtin(&builtin_eq, "eq?"));
+	scope_insert_var(sc, "null?", sexpr_fun_builtin(&builtin_nullq, "null?"));
+	scope_insert_var(sc, "pair?", sexpr_fun_builtin(&builtin_pairq, "pair?"));
+	scope_insert_var(sc, "number?", sexpr_fun_builtin(&builtin_numberq, "number?"));
+	scope_insert_var(sc, "eval", sexpr_fun_builtin(&builtin_eval, "eval"));
+	scope_insert_var(sc, "+", sexpr_fun_builtin(&builtin_math_op, "+"));
+	scope_insert_var(sc, "-", sexpr_fun_builtin(&builtin_math_op, "-"));
+	scope_insert_var(sc, "*", sexpr_fun_builtin(&builtin_math_op, "*"));
+	scope_insert_var(sc, "/", sexpr_fun_builtin(&builtin_math_op, "/"));
+	scope_insert_var(sc, "%", sexpr_fun_builtin(&builtin_math_op, "%"));
+	scope_insert_var(sc, "=", sexpr_fun_builtin(&builtin_math_cmp, "="));
+	scope_insert_var(sc, ">", sexpr_fun_builtin(&builtin_math_cmp, ">"));
+	scope_insert_var(sc, ">=", sexpr_fun_builtin(&builtin_math_cmp, ">="));
+	scope_insert_var(sc, "<", sexpr_fun_builtin(&builtin_math_cmp, "<"));
+	scope_insert_var(sc, "<=", sexpr_fun_builtin(&builtin_math_cmp, "<="));
+	scope_insert_var(sc, "not", sexpr_fun_builtin(&builtin_not, "not"));
+	scope_insert_var(sc, "or", sexpr_fun_builtin(&builtin_or, "or"));
+	scope_insert_var(sc, "and", sexpr_fun_builtin(&builtin_and, "and"));
+	scope_insert_var(sc, "min", sexpr_fun_builtin(&builtin_min_op, "min"));
+	scope_insert_var(sc, "max", sexpr_fun_builtin(&builtin_max_op, "max"));
+	scope_insert_var(sc, "quit", sexpr_fun_builtin(&builtin_quit, "quit"));
+	scope_insert_var(sc, "define", sexpr_fun_builtin(&define, "define"));
+	scope_insert_var(sc, "quote", sexpr_fun_builtin(&quote_form, "quote"));
+	scope_insert_var(sc, "lambda", sexpr_fun_builtin(&builtin_lambda, "lambda"));
+	scope_insert_var(sc, "dump", sexpr_fun_builtin(&builtin_mem_dump, "dump"));
+	scope_insert_var(sc, "cond", sexpr_fun_builtin(&builtin_cond, "cond"));
+	scope_insert_var(sc, "string?", sexpr_fun_builtin(&builtin_stringq, "string?"));
+	scope_insert_var(sc, "string-length", sexpr_fun_builtin(&builtin_stringlen, "string-length"));
+	scope_insert_var(sc, "string", sexpr_fun_builtin(&builtin_string, "string"));
+	scope_insert_var(sc, "string-append", sexpr_fun_builtin(&builtin_stringappend, "string-append"));
+	scope_insert_var(sc, "string-copy", sexpr_fun_builtin(&builtin_stringcopy, "string-copy"));
+	scope_insert_var(sc, "load", sexpr_fun_builtin(&builtin_load, "load"));
 }
