@@ -1,6 +1,7 @@
 #ifndef parser_h
 #define parser_h
 
+#include "environment.h"
 #include "sexpr.h"
 #include "tokenizer.h"
 
@@ -17,6 +18,6 @@ typedef struct parser {
 parser* parser_create(void);
 void parser_free(parser*);
 void parser_clear(parser*);
-void parser_feed_token(parser*, token*);
+void parser_feed_token(vm_heap*, parser*, token*);
 
 #endif

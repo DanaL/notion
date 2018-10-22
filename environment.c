@@ -75,13 +75,13 @@ void scope_insert_var(vm_heap *vm, scope* sc, char *name, sexpr *s) {
 	}
 }
 
-sexpr* scope_fetch_var(scope *sc, char* key) {
+sexpr* scope_fetch_var(vm_heap *vm, scope *sc, char* key) {
 	int h = bt_hash(sc->size, key);
 
 	if (!sc->sym_table[h]) {
 		char msg[256];
 		snprintf(msg, sizeof msg, "%s%s", "Unbound symbol: ", key);
-		sexpr *r = CHECK_PARENT_SCOPE(sc, key, msg);
+		sexpr *r = CHECK_PARENT_SCOPE(vm, sc, key, msg);
 		return r;
 	}
 	sym *b = sc->sym_table[h];
@@ -96,10 +96,10 @@ sexpr* scope_fetch_var(scope *sc, char* key) {
 	if (!b) {
 		char msg[256];
 		snprintf(msg, sizeof msg, "%s%s", "Unbound symbol: ", key);
-		return CHECK_PARENT_SCOPE(sc, key, msg);
+		return CHECK_PARENT_SCOPE(vm, sc, key, msg);
 	}
 
-	return sexpr_copy(b->val);
+	return b->val;
 }
 
 void scope_free(scope *sc) {

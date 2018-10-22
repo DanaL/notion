@@ -25,14 +25,14 @@ struct scope {
 scope* scope_new(unsigned int size);
 void scope_free(scope*);
 void scope_insert_var(vm_heap*, scope*, char*, sexpr*);
-sexpr* scope_fetch_var(scope*, char*);
+sexpr* scope_fetch_var(vm_heap*, scope*, char*);
 void env_dump(vm_heap*, scope*);
 
 #define IS_FUNC(f) (f->type == LVAL_LIST && f->count > 0) ? 1 : 0
 
-#define CHECK_PARENT_SCOPE(e, k, msg) (e->parent) \
-		? scope_fetch_var(e->parent, k) \
-		: sexpr_err(msg)
+#define CHECK_PARENT_SCOPE(vm, e, k, msg) (e->parent) \
+		? scope_fetch_var(vm, e->parent, k) \
+		: sexpr_err(vm, msg)
 
 
 struct vm_heap {

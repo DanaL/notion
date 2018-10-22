@@ -84,7 +84,7 @@ sexpr* builtin_load(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op)
 	ASSERT_PARAM_EQ(count, 2, "Load expects only the filename to be loaded.");
 
 	if (nodes[1]->type != LVAL_STR)
-		return sexpr_err("Filename must be a string constant.");
+		return sexpr_err(vm, "Filename must be a string constant.");
 
 	char buffer[1024];
 	FILE *infile = fopen(nodes[1]->str, "r");
@@ -111,10 +111,10 @@ sexpr* builtin_load(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op)
 					continue;
 				}
 				else {
-					parser_feed_token(p, nt);
+					parser_feed_token(vm, p, nt);
 					token_free(nt);
                     if (p->open_p == p->closed_p) {
-                        expr = sexpr_copy(p->head);
+                        expr = sexpr_copy(vm, p->head);
 						parser_clear(p);
                         sexpr *result = eval2(vm, env, expr);
 
@@ -134,13 +134,13 @@ sexpr* builtin_load(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op)
 	parser_free(p);
 	fclose(infile);
 
-	return sexpr_null();
+	return sexpr_null(vm);
 }
 
 sexpr* builtin_mem_dump(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
 	env_dump(vm, env);
 
-	return sexpr_null();
+	return sexpr_null(vm);
 }
 
 /* I think this is probably incorrect, or not totally correct because I haven't
@@ -154,18 +154,18 @@ sexpr *builtin_pairq(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op
 	if (v->type == LVAL_LIST && v->count > 0)
 		pq = 1;
 
-	return sexpr_bool(pq);
+	return sexpr_bool(vm, pq);
 }
 
 sexpr *builtin_not(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
 	if (count != 2)
-		return sexpr_err("Just one parameter expected.");
+		return sexpr_err(vm, "Just one parameter expected.");
 
 	sexpr *v = eval2(vm, env, nodes[1]);
 	if (v->type != LVAL_BOOL)
-		return sexpr_err("Boolean value expected.");
+		return sexpr_err(vm, "Boolean value expected.");
 
-	sexpr *result = sexpr_bool(!v->bool);
+	sexpr *result = sexpr_bool(vm, !v->bool);
 
 	return result;
 }
@@ -173,11 +173,11 @@ sexpr *builtin_not(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) 
 /* I find Scheme's version of and pretty odd in how all non-booleans
 	are considered true. */
 sexpr* builtin_and(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
-	sexpr* result = sexpr_list();
+	sexpr* result = sexpr_list(vm);
 
 	/* and with no parameters returns true, apparently */
 	if (count == 1)
-		return sexpr_bool(1);
+		return sexpr_bool(vm, 1);
 
 	for (int j = 1; j < count; j++) {
 		sexpr *cp = eval2(vm, env, nodes[j]);
@@ -186,20 +186,20 @@ sexpr* builtin_and(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) 
 		}
 
 		if (cp->type == LVAL_BOOL && !cp->bool)
-			return sexpr_bool(0);
+			return sexpr_bool(vm, 0);
 
-		result = sexpr_copy(cp);
+		result = sexpr_copy(vm, cp);
 	}
 
 	return result;
 }
 
 sexpr* builtin_or(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
-	sexpr* result = sexpr_list();
+	sexpr* result = sexpr_list(vm);
 
 	/* and with no parameters returns true, apparently */
 	if (count == 1)
-		return sexpr_bool(0);
+		return sexpr_bool(vm, 0);
 
 	for (int j = 1; j < count; j++) {
 		sexpr *cp = eval2(vm, env, nodes[j]);
@@ -210,7 +210,7 @@ sexpr* builtin_or(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
 		if (cp->type != LVAL_BOOL || (cp->type == LVAL_BOOL && cp->bool))
 			return cp;
 
-		result = sexpr_copy(cp);
+		result = sexpr_copy(vm, cp);
 	}
 
 	return result;
@@ -225,14 +225,14 @@ sexpr* builtin_or(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
  */
 sexpr* builtin_math_cmp(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
 	if (count != 3) {
-		return sexpr_err("Just two parameters expected.");
+		return sexpr_err(vm, "Just two parameters expected.");
 	}
 
 	sexpr *n0 = eval2(vm, env, nodes[1]);
 	sexpr *n1 = eval2(vm, env, nodes[2]);
 
 	if (n0->type != LVAL_NUM || n1->type != LVAL_NUM)
-		return sexpr_err("Number expected.");
+		return sexpr_err(vm, "Number expected.");
 
 	int eq = 0;
 	float f0 = n0->num_type == NUM_TYPE_INT ? n0->i_num : n0->d_num;
@@ -249,7 +249,7 @@ sexpr* builtin_math_cmp(vm_heap *vm, scope *env, sexpr **nodes, int count, char 
 	else if (strcmp("<=", op) == 0)
 		eq = f0 < f1 || fabsf(f0 - f1) < 0.000000001;
 
-	return eq ? sexpr_bool(1) : sexpr_bool(0);
+	return eq ? sexpr_bool(vm, 1) : sexpr_bool(vm, 0);
 }
 
 sexpr* builtin_math_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
@@ -261,10 +261,10 @@ sexpr* builtin_math_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *
 		sexpr *n = eval2(vm, env, nodes[1]);
 
 		if (n->type != LVAL_NUM)
-			r = sexpr_err("Expected number!");
+			r = sexpr_err(vm, "Expected number!");
 		else {
 			result = - (NUM_CONVERT(nodes[1]));
-			r = sexpr_num(nodes[1]->num_type, result);
+			r = sexpr_num(vm, nodes[1]->num_type, result);
 		}
 
 		return r;
@@ -275,7 +275,7 @@ sexpr* builtin_math_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *
 		sexpr *n = eval2(vm, env, nodes[j]);
 
 		if (n->type != LVAL_NUM) {
-			return sexpr_err("Expected number!");
+			return sexpr_err(vm, "Expected number!");
 		}
 
 		if (n->num_type == NUM_TYPE_DEC)
@@ -296,22 +296,22 @@ sexpr* builtin_math_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *
 		else if (strcmp(op, "/") == 0) {
 			/* Let's make sure we're not trying to divide by zero */
 			if (is_zero(n)) {
-				return sexpr_err("Division by zero!");
+				return sexpr_err(vm, "Division by zero!");
 			}
 			result /= NUM_CONVERT(n);
 		}
 		else if (strcmp(op, "%") == 0) {
 			if (n->num_type != NUM_TYPE_INT || nodes[1]->num_type != NUM_TYPE_INT) {
-				return sexpr_err("Can only calculate the remainder for integers.");
+				return sexpr_err(vm, "Can only calculate the remainder for integers.");
 			}
 			else if (is_zero(n)) {
-				return sexpr_err("Division by zero!");
+				return sexpr_err(vm, "Division by zero!");
 			}
 			result = nodes[1]->i_num % n->i_num;
 		}
 	}
 
-	r = sexpr_num(rt, result);
+	r = sexpr_num(vm, rt, result);
 
 	return r;
 }
@@ -325,7 +325,7 @@ sexpr* builtin_min_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *o
 	for (int j = 1; j < count; j++) {
 		sexpr *n = eval2(vm, env, nodes[j]);
 		if (n->type != LVAL_NUM) {
-			return sexpr_err("Expected number!");
+			return sexpr_err(vm, "Expected number!");
 		}
 
 		if (n->num_type == NUM_TYPE_DEC)
@@ -341,7 +341,7 @@ sexpr* builtin_min_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *o
 			curr_max = x;
 	}
 
-	return sexpr_num(rt, curr_max);
+	return sexpr_num(vm, rt, curr_max);
 }
 
 sexpr* builtin_max_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
@@ -353,7 +353,7 @@ sexpr* builtin_max_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *o
 	for (int j = 1; j < count; j++) {
 		sexpr *n = eval2(vm, env, nodes[j]);
 		if (n->type != LVAL_NUM) {
-			return sexpr_err("Expected number!");
+			return sexpr_err(vm, "Expected number!");
 		}
 
 		if (n->num_type == NUM_TYPE_DEC)
@@ -369,11 +369,11 @@ sexpr* builtin_max_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *o
 			curr_max = x;
 	}
 
-	return sexpr_num(rt, curr_max);
+	return sexpr_num(vm, rt, curr_max);
 }
 
 sexpr* builtin_list(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
-	sexpr* result = sexpr_list();
+	sexpr* result = sexpr_list(vm);
 
 	for (int j = 1; j < count; j++) {
 		sexpr *cp = eval2(vm, env, nodes[j]);
@@ -392,12 +392,12 @@ sexpr* builtin_cdr(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) 
 
 	sexpr *l = eval2(vm, env, nodes[1]);
 	if (l->type != LVAL_LIST || l->count == 0) {
-		return sexpr_err("cdr is defined only for non-empty lists.");
+		return sexpr_err(vm, "cdr is defined only for non-empty lists.");
 	}
 
-	sexpr *result = sexpr_list();
+	sexpr *result = sexpr_list(vm);
 	for (int j = 1; j < l->count; j++) {
-		sexpr_list_insert(result, sexpr_copy(l->children[j]));
+		sexpr_list_insert(vm, result, sexpr_copy(vm, l->children[j]));
 	}
 
 	return result;
@@ -409,10 +409,10 @@ sexpr* builtin_car(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) 
 	sexpr *l = eval2(vm, env, nodes[1]);
 
 	if (l->type != LVAL_LIST || l->count == 0) {
-		return sexpr_err("car is defined only for non-empty lists.");
+		return sexpr_err(vm, "car is defined only for non-empty lists.");
 	}
 
-	sexpr *result = sexpr_copy(l->children[0]);
+	sexpr *result = sexpr_copy(vm, l->children[0]);
 
 	return result;
 }
@@ -423,14 +423,14 @@ sexpr* builtin_cons(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op)
 	sexpr *a2 = eval2(vm, env, nodes[2]);
 
 	if (a2->type != LVAL_LIST) {
-		return sexpr_err("The second argument of cons must be a list.");
+		return sexpr_err(vm, "The second argument of cons must be a list.");
 	}
 
-	sexpr *result = sexpr_list();
-	sexpr_list_insert(result, eval2(vm, env, nodes[1]));
+	sexpr *result = sexpr_list(vm);
+	sexpr_list_insert(vm, result, eval2(vm, env, nodes[1]));
 
 	for (int j = 0; j < a2->count; j++) {
-		sexpr_list_insert(result, sexpr_copy(a2->children[j]));
+		sexpr_list_insert(vm, result, sexpr_copy(vm, a2->children[j]));
 	}
 
 	return result;
@@ -442,7 +442,7 @@ sexpr* builtin_nullq(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op
 	sexpr *a = eval2(vm, env, nodes[1]);
 	ASSERT_NOT_ERR(a);
 
-	sexpr *result = sexpr_bool(a->type == LVAL_LIST && a->count == 0 ? 1 :0);
+	sexpr *result = sexpr_bool(vm, a->type == LVAL_LIST && a->count == 0 ? 1 :0);
 
 	return result;
 }
@@ -453,7 +453,7 @@ sexpr* builtin_numberq(vm_heap *vm, scope *env, sexpr **nodes, int count, char *
 	sexpr *n = eval2(vm, env, nodes[1]);
 	ASSERT_NOT_ERR(n);
 
-	sexpr *result = sexpr_bool(n->type == LVAL_NUM);
+	sexpr *result = sexpr_bool(vm, n->type == LVAL_NUM);
 
 	return result;
 }
@@ -473,21 +473,21 @@ sexpr* builtin_eq(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
 
 	sexpr *result = NULL;
 	if (a->type == LVAL_BOOL && b->type == LVAL_BOOL && a->bool == b->bool)
-		result = sexpr_bool(1);
+		result = sexpr_bool(vm, 1);
 	else if (a->type == LVAL_SYM && b->type == LVAL_SYM && strcmp(a->sym, b->sym) == 0)
-		result = sexpr_bool(1);
+		result = sexpr_bool(vm, 1);
 	else if (a->type == LVAL_STR && b->type == LVAL_STR && strcmp(a->str, b->str) == 0)
-		result = sexpr_bool(1);
+		result = sexpr_bool(vm, 1);
 	else if (a->type == LVAL_NUM && b->type == LVAL_NUM && a->num_type == b->num_type) {
 		if (a->num_type == NUM_TYPE_INT && a->i_num == b->i_num)
-			result = sexpr_bool(1);
+			result = sexpr_bool(vm, 1);
 		else if (a->num_type == NUM_TYPE_DEC && fabs(a->d_num - b->d_num) < 0.0000001)
-			result = sexpr_bool(1);
+			result = sexpr_bool(vm, 1);
 		else
-			result = sexpr_bool(0);
+			result = sexpr_bool(vm, 0);
 	}
 	else
-		result = sexpr_bool(0);
+		result = sexpr_bool(vm, 0);
 
 	return result;
 }
@@ -506,11 +506,11 @@ sexpr* builtin_eval(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op)
 }
 
 sexpr* builtin_quit(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
-	return sexpr_err("<quit>");
+	return sexpr_err(vm, "<quit>");
 }
 
 sexpr* quote_form(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
-	return sexpr_copy(nodes[1]);
+	return sexpr_copy(vm, nodes[1]);
 }
 
 int is_quoted_val(sexpr *v) {
@@ -526,30 +526,30 @@ int is_quoted_val(sexpr *v) {
 
 sexpr* define_var(vm_heap *vm, scope *sc, sexpr **nodes, int count, char *op) {
 	if (nodes[1]->type != LVAL_SYM)
-		return sexpr_err("Expected variable name.");
+		return sexpr_err(vm, "Expected variable name.");
 
-	ASSERT_PRIMITIVE(sc, nodes[1]->sym);
+	ASSERT_PRIMITIVE(vm, sc, nodes[1]->sym);
 
 	if (is_quoted_val(nodes[2]))
-		scope_insert_var(vm, sc, nodes[1]->sym, sexpr_copy(nodes[2]->children[1]));
+		scope_insert_var(vm, sc, nodes[1]->sym, sexpr_copy(vm, nodes[2]->children[1]));
 	else
 		scope_insert_var(vm, sc, nodes[1]->sym, eval2(vm, sc, nodes[2]));
 
-	return sexpr_null();
+	return sexpr_null(vm);
 }
 
 sexpr* build_func(vm_heap *vm, sexpr *header, sexpr *body, char *name) {
 	/* Each parameter must be a symbol and be uniquely named
 		Note to self: there can be zero params of course */
-	sexpr *params = sexpr_list();
+	sexpr *params = sexpr_list(vm);
 	for (int j = 1; j < header->count; j++) {
 		if (header->children[j]->type != LVAL_SYM) {
-			return sexpr_err("Paramter names must be symbols.");
+			return sexpr_err(vm, "Paramter names must be symbols.");
 		}
-		sexpr_append(params, sexpr_copy(header->children[j]));
+		sexpr_append(params, sexpr_copy(vm, header->children[j]));
 	}
 
-	return sexpr_fun_user(params, sexpr_copy(body), name);
+	return sexpr_fun_user(vm, params, sexpr_copy(vm, body), name);
 }
 
 sexpr* builtin_cond(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
@@ -576,24 +576,24 @@ sexpr* builtin_cond(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op)
 			if (result->type == LVAL_ERR)
 				return result;
 			else if (result->type != LVAL_BOOL) {
-				return sexpr_err("Invalid boolean test.");
+				return sexpr_err(vm, "Invalid boolean test.");
 			}
 
 			if (result->bool)
 				return eval2(vm, env, cond->children[1]);
 		}
 		else
-			return sexpr_err("Cond tests must be an expression.");
+			return sexpr_err(vm, "Cond tests must be an expression.");
 	}
 
-	return sexpr_null();
+	return sexpr_null(vm);
 }
 
 sexpr* builtin_stringq(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
 	ASSERT_PARAM_EQ(count, 2, "String? takes just one paramter.");
 
 	sexpr *s = eval2(vm, env, nodes[1]);
-	sexpr *result = sexpr_bool(s->type == LVAL_STR ? 1 : 0);
+	sexpr *result = sexpr_bool(vm, s->type == LVAL_STR ? 1 : 0);
 
 	return result;
 }
@@ -603,10 +603,10 @@ sexpr* builtin_stringlen(vm_heap *vm, scope *env, sexpr **nodes, int count, char
 
 	sexpr *s = eval2(vm, env, nodes[1]);
 	if (s->type != LVAL_STR) {
-		return sexpr_err("That was not a string.");
+		return sexpr_err(vm, "That was not a string.");
 	}
 
-	sexpr *result = sexpr_num(NUM_TYPE_INT, strlen(s->str));
+	sexpr *result = sexpr_num(vm, NUM_TYPE_INT, strlen(s->str));
 
 	return result;
 }
@@ -616,10 +616,10 @@ sexpr* builtin_string(vm_heap *vm, scope *env, sexpr **nodes, int count, char *o
 
 	sexpr *src = eval2(vm, env, nodes[1]);
 	if (src->type != LVAL_STR) {
-		return sexpr_err("String takes a string type for its parameter.");
+		return sexpr_err(vm, "String takes a string type for its parameter.");
 	}
 
-	sexpr *result = sexpr_copy(src);
+	sexpr *result = sexpr_copy(vm, src);
 
 	return result;
 }
@@ -630,13 +630,11 @@ sexpr* builtin_stringappend(vm_heap *vm, scope *env, sexpr **nodes, int count, c
 	sexpr *s1 = eval2(vm, env, nodes[1]);
 	ASSERT_NOT_ERR(s1);
 	sexpr *s2 = eval2(vm, env, nodes[2]);
-	if (s2->type == LVAL_ERR) {
-		return s2;
-	}
+	ASSERT_NOT_ERR(s2);
 
 	sexpr *result;
 	if (s1->type != LVAL_STR || s2->type != LVAL_STR) {
-		result = sexpr_err("String-append requiers two strings.");
+		result = sexpr_err(vm, "String-append requiers two strings.");
 	}
 	else {
 		/* s1 and s2 are strings, but their values could be NULL */
@@ -645,7 +643,7 @@ sexpr* builtin_stringappend(vm_heap *vm, scope *env, sexpr **nodes, int count, c
 
 		/* Competent C coders are probably recoiling in horror
 			from this next bit... */
-		result = sexpr_str(NULL);
+		result = sexpr_str(vm, NULL);
 		result->str = malloc(len);
 		result->str[len - 1] = '\0';
 
@@ -672,7 +670,7 @@ sexpr* builtin_stringcopy(vm_heap *vm, scope *env, sexpr **nodes, int count, cha
 	ASSERT_NOT_ERR(s1);
 
 	if (s1->type != LVAL_STR) {
-		return sexpr_err("String copy only copies strings.");
+		return sexpr_err(vm, "String copy only copies strings.");
 	}
 
 	/* Eval returns a copy of its input for atoms so we don't need to do
@@ -686,14 +684,14 @@ sexpr* builtin_lambda(vm_heap *vm, scope *env, sexpr **nodes, int count, char *o
 	/* So function evaluation excepts the paramter list for function
 		calls to include the function name, so gotta add in a dummy
 		value for lambdas */
-	sexpr *params = sexpr_list();
-	sexpr_append(params, sexpr_null());
+	sexpr *params = sexpr_list(vm);
+	sexpr_append(params, sexpr_null(vm));
 	for (int j = 0; j < nodes[1]->count; j++)
-		sexpr_append(params, sexpr_copy(nodes[1]->children[j]));
+		sexpr_append(params, sexpr_copy(vm, nodes[1]->children[j]));
 	sexpr *body = nodes[2];
 
 	if (params->count == 0)
-		return sexpr_err("Invalid definition.");
+		return sexpr_err(vm, "Invalid definition.");
 
 	sexpr *lambda = build_func(vm, params, body, "");
 
@@ -705,9 +703,9 @@ sexpr* define_fun(vm_heap *vm, scope *sc, sexpr **nodes, int count, char *op)  {
 	sexpr *body = nodes[2];
 
 	if (count < 3)
-		return sexpr_err("Invalid definition.");
+		return sexpr_err(vm, "Invalid definition.");
 
-	ASSERT_PRIMITIVE(sc, header->children[0]->sym);
+	ASSERT_PRIMITIVE(vm, sc, header->children[0]->sym);
 	char *fun_name = header->children[0]->sym;
 
 	sexpr *fun = build_func(vm, header, body, fun_name);
@@ -717,12 +715,12 @@ sexpr* define_fun(vm_heap *vm, scope *sc, sexpr **nodes, int count, char *op)  {
 
 	scope_insert_var(vm, sc, fun_name, fun);
 
-	return sexpr_null();
+	return sexpr_null(vm);
 }
 
 sexpr* define(vm_heap *vm, scope *sc, sexpr **nodes, int count, char *op) {
 	if (count != 3)
-		return sexpr_err("Invalid definition.");
+		return sexpr_err(vm, "Invalid definition.");
 
 	if (nodes[1]->type == LVAL_LIST)
 		return define_fun(vm, sc, nodes, count, op);
@@ -730,11 +728,11 @@ sexpr* define(vm_heap *vm, scope *sc, sexpr **nodes, int count, char *op) {
 		return define_var(vm, sc, nodes, count, op);
 }
 
-sexpr* resolve_symbol(scope *sc, sexpr *s) {
-	sexpr *r = scope_fetch_var(sc, s->sym);
+sexpr* resolve_symbol(vm_heap *vm, scope *sc, sexpr *s) {
+	sexpr *r = scope_fetch_var(vm, sc, s->sym);
 
 	if (r->type == LVAL_SYM) {
-		sexpr *r2 = scope_fetch_var(sc, r->sym);
+		sexpr *r2 = scope_fetch_var(vm, sc, r->sym);
 		/* If the symbol isn't found, just return the original result.
 			(This is for cases like (define x 'aaa) where aaa is a meaningless
 			symbol) */
@@ -755,11 +753,11 @@ sexpr* eval_user_func(vm_heap *vm, scope *sc, sexpr **operands, int count, sexpr
 	for (int j = 0; j < fun->params->count; j++) {
 		sexpr *var;
 		if (operands[j + 1]->type == LVAL_SYM)
-			var = scope_fetch_var(sc, operands[j + 1]->sym);
+			var = scope_fetch_var(vm, sc, operands[j + 1]->sym);
 		else if (operands[j + 1]->type == LVAL_LIST)
 			var = eval2(vm, sc, operands[j + 1]);
 		else
-			var = sexpr_copy(operands[j + 1]);
+			var = sexpr_copy(vm, operands[j + 1]);
 
 		if (var->type == LVAL_ERR)
 			return var;
@@ -784,18 +782,18 @@ sexpr* eval2(vm_heap *vm, scope *sc, sexpr *v) {
 		case LVAL_LIST:
 			/* An empty list evals to an empty list */
 			if (v->count == 0)
-				return sexpr_list();
+				return sexpr_list(vm);
 
 			sexpr *func;
 			if (v->children[0]->type == LVAL_LIST)
 				func = eval2(vm, sc, v->children[0]);
 			else if (v->children[0]->type == LVAL_SYM)
-				func = scope_fetch_var(sc, v->children[0]->sym);
+				func = scope_fetch_var(vm, sc, v->children[0]->sym);
 			else
-				return sexpr_err("Expected function.");
+				return sexpr_err(vm, "Expected function.");
 
 			if (func->type != LVAL_FUN)
-				return sexpr_err("Expected function.");
+				return sexpr_err(vm, "Expected function.");
 
 			if (func->builtin)
 				result = func->fun(vm, sc, v->children, v->count, func->sym);
@@ -804,7 +802,7 @@ sexpr* eval2(vm_heap *vm, scope *sc, sexpr *v) {
 
 			return result;
 		case LVAL_SYM:
-			return resolve_symbol(sc, v);
+			return resolve_symbol(vm, sc, v);
 		case LVAL_FUN:
 			break;
 		case LVAL_ERR:
@@ -813,11 +811,11 @@ sexpr* eval2(vm_heap *vm, scope *sc, sexpr *v) {
 		case LVAL_BOOL:
 		case LVAL_NULL:
 		case LVAL_STR:
-			return sexpr_copy(v);
+			return sexpr_copy(vm, v);
 			break;
 	}
 
-	return sexpr_err("Something hasn't been implemented yet");
+	return sexpr_err(vm, "Something hasn't been implemented yet");
 }
 
 void load_built_ins(vm_heap *vm, scope *sc) {

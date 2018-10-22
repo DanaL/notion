@@ -14,29 +14,29 @@
 #include "sexpr.h"
 #include "util.h"
 
-sexpr* sexpr_from_token(token *t) {
+sexpr* sexpr_from_token(vm_heap *vm, token *t) {
 	sexpr *expr = NULL;
 
 	switch (t->type) {
 		case T_NUM:
-			expr = sexpr_num_s(t->val);
+			expr = sexpr_num_s(vm, t->val);
 			break;
 		case T_SYM:
-			expr = sexpr_sym(t->val);
+			expr = sexpr_sym(vm, t->val);
 			break;
 		case T_CONSTANT:
 			if (strcmp("#t", t->val) == 0)
-				expr = sexpr_bool(1);
+				expr = sexpr_bool(vm, 1);
 			else if (strcmp("#f", t->val) == 0)
-				expr = sexpr_bool(0);
+				expr = sexpr_bool(vm, 0);
 			else
-				expr = sexpr_err("Unknown constant.");
+				expr = sexpr_err(vm, "Unknown constant.");
 			break;
 		case T_STR:
-			expr = sexpr_str(t->val);
+			expr = sexpr_str(vm, t->val);
 			break;
 		case T_ERR:
-			expr = sexpr_err(t->val);
+			expr = sexpr_err(vm, t->val);
 			break;
 		case T_LIST_START:
 		case T_LIST_END:
@@ -44,7 +44,7 @@ sexpr* sexpr_from_token(token *t) {
 		case T_UNKNOWN:
 		case T_COMMENT:
 		case T_SINGLE_QUOTE:
-			expr = sexpr_err("Unexpeted token.");
+			expr = sexpr_err(vm, "Unexpeted token.");
 			break;
 	}
 
@@ -63,14 +63,10 @@ parser* parser_create(void) {
 }
 
 void parser_free(parser *p) {
-	if (p->curr)
-		sexpr_free(p->curr);
 	free(p);
 }
 
 void parser_clear(parser* p) {
-	if (p->curr)
-		sexpr_free(p->curr);
 	p->curr = NULL;
 	p->head = NULL;
 	p->complete = 0;
@@ -78,12 +74,12 @@ void parser_clear(parser* p) {
 	p->closed_p = 0;
 }
 
-void parser_feed_token(parser* p, token* t) {
+void parser_feed_token(vm_heap *vm, parser* p, token* t) {
 	/* If we have a open parenthesis, start a new list and make it our current
 		head. If head is an existing list, we append the new list to its lists
 		if children. */
 	if (t->type == T_LIST_START) {
-		sexpr *list = sexpr_list();
+		sexpr *list = sexpr_list(vm);
 
 		/* Are we at the start of a brand new expression? */
 		if (!p->head)
@@ -104,14 +100,14 @@ void parser_feed_token(parser* p, token* t) {
 			So start a new list, add a quote symbol to it and make that the
 			new curr pointer.
 		 */
-		sexpr *quote = sexpr_list();
+		sexpr *quote = sexpr_list(vm);
 
 		/* This is a bit kludgy :( If this, the single quoted item we are
 			expanding in a (quote ...) expression contains a list, when we
 			hit its ending paranthesis, we will need to pop out two levels
 			instead of one, so track that with the sq_list field */
 		quote->sq_list = 1;
-		sexpr_append(quote, sexpr_sym("quote"));
+		sexpr_append(quote, sexpr_sym(vm, "quote"));
 
 		/* I don't really need to increment the counts but I know sometime in
 			the future I'll be debugging and manually counting them and panic
@@ -136,9 +132,8 @@ void parser_feed_token(parser* p, token* t) {
 			parenthesis was typed. Ie,  (+ (list 1 2 3)) (list 3 2 1))
 			So flag that as an error condition. */
 		if (!p->curr) {
-			sexpr_free(p->head);
 			parser_clear(p);
-			p->head = sexpr_err("Unexpected end of list. Too many )s?");
+			p->head = sexpr_err(vm, "Unexpected end of list. Too many )s?");
 			p->complete = 1;
 			return;
 		}
@@ -154,11 +149,10 @@ void parser_feed_token(parser* p, token* t) {
 			p->complete = 1;
 	}
 	else {
-		sexpr *e = sexpr_from_token(t);
+		sexpr *e = sexpr_from_token(vm, t);
 
 		if (e->type == LVAL_ERR) {
 			parser_clear(p);
-			sexpr_free(p->head);
 			p->head = e;
 			p->complete = 1;
 			return;

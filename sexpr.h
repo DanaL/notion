@@ -36,22 +36,22 @@ struct sexpr {
 	struct sexpr *neighbour; // Used to keep track on the VM's "heap"
 };
 
-sexpr* sexpr_err(char*);
-sexpr* sexpr_num_s(char*);
-sexpr* sexpr_num(enum sexpr_num_type, float);
-sexpr* sexpr_null(void);
-sexpr* sexpr_sym(char*);
-sexpr* sexpr_list(void);
-sexpr* sexpr_null(void);
-sexpr* sexpr_bool(int);
+sexpr* sexpr_err(vm_heap*, char*);
+sexpr* sexpr_num_s(vm_heap*, char*);
+sexpr* sexpr_num(vm_heap*, enum sexpr_num_type, float);
+sexpr* sexpr_null(vm_heap*);
+sexpr* sexpr_sym(vm_heap*, char*);
+sexpr* sexpr_list(vm_heap*);
+sexpr* sexpr_null(vm_heap*);
+sexpr* sexpr_bool(vm_heap*, int);
 sexpr* sexpr_fun_builtin(builtinf, char*);
-sexpr* sexpr_fun_user(sexpr*, sexpr*, char*);
-sexpr* sexpr_copy(sexpr*);
-sexpr* sexpr_quote(void);
-sexpr* sexpr_str(char *);
+sexpr* sexpr_fun_user(vm_heap*, sexpr*, sexpr*, char*);
+sexpr* sexpr_copy(vm_heap*, sexpr*);
+sexpr* sexpr_quote(vm_heap*);
+sexpr* sexpr_str(vm_heap*, char *);
 
 void sexpr_free(sexpr*);
-void sexpr_list_insert(sexpr*, sexpr*);
+void sexpr_list_insert(vm_heap*, sexpr*, sexpr*);
 void sexpr_append(sexpr*, sexpr*);
 
 void print_sexpr_type(sexpr*);

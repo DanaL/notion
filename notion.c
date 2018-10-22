@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
 		tokenizer_feed_line(tz, line);
 		nt = next_token(tz);
 		while (nt) {
-			parser_feed_token(p, nt);
+			parser_feed_token(vm, p, nt);
 			if (p->complete)
 				break;
 			token_free(nt);
@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
 		if (!okay)
 			continue;
 
-		sexpr *ast = sexpr_copy(p->head);
+		sexpr *ast = sexpr_copy(vm, p->head);
 		parser_clear(p);
 
 		sexpr *result = eval2(vm, global, ast);
