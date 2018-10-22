@@ -4,18 +4,19 @@
 #include "fwd.h"
 #include "sexpr.h"
 
-typedef struct bucket {
+typedef struct sym {
 	int hash_val;
 	char *name;
 	struct sexpr *val;
-	struct bucket *next;
-} bucket;
+	struct sym *next;
+} sym;
 
-bucket* bucket_new(char*, sexpr*);
-void bucket_free(bucket*);
+sym* sym_new(char*, sexpr*);
+void sym_free(sym*);
 
+/* Not sure if scope or sym_table will be a better name for this in the end */
 struct scope {
-	struct bucket **buckets;
+	struct sym **sym_table;
 	scope *parent;
 	unsigned int size;
 };

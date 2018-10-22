@@ -7,8 +7,8 @@
 #include "environment.h"
 #include "util.h"
 
-bucket* bucket_new(char *name, sexpr* e) {
-	bucket *b = malloc(sizeof(bucket));
+sym* sym_new(char *name, sexpr* e) {
+	sym *b = malloc(sizeof(sym));
 	b->val = e;
 	b->next = NULL;
 
@@ -17,10 +17,13 @@ bucket* bucket_new(char *name, sexpr* e) {
 	return b;
 }
 
-void bucket_free(bucket* b) {
+void sym_free(sym* b) {
 	free(b->name);
 
-	bucket *n, *p = b->next;
+	/* I don't think I'll want to do this once garbage collection is a thing.
+		All the sym table entries should be pure references to things on the
+		heap. */
+	sym *n, *p = b->next;
 	while (p) {
 		free(p->name);
 		sexpr_free(p->val);
@@ -35,7 +38,7 @@ void bucket_free(bucket* b) {
 
 scope* scope_new(unsigned int size) {
 	scope *e = malloc(sizeof(scope));
-	e->buckets = calloc(size, sizeof(bucket*));
+	e->sym_table = calloc(size, sizeof(sym*));
 	e->size = size;
 	e->parent = NULL;
 
@@ -56,11 +59,11 @@ int bt_hash(unsigned int size, char *s) {
 
 void scope_insert_var(scope* sc, char *name, sexpr *s) {
 	unsigned int h = bt_hash(sc->size, name);
-	bucket *b = bucket_new(name, s);
+	sym *b = sym_new(name, s);
 
-	if (sc->buckets[h] == NULL) {
-		/* Easy case! Just create the new bucket and stick it there */
-		sc->buckets[h] = b;
+	if (sc->sym_table[h] == NULL) {
+		/* Easy case! Just create the new entry and stick it there */
+		sc->sym_table[h] = b;
 	}
 	else {
 		/* Collision! I am going to make the assumption that a variable added will
@@ -68,21 +71,21 @@ void scope_insert_var(scope* sc, char *name, sexpr *s) {
 
 		/* Note that I am curently in no way handling what to do when a variable with the same name is added */
 		/* Or scope...I bet scope is going to be a huge pain... */
-		b->next = sc->buckets[h];
-		sc->buckets[h] = b;
+		b->next = sc->sym_table[h];
+		sc->sym_table[h] = b;
 	}
 }
 
 sexpr* scope_fetch_var(scope *sc, char* key) {
 	int h = bt_hash(sc->size, key);
 
-	if (!sc->buckets[h]) {
+	if (!sc->sym_table[h]) {
 		char msg[256];
 		snprintf(msg, sizeof msg, "%s%s", "Unbound symbol: ", key);
 		sexpr *r = CHECK_PARENT_SCOPE(sc, key, msg);
 		return r;
 	}
-	bucket *b = sc->buckets[h];
+	sym *b = sc->sym_table[h];
 
 	/* Assuming a variable called is probably going to be
 			called again soon, it might be worth moving it to
@@ -102,19 +105,19 @@ sexpr* scope_fetch_var(scope *sc, char* key) {
 
 void scope_free(scope *sc) {
 	for (int j = 0; j < sc->size; j++) {
-		if (sc->buckets[j])
-			bucket_free(sc->buckets[j]);
+		if (sc->sym_table[j])
+			sym_free(sc->sym_table[j]);
 	}
 
 	free(sc);
 }
 
 void env_dump(scope* env) {
-	bucket *b;
+	sym *b;
 
 	puts("Binding for current scope:");
 	for (int j = 0; j < env->size; j++) {
-		b = env->buckets[j];
+		b = env->sym_table[j];
 		if (b) {
 			printf("  %s ", b->name);
 			print_sexpr_type(b->val);
