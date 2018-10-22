@@ -17,7 +17,7 @@ token* token_create(enum token_type type) {
 void token_free(token *t) {
 	if (!t)
 		return;
-		
+
     if (t->val != NULL)
 		free(t->val);
 
@@ -109,7 +109,7 @@ int skip_whitespace(char *line, int pos) {
     int curr = pos;
 
     while (line && (line[curr] == ' ' || line[curr] == '\n'))
-        ++curr;
+		++curr;
 
 	return curr;
 }

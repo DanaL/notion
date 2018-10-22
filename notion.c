@@ -44,9 +44,9 @@ int main(int argc, char **argv) {
 		line = malloc(sizeof(char) * (MAX_LINE_LENGTH + 1));
 		printf("> ");
 		fgets(line, MAX_LINE_LENGTH, stdin);
-		char *p = strchr(line, '\n');
-		if (p) {
-			*p = '\0';
+		char *cp = strchr(line, '\n');
+		if (cp) {
+			*cp = '\0';
 		}
 #else
 		line = readline("> ");
