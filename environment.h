@@ -14,6 +14,7 @@ typedef struct sym {
 sym* sym_new(char*, sexpr*);
 void sym_free(sym*);
 
+
 /* Not sure if scope or sym_table will be a better name for this in the end */
 struct scope {
 	struct sym **sym_table;
@@ -23,14 +24,24 @@ struct scope {
 
 scope* scope_new(unsigned int size);
 void scope_free(scope*);
-void scope_insert_var(scope*, char*, sexpr*);
+void scope_insert_var(vm_heap*, scope*, char*, sexpr*);
 sexpr* scope_fetch_var(scope*, char*);
-void env_dump(scope*);
+void env_dump(vm_heap*, scope*);
 
 #define IS_FUNC(f) (f->type == LVAL_LIST && f->count > 0) ? 1 : 0
 
 #define CHECK_PARENT_SCOPE(e, k, msg) (e->parent) \
 		? scope_fetch_var(e->parent, k) \
 		: sexpr_err(msg)
+
+
+struct vm_heap {
+	sexpr *heap;
+	int gc_generation;
+	unsigned long count;
+};
+
+vm_heap* vm_new(void);
+void vm_add(vm_heap*, sexpr*);
 
 #endif

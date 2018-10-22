@@ -4,8 +4,8 @@
 #include "environment.h"
 #include "sexpr.h"
 
-sexpr* eval2(scope*, sexpr*);
-void load_built_ins(scope*);
+sexpr* eval2(vm_heap*, scope*, sexpr*);
+void load_built_ins(vm_heap*, scope*);
 
 #define IS_FUNC(f) (f->type == LVAL_LIST && f->count > 0) ? 1 : 0
 #define ASSERT_PRIMITIVE(e, s) sexpr *c = scope_fetch_var(e, s); \

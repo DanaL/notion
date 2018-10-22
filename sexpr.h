@@ -8,7 +8,7 @@ enum sexpr_type { LVAL_NUM, LVAL_ERR, LVAL_SYM, LVAL_LIST, LVAL_NULL,
 	LVAL_BOOL, LVAL_FUN, LVAL_STR };
 enum sexpr_num_type { NUM_TYPE_INT, NUM_TYPE_DEC };
 
-typedef sexpr*(*builtinf)(scope*, sexpr**, int, char*);
+typedef sexpr*(*builtinf)(vm_heap *, scope*, sexpr**, int, char*);
 
 struct sexpr {
 	enum sexpr_type type;

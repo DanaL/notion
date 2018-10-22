@@ -10,4 +10,7 @@ typedef struct sexpr sexpr;
 struct scope;
 typedef struct scope scope;
 
+struct vm_heap;
+typedef struct vm_heap vm_heap;
+
 #endif

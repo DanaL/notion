@@ -57,9 +57,10 @@ int bt_hash(unsigned int size, char *s) {
 	return h;
 }
 
-void scope_insert_var(scope* sc, char *name, sexpr *s) {
+void scope_insert_var(vm_heap *vm, scope* sc, char *name, sexpr *s) {
 	unsigned int h = bt_hash(sc->size, name);
 	sym *b = sym_new(name, s);
+	vm_add(vm, s);
 
 	if (sc->sym_table[h] == NULL) {
 		/* Easy case! Just create the new entry and stick it there */
@@ -112,7 +113,7 @@ void scope_free(scope *sc) {
 	free(sc);
 }
 
-void env_dump(scope* env) {
+void env_dump(vm_heap *vm, scope* env) {
 	sym *b;
 
 	puts("Binding for current scope:");
@@ -126,4 +127,19 @@ void env_dump(scope* env) {
 			putchar('\n');
 		}
 	}
+}
+
+vm_heap* vm_new(void) {
+	vm_heap *vm = malloc(sizeof(vm));
+	vm->count = 0;
+	vm->gc_generation = 0;
+	vm->heap = NULL;
+
+	return vm;
+}
+
+void vm_add(vm_heap* vm, sexpr* expr) {
+	expr->neighbour = vm->heap;
+	vm->heap = expr;
+	vm->count++;
 }
