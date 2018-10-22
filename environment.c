@@ -35,13 +35,9 @@ void bucket_free(bucket* b) {
 
 scope* scope_new(unsigned int size) {
 	scope *e = malloc(sizeof(scope));
-	e->buckets = malloc(size * sizeof(bucket*));
+	e->buckets = calloc(size, sizeof(bucket*));
 	e->size = size;
 	e->parent = NULL;
-
-	/* I bet there's a fancy C trick to do this better/fast */
-	for (int j = 0; j < size; j++)
-		e->buckets[j] = NULL;
 
 	return e;
 }
