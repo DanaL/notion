@@ -33,7 +33,6 @@ int main(int argc, char **argv) {
 	vm_heap *vm = vm_new();
 	scope *global = scope_new(DEFAULT_TABLE_SIZE);
 	load_built_ins(vm, global);
-
 	tokenizer *tz = tokenizer_create();
 	parser *p = parser_create();
 	token *nt;
@@ -100,6 +99,8 @@ int main(int argc, char **argv) {
 
 		sexpr_pprint(result);
 		putchar('\n');
+		puts("Garbage check:");
+		gc_run(vm, global);
 	}
 
 	tokenizer_free(tz);

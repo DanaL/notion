@@ -41,6 +41,8 @@ sexpr* sexpr_num(vm_heap* vm, enum sexpr_num_type t, float n) {
 	sexpr *v = malloc(sizeof(sexpr));
 	v->type = LVAL_NUM;
 	v->num_type = t;
+	v->gen = 0;
+	v->count = 0;
 
 	if (t == NUM_TYPE_INT) {
 		v->i_num = n;
@@ -56,6 +58,8 @@ sexpr* sexpr_num(vm_heap* vm, enum sexpr_num_type t, float n) {
 sexpr* sexpr_num_s(vm_heap* vm, char *s) {
 	sexpr *v = malloc(sizeof(sexpr));
 	v->type = LVAL_NUM;
+	v->gen = 0;
+	v->count = 0;
 
 	if (strchr(s, '.')) {
 		float f = strtof(s, NULL);
@@ -81,6 +85,8 @@ sexpr* sexpr_fun_builtin(builtinf fun, char *name) {
 	v->builtin = 1;
 	v->params = NULL;
 	v->body = NULL;
+	v->gen = 0;
+	v->count = 0;
 
 	return v;
 }
@@ -93,6 +99,8 @@ sexpr* sexpr_fun_user(vm_heap* vm, sexpr *params, sexpr *body, char *name) {
 	v->builtin = 0;
 	v->params = params;
 	v->body = body;
+	v->gen = 0;
+	v->count = 0;
 
 	vm_add(vm, v);
 
@@ -102,6 +110,9 @@ sexpr* sexpr_fun_user(vm_heap* vm, sexpr *params, sexpr *body, char *name) {
 sexpr* sexpr_str(vm_heap* vm, char *s) {
 	sexpr *v = malloc(sizeof(sexpr));
 	v->type = LVAL_STR;
+	v->gen = 0;
+	v->count = 0;
+
 	if (s)
 		v->str = n_strcpy(v->str, s);
 	else
@@ -116,6 +127,8 @@ sexpr* sexpr_err(vm_heap* vm, char *s) {
 	sexpr *v = malloc(sizeof(sexpr));
 	v->type = LVAL_ERR;
 	v->err = n_strcpy(v->err, s);
+	v->gen = 0;
+	v->count = 0;
 
 	vm_add(vm, v);
 
@@ -126,6 +139,8 @@ sexpr* sexpr_sym(vm_heap* vm, char *s) {
 	sexpr *v = malloc(sizeof(sexpr));
 	v->type = LVAL_SYM;
 	v->sym = n_strcpy(v->sym, s);
+	v->gen = 0;
+	v->count = 0;
 
 	vm_add(vm, v);
 
@@ -136,6 +151,8 @@ sexpr* sexpr_bool(vm_heap* vm, int v) {
 	sexpr *b = malloc(sizeof(sexpr));
 	b->type = LVAL_BOOL;
 	b->bool = v;
+	b->gen = 0;
+	b->count = 0;
 
 	vm_add(vm, b);
 
@@ -148,6 +165,7 @@ sexpr* sexpr_list(vm_heap* vm) {
 	v->count = 0;
 	v->children = NULL;
 	v->sq_list = 0;
+	v->gen = 0;
 
 	vm_add(vm, v);
 
@@ -159,6 +177,8 @@ sexpr* sexpr_null(vm_heap* vm) {
 	v->type = LVAL_NULL;
 	v->count = 0;
 	v->children = NULL;
+	v->gen = 0;
+	v->count = 0;
 
 	vm_add(vm, v);
 

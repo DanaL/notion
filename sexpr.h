@@ -34,6 +34,7 @@ struct sexpr {
 
 	struct sexpr *parent; // this is used strictly during parsing
 	struct sexpr *neighbour; // Used to keep track on the VM's "heap"
+	unsigned int gen;
 };
 
 sexpr* sexpr_err(vm_heap*, char*);

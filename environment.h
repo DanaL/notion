@@ -43,5 +43,6 @@ struct vm_heap {
 
 vm_heap* vm_new(void);
 void vm_add(vm_heap*, sexpr*);
+void gc_run(vm_heap*, scope*);
 
 #endif

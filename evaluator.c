@@ -762,9 +762,9 @@ sexpr* eval_user_func(vm_heap *vm, scope *sc, sexpr **operands, int count, sexpr
 		if (var->type == LVAL_ERR)
 			return var;
 
-		printf("%s -> ", fun->params->children[j]->sym);
-		sexpr_pprint(var);
-		putchar('\n');
+		//printf("%s -> ", fun->params->children[j]->sym);
+		//sexpr_pprint(var);
+		//putchar('\n');
 		scope_insert_var(vm, func_scope, fun->params->children[j]->sym, var);
 	}
 

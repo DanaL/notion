@@ -55,14 +55,13 @@ int bt_hash(unsigned int size, char *s) {
 	return h;
 }
 
-void scope_insert_var(vm_heap *vm, scope* sc, char *name, sexpr *s) {
+void scope_insert_var(vm_heap *vm, scope* sc, char *name, sexpr *exp) {
 	unsigned int h = bt_hash(sc->size, name);
-	sym *b = sym_new(name, s);
-	vm_add(vm, s);
+	sym *s = sym_new(name, exp);
 
 	if (sc->sym_table[h] == NULL) {
 		/* Easy case! Just create the new entry and stick it there */
-		sc->sym_table[h] = b;
+		sc->sym_table[h] = s;
 	}
 	else {
 		/* Collision! I am going to make the assumption that a variable added will
@@ -70,8 +69,8 @@ void scope_insert_var(vm_heap *vm, scope* sc, char *name, sexpr *s) {
 
 		/* Note that I am curently in no way handling what to do when a variable with the same name is added */
 		/* Or scope...I bet scope is going to be a huge pain... */
-		b->next = sc->sym_table[h];
-		sc->sym_table[h] = b;
+		s->next = sc->sym_table[h];
+		sc->sym_table[h] = s;
 	}
 }
 
@@ -143,4 +142,50 @@ void vm_add(vm_heap* vm, sexpr* expr) {
 	expr->neighbour = vm->heap;
 	vm->heap = expr;
 	vm->count++;
+}
+
+void mark_chain(vm_heap* vm, sexpr *chain) {
+	/* Bailing out if it has been marked avoids cycles in the graph of
+		connection objects */
+	if (chain->gen == vm->gc_generation)
+		return;
+
+	if (chain->count > 0) {
+		for (int j = 0; j < chain->count; j++)
+			mark_chain(vm, chain->children[j]);
+	}
+
+	chain->gen = vm->gc_generation;
+}
+
+void gc_run(vm_heap* vm, scope* env) {
+	vm->gc_generation++;
+
+	/* Need to pass over the entire symbol table and mark which objects
+		are still referenced. Don't bother marking built-ins because we are
+		never going to recycle them. */
+	for (int j = 0; j < env->size; j++) {
+		sym *s = env->sym_table[j];
+		while (s) {
+			mark_chain(vm, s->val);
+			s = s->next;
+		}
+	}
+
+	unsigned long total = 0;
+	unsigned long stale = 0;
+	unsigned long curr = 0;
+	sexpr *h = vm->heap;
+	while (h) {
+		if (h->gen == vm->gc_generation)
+			++curr;
+		else
+			++stale;
+		++total;
+		h = h->neighbour;
+	}
+
+	printf("Total objects on heap: %ld\n", total);
+	printf("    Total marked: %ld\n", curr);
+	printf("    Total stale:  %ld\n", stale);
 }
