@@ -92,17 +92,14 @@ int main(int argc, char **argv) {
 		parser_clear(p);
 
 		sexpr *result = eval2(vm, global, ast);
-		sexpr_free(ast);
 
 		if (result->type == LVAL_ERR && strcmp(result->err, "<quit>") == 0) {
 			puts("Notion exiting.");
-			sexpr_free(result);
 			break;
 		}
 
 		sexpr_pprint(result);
 		putchar('\n');
-		sexpr_free(result);
 	}
 
 	tokenizer_free(tz);

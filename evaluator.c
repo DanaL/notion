@@ -140,13 +140,6 @@ sexpr* builtin_load(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op)
 sexpr* builtin_mem_dump(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
 	env_dump(vm, env);
 
-	sexpr *node = vm->heap;
-	while (node) {
-		print_sexpr_type(node);
-		putchar('\n');
-		node = node->neighbour;
-	}
-
 	return sexpr_null();
 }
 
@@ -627,7 +620,7 @@ sexpr* builtin_string(vm_heap *vm, scope *env, sexpr **nodes, int count, char *o
 	}
 
 	sexpr *result = sexpr_copy(src);
-	
+
 	return result;
 }
 

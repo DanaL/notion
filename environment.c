@@ -26,13 +26,11 @@ void sym_free(sym* b) {
 	sym *n, *p = b->next;
 	while (p) {
 		free(p->name);
-		sexpr_free(p->val);
 		n = p->next;
 		free(p);
 		p = n;
 	}
 
-	sexpr_free(b->val);
 	free(b);
 }
 
