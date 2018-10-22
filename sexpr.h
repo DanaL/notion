@@ -17,11 +17,11 @@ struct sexpr {
 	union {
 		long i_num;
 		float d_num;
-	} n;
-	int bool;
-	char *sym;
-	char *err;
-	char *str;
+		int bool;
+		char *sym;
+		char *err;
+		char *str;
+	};
 
 	int builtin;
 	builtinf fun;
@@ -60,6 +60,6 @@ void sexpr_pprint(sexpr*);
 	|| a->type == LVAL_NULL || a->type == LVAL_BOOL \
 	|| a->type == LVAL_FUN || a->type == LVAL_STR) ? 1 : 0
 
-#define NUM_CONVERT(x) x->num_type == NUM_TYPE_INT ? x->n.i_num : x->n.d_num
+#define NUM_CONVERT(x) x->num_type == NUM_TYPE_INT ? x->i_num : x->d_num
 
 #endif

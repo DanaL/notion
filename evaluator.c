@@ -13,9 +13,9 @@
 
 int is_zero(sexpr *num) {
 	if (num->num_type == NUM_TYPE_INT)
-		return num->n.i_num == 0;
+		return num->i_num == 0;
 	else
-		return (fabs(0 - num->n.d_num) < 0.00000001);
+		return (fabs(0 - num->d_num) < 0.00000001);
 }
 
 int sexpr_cmp(sexpr *s1, sexpr *s2) {
@@ -30,9 +30,9 @@ int sexpr_cmp(sexpr *s1, sexpr *s2) {
 		case LVAL_NUM:
 			if (s1->num_type != s2->num_type)
 				return 0;
-			if (s1->num_type == NUM_TYPE_INT && s1->n.i_num != s2->n.i_num)
+			if (s1->num_type == NUM_TYPE_INT && s1->i_num != s2->i_num)
 				return 0;
-			if (s1->num_type == NUM_TYPE_DEC && s1->n.d_num != s2->n.d_num)
+			if (s1->num_type == NUM_TYPE_DEC && s1->d_num != s2->d_num)
 				return 0;
 			break;
 		case LVAL_SYM:
@@ -244,8 +244,8 @@ sexpr* builtin_math_cmp(scope *env, sexpr **nodes, int count, char *op) {
 		return sexpr_err("Number expected.");
 
 	int eq = 0;
-	float f0 = n0->num_type == NUM_TYPE_INT ? n0->n.i_num : n0->n.d_num;
-	float f1 = n1->num_type == NUM_TYPE_INT ? n1->n.i_num : n1->n.d_num;
+	float f0 = n0->num_type == NUM_TYPE_INT ? n0->i_num : n0->d_num;
+	float f1 = n1->num_type == NUM_TYPE_INT ? n1->i_num : n1->d_num;
 
 	if (strcmp("=", op) == 0)
 		eq = fabsf(f0 - f1) < 0.000000001;
@@ -324,7 +324,7 @@ sexpr* builtin_math_op(scope *env, sexpr **nodes, int count, char *op) {
 				sexpr_free(n);
 				return sexpr_err("Division by zero!");
 			}
-			result = nodes[1]->n.i_num % n->n.i_num;
+			result = nodes[1]->i_num % n->i_num;
 		}
 
 		sexpr_free(n);
@@ -518,9 +518,9 @@ sexpr* builtin_eq(scope *env, sexpr **nodes, int count, char *op) {
 	else if (a->type == LVAL_STR && b->type == LVAL_STR && strcmp(a->str, b->str) == 0)
 		result = sexpr_bool(1);
 	else if (a->type == LVAL_NUM && b->type == LVAL_NUM && a->num_type == b->num_type) {
-		if (a->num_type == NUM_TYPE_INT && a->n.i_num == b->n.i_num)
+		if (a->num_type == NUM_TYPE_INT && a->i_num == b->i_num)
 			result = sexpr_bool(1);
-		else if (a->num_type == NUM_TYPE_DEC && fabs(a->n.d_num - b->n.d_num) < 0.0000001)
+		else if (a->num_type == NUM_TYPE_DEC && fabs(a->d_num - b->d_num) < 0.0000001)
 			result = sexpr_bool(1);
 		else
 			result = sexpr_bool(0);

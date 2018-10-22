@@ -43,10 +43,10 @@ sexpr* sexpr_num(enum sexpr_num_type t, float n) {
 	v->num_type = t;
 
 	if (t == NUM_TYPE_INT) {
-		v->n.i_num = n;
+		v->i_num = n;
 	}
 	else
-		v->n.d_num = n;
+		v->d_num = n;
 
 	return v;
 }
@@ -58,12 +58,12 @@ sexpr* sexpr_num_s(char *s) {
 	if (strchr(s, '.')) {
 		float f = strtof(s, NULL);
 		v->num_type = NUM_TYPE_DEC;
-		v->n.d_num = f;
+		v->d_num = f;
 	}
 	else {
 		long i = strtol(s, NULL, 10);
 		v->num_type = NUM_TYPE_INT;
-		v->n.i_num = i;
+		v->i_num = i;
 	}
 
 	return v;
@@ -268,9 +268,9 @@ void sexpr_pprint(sexpr *v) {
 			break;
 		case LVAL_NUM:
 			if (v->num_type == NUM_TYPE_INT)
-				printf("%li", v->n.i_num);
+				printf("%li", v->i_num);
 			else
-				printf("%f", v->n.d_num);
+				printf("%f", v->d_num);
 			break;
 		case LVAL_BOOL:
 			printf("%s", v->bool ? "#t" : "#f");
