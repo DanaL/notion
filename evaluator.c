@@ -808,11 +808,7 @@ sexpr* resolve_symbol(scope *sc, sexpr *s) {
 	return r;
 }
 
-<<<<<<< HEAD
-sexpr* eval_user_func(scheme_env *env, sexpr **operands, int count, sexpr *fun) {
-=======
 sexpr* eval_user_func(scope *sc, sexpr **operands, int count, sexpr *fun) {
->>>>>>> closures
 	ASSERT_PARAM_MIN(count - 1, fun->params->count, "Too few paramters passed to function.");
 
 	scope *func_scope = scope_new(CLOSURE_TABLE_SIZE);
