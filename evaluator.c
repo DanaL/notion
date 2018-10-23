@@ -173,7 +173,7 @@ sexpr *builtin_not(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) 
 /* I find Scheme's version of and pretty odd in how all non-booleans
 	are considered true. */
 sexpr* builtin_and(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
-	sexpr* result = sexpr_list(vm);
+	sexpr* result = NULL;
 
 	/* and with no parameters returns true, apparently */
 	if (count == 1)
@@ -195,7 +195,7 @@ sexpr* builtin_and(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) 
 }
 
 sexpr* builtin_or(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
-	sexpr* result = sexpr_list(vm);
+	sexpr* result = NULL;
 
 	/* and with no parameters returns true, apparently */
 	if (count == 1)
