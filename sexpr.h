@@ -40,10 +40,9 @@ struct sexpr {
 sexpr* sexpr_err(vm_heap*, char*);
 sexpr* sexpr_num_s(vm_heap*, char*);
 sexpr* sexpr_num(vm_heap*, enum sexpr_num_type, float);
-sexpr* sexpr_null(vm_heap*);
+sexpr* sexpr_null(void);
 sexpr* sexpr_sym(vm_heap*, char*);
 sexpr* sexpr_list(vm_heap*);
-sexpr* sexpr_null(vm_heap*);
 sexpr* sexpr_bool(vm_heap*, int);
 sexpr* sexpr_fun_builtin(builtinf, char*);
 sexpr* sexpr_fun_user(vm_heap*, sexpr*, sexpr*, char*);

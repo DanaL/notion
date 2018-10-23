@@ -132,13 +132,13 @@ sexpr* builtin_load(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op)
 	parser_free(p);
 	fclose(infile);
 
-	return sexpr_null(vm);
+	return sexpr_null();
 }
 
 sexpr* builtin_mem_dump(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
 	env_dump(vm, env);
 
-	return sexpr_null(vm);
+	return sexpr_null();
 }
 
 /* I think this is probably incorrect, or not totally correct because I haven't
@@ -494,7 +494,7 @@ sexpr* define_var(vm_heap *vm, scope *sc, sexpr **nodes, int count, char *op) {
 	else
 		scope_insert_var(sc, nodes[1]->sym, eval2(vm, sc, nodes[2]));
 
-	return sexpr_null(vm);
+	return sexpr_null();
 }
 
 sexpr* build_func(vm_heap *vm, sexpr *header, sexpr *body, char *name) {
@@ -543,14 +543,14 @@ sexpr* builtin_cond(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op)
 			return sexpr_err(vm, "Cond tests must be an expression.");
 	}
 
-	return sexpr_null(vm);
+	return sexpr_null();
 }
 
 sexpr* builtin_stringq(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
 	ASSERT_PARAM_EQ(count, 2, "String? takes just one paramter.");
 
 	sexpr *s = eval2(vm, env, nodes[1]);
-	
+
 	return sexpr_bool(vm, s->type == LVAL_STR ? 1 : 0);
 }
 
@@ -628,7 +628,7 @@ sexpr* builtin_lambda(vm_heap *vm, scope *env, sexpr **nodes, int count, char *o
 		calls to include the function name, so gotta add in a dummy
 		value for lambdas */
 	sexpr *params = sexpr_list(vm);
-	sexpr_append(params, sexpr_null(vm));
+	sexpr_append(params, sexpr_null());
 	for (int j = 0; j < nodes[1]->count; j++)
 		sexpr_append(params, sexpr_copy(vm, nodes[1]->children[j]));
 	sexpr *body = nodes[2];
@@ -658,7 +658,7 @@ sexpr* define_fun(vm_heap *vm, scope *sc, sexpr **nodes, int count, char *op)  {
 
 	scope_insert_var(sc, fun_name, fun);
 
-	return sexpr_null(vm);
+	return sexpr_null();
 }
 
 sexpr* define(vm_heap *vm, scope *sc, sexpr **nodes, int count, char *op) {

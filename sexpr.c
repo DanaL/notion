@@ -6,6 +6,11 @@
 #include "sexpr.h"
 #include "util.h"
 
+/* Making this a singleton of sorts. A bunch of functions return a null value
+	but they don't need to be unique values stored on the heap and re-created
+	and garbage collected. Re-use is better than recycling! */
+static sexpr *null_expr = NULL;
+
 void print_sexpr_type(sexpr *v) {
 	switch (v->type) {
 		case LVAL_NUM:
@@ -172,17 +177,17 @@ sexpr* sexpr_list(vm_heap* vm) {
 	return v;
 }
 
-sexpr* sexpr_null(vm_heap* vm) {
-	sexpr *v = malloc(sizeof(sexpr));
-	v->type = LVAL_NULL;
-	v->count = 0;
-	v->children = NULL;
-	v->gen = 0;
-	v->count = 0;
+sexpr* sexpr_null(void) {
+	if (!null_expr) {
+		null_expr = malloc(sizeof(sexpr));
+		null_expr->type = LVAL_NULL;
+		null_expr->count = 0;
+		null_expr->children = NULL;
+		null_expr->gen = 0;
+		null_expr->count = 0;
+	}
 
-	vm_add(vm, v);
-
-	return v;
+	return null_expr;
 }
 
 void sexpr_free(sexpr *v) {
@@ -221,7 +226,7 @@ sexpr* sexpr_copy_atom(vm_heap* vm, sexpr* src) {
 		return sexpr_bool(vm, src->bool);
 
 	if (src->type == LVAL_NULL)
-		return sexpr_null(vm);
+		return src;
 
 	if (src->type == LVAL_FUN) {
 		if (src->builtin)
