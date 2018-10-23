@@ -36,9 +36,13 @@ void sym_free(sym* b) {
 
 scope* scope_new(unsigned int size) {
 	scope *e = malloc(sizeof(scope));
-	e->sym_table = calloc(size, sizeof(sym*));
+	e->sym_table = malloc(size * sizeof(sym*));
+
 	e->size = size;
 	e->parent = NULL;
+
+	for (int j = 0; j < size; j++)
+		e->sym_table[j] = NULL;
 
 	return e;
 }
@@ -55,7 +59,7 @@ int bt_hash(unsigned int size, char *s) {
 	return h;
 }
 
-void scope_insert_var(vm_heap *vm, scope* sc, char *name, sexpr *exp) {
+void scope_insert_var(scope* sc, char *name, sexpr *exp) {
 	unsigned int h = bt_hash(sc->size, name);
 	sym *s = sym_new(name, exp);
 
@@ -126,7 +130,7 @@ void env_dump(vm_heap *vm, scope* env) {
 	}
 
 	printf("\nHeap items:\n");
-	printf("Heap count: %ld\n", vm->count);
+	printf("Heap count: %d\n", vm->count);
 }
 
 vm_heap* vm_new(void) {
@@ -185,7 +189,7 @@ void gc_run(vm_heap* vm, scope* env) {
 		h = h->neighbour;
 	}
 
-	printf("Total objects on heap: %ld\n", total);
-	printf("    Total marked: %ld\n", curr);
-	printf("    Total stale:  %ld\n", stale);
+	printf("Total objects on heap: %lu\n", total);
+	printf("    Total marked: %lu\n", curr);
+	printf("    Total stale:  %lu\n", stale);
 }

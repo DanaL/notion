@@ -326,5 +326,8 @@ void sexpr_pprint(sexpr *v) {
 		case LVAL_NULL:
 			/* Don't need to do anything */
 			break;
+		default:
+			puts("WHAT");
+			break;
 	}
 }

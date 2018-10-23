@@ -30,9 +30,11 @@ int main(int argc, char **argv) {
 	puts("Press Ctrl-C or (quit) to exit");
 
 	puts("Loading env...");
+
 	vm_heap *vm = vm_new();
-	scope *global = scope_new(DEFAULT_TABLE_SIZE);
-	load_built_ins(vm, global);
+	scope *global =  scope_new(DEFAULT_TABLE_SIZE);
+
+	load_built_ins(global);
 	tokenizer *tz = tokenizer_create();
 	parser *p = parser_create();
 	token *nt;
@@ -87,7 +89,7 @@ int main(int argc, char **argv) {
 		if (!okay)
 			continue;
 
-		sexpr *ast = sexpr_copy(vm, p->head);
+		sexpr *ast = p->head;
 		parser_clear(p);
 
 		sexpr *result = eval2(vm, global, ast);

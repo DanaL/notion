@@ -531,9 +531,9 @@ sexpr* define_var(vm_heap *vm, scope *sc, sexpr **nodes, int count, char *op) {
 	ASSERT_PRIMITIVE(vm, sc, nodes[1]->sym);
 
 	if (is_quoted_val(nodes[2]))
-		scope_insert_var(vm, sc, nodes[1]->sym, sexpr_copy(vm, nodes[2]->children[1]));
+		scope_insert_var(sc, nodes[1]->sym, sexpr_copy(vm, nodes[2]->children[1]));
 	else
-		scope_insert_var(vm, sc, nodes[1]->sym, eval2(vm, sc, nodes[2]));
+		scope_insert_var(sc, nodes[1]->sym, eval2(vm, sc, nodes[2]));
 
 	return sexpr_null(vm);
 }
@@ -713,7 +713,7 @@ sexpr* define_fun(vm_heap *vm, scope *sc, sexpr **nodes, int count, char *op)  {
 	if (fun->type == LVAL_ERR)
 		return fun;
 
-	scope_insert_var(vm, sc, fun_name, fun);
+	scope_insert_var(sc, fun_name, fun);
 
 	return sexpr_null(vm);
 }
@@ -765,7 +765,7 @@ sexpr* eval_user_func(vm_heap *vm, scope *sc, sexpr **operands, int count, sexpr
 		//printf("%s -> ", fun->params->children[j]->sym);
 		//sexpr_pprint(var);
 		//putchar('\n');
-		scope_insert_var(vm, func_scope, fun->params->children[j]->sym, var);
+		scope_insert_var(func_scope, fun->params->children[j]->sym, var);
 	}
 
 	sexpr_pprint(fun->body);
@@ -818,41 +818,41 @@ sexpr* eval2(vm_heap *vm, scope *sc, sexpr *v) {
 	return sexpr_err(vm, "Something hasn't been implemented yet");
 }
 
-void load_built_ins(vm_heap *vm, scope *sc) {
-   	scope_insert_var(vm, sc, "car", sexpr_fun_builtin(&builtin_car, "car"));
-	scope_insert_var(vm, sc, "cdr", sexpr_fun_builtin(&builtin_cdr, "cdr"));
-	scope_insert_var(vm, sc, "cons", sexpr_fun_builtin(&builtin_cons, "cons"));
-	scope_insert_var(vm, sc, "list", sexpr_fun_builtin(&builtin_list, "list"));
-	scope_insert_var(vm, sc, "eq?", sexpr_fun_builtin(&builtin_eq, "eq?"));
-	scope_insert_var(vm, sc, "null?", sexpr_fun_builtin(&builtin_nullq, "null?"));
-	scope_insert_var(vm, sc, "pair?", sexpr_fun_builtin(&builtin_pairq, "pair?"));
-	scope_insert_var(vm, sc, "number?", sexpr_fun_builtin(&builtin_numberq, "number?"));
-	scope_insert_var(vm, sc, "eval", sexpr_fun_builtin(&builtin_eval, "eval"));
-	scope_insert_var(vm, sc, "+", sexpr_fun_builtin(&builtin_math_op, "+"));
-	scope_insert_var(vm, sc, "-", sexpr_fun_builtin(&builtin_math_op, "-"));
-	scope_insert_var(vm, sc, "*", sexpr_fun_builtin(&builtin_math_op, "*"));
-	scope_insert_var(vm, sc, "/", sexpr_fun_builtin(&builtin_math_op, "/"));
-	scope_insert_var(vm, sc, "%", sexpr_fun_builtin(&builtin_math_op, "%"));
-	scope_insert_var(vm, sc, "=", sexpr_fun_builtin(&builtin_math_cmp, "="));
-	scope_insert_var(vm, sc, ">", sexpr_fun_builtin(&builtin_math_cmp, ">"));
-	scope_insert_var(vm, sc, ">=", sexpr_fun_builtin(&builtin_math_cmp, ">="));
-	scope_insert_var(vm, sc, "<", sexpr_fun_builtin(&builtin_math_cmp, "<"));
-	scope_insert_var(vm, sc, "<=", sexpr_fun_builtin(&builtin_math_cmp, "<="));
-	scope_insert_var(vm, sc, "not", sexpr_fun_builtin(&builtin_not, "not"));
-	scope_insert_var(vm, sc, "or", sexpr_fun_builtin(&builtin_or, "or"));
-	scope_insert_var(vm, sc, "and", sexpr_fun_builtin(&builtin_and, "and"));
-	scope_insert_var(vm, sc, "min", sexpr_fun_builtin(&builtin_min_op, "min"));
-	scope_insert_var(vm, sc, "max", sexpr_fun_builtin(&builtin_max_op, "max"));
-	scope_insert_var(vm, sc, "quit", sexpr_fun_builtin(&builtin_quit, "quit"));
-	scope_insert_var(vm, sc, "define", sexpr_fun_builtin(&define, "define"));
-	scope_insert_var(vm, sc, "quote", sexpr_fun_builtin(&quote_form, "quote"));
-	scope_insert_var(vm, sc, "lambda", sexpr_fun_builtin(&builtin_lambda, "lambda"));
-	scope_insert_var(vm, sc, "dump", sexpr_fun_builtin(&builtin_mem_dump, "dump"));
-	scope_insert_var(vm, sc, "cond", sexpr_fun_builtin(&builtin_cond, "cond"));
-	scope_insert_var(vm, sc, "string?", sexpr_fun_builtin(&builtin_stringq, "string?"));
-	scope_insert_var(vm, sc, "string-length", sexpr_fun_builtin(&builtin_stringlen, "string-length"));
-	scope_insert_var(vm, sc, "string", sexpr_fun_builtin(&builtin_string, "string"));
-	scope_insert_var(vm, sc, "string-append", sexpr_fun_builtin(&builtin_stringappend, "string-append"));
-	scope_insert_var(vm, sc, "string-copy", sexpr_fun_builtin(&builtin_stringcopy, "string-copy"));
-	scope_insert_var(vm, sc, "load", sexpr_fun_builtin(&builtin_load, "load"));
+void load_built_ins(scope *sc) {
+   	scope_insert_var(sc, "car", sexpr_fun_builtin(&builtin_car, "car"));
+	scope_insert_var(sc, "cdr", sexpr_fun_builtin(&builtin_cdr, "cdr"));
+	scope_insert_var(sc, "cons", sexpr_fun_builtin(&builtin_cons, "cons"));
+	scope_insert_var(sc, "list", sexpr_fun_builtin(&builtin_list, "list"));
+	scope_insert_var(sc, "eq?", sexpr_fun_builtin(&builtin_eq, "eq?"));
+	scope_insert_var(sc, "null?", sexpr_fun_builtin(&builtin_nullq, "null?"));
+	scope_insert_var(sc, "pair?", sexpr_fun_builtin(&builtin_pairq, "pair?"));
+	scope_insert_var(sc, "number?", sexpr_fun_builtin(&builtin_numberq, "number?"));
+	scope_insert_var(sc, "eval", sexpr_fun_builtin(&builtin_eval, "eval"));
+	scope_insert_var(sc, "+", sexpr_fun_builtin(&builtin_math_op, "+"));
+	scope_insert_var(sc, "-", sexpr_fun_builtin(&builtin_math_op, "-"));
+	scope_insert_var(sc, "*", sexpr_fun_builtin(&builtin_math_op, "*"));
+	scope_insert_var(sc, "/", sexpr_fun_builtin(&builtin_math_op, "/"));
+	scope_insert_var(sc, "%", sexpr_fun_builtin(&builtin_math_op, "%"));
+	scope_insert_var(sc, "=", sexpr_fun_builtin(&builtin_math_cmp, "="));
+	scope_insert_var(sc, ">", sexpr_fun_builtin(&builtin_math_cmp, ">"));
+	scope_insert_var(sc, ">=", sexpr_fun_builtin(&builtin_math_cmp, ">="));
+	scope_insert_var(sc, "<", sexpr_fun_builtin(&builtin_math_cmp, "<"));
+	scope_insert_var(sc, "<=", sexpr_fun_builtin(&builtin_math_cmp, "<="));
+	scope_insert_var(sc, "not", sexpr_fun_builtin(&builtin_not, "not"));
+	scope_insert_var(sc, "or", sexpr_fun_builtin(&builtin_or, "or"));
+	scope_insert_var(sc, "and", sexpr_fun_builtin(&builtin_and, "and"));
+	scope_insert_var(sc, "min", sexpr_fun_builtin(&builtin_min_op, "min"));
+	scope_insert_var(sc, "max", sexpr_fun_builtin(&builtin_max_op, "max"));
+	scope_insert_var(sc, "quit", sexpr_fun_builtin(&builtin_quit, "quit"));
+	scope_insert_var(sc, "define", sexpr_fun_builtin(&define, "define"));
+	scope_insert_var(sc, "quote", sexpr_fun_builtin(&quote_form, "quote"));
+	scope_insert_var(sc, "lambda", sexpr_fun_builtin(&builtin_lambda, "lambda"));
+	scope_insert_var(sc, "dump", sexpr_fun_builtin(&builtin_mem_dump, "dump"));
+	scope_insert_var(sc, "cond", sexpr_fun_builtin(&builtin_cond, "cond"));
+	scope_insert_var(sc, "string?", sexpr_fun_builtin(&builtin_stringq, "string?"));
+	scope_insert_var(sc, "string-length", sexpr_fun_builtin(&builtin_stringlen, "string-length"));
+	scope_insert_var(sc, "string", sexpr_fun_builtin(&builtin_string, "string"));
+	scope_insert_var(sc, "string-append", sexpr_fun_builtin(&builtin_stringappend, "string-append"));
+	scope_insert_var(sc, "string-copy", sexpr_fun_builtin(&builtin_stringcopy, "string-copy"));
+	scope_insert_var(sc, "load", sexpr_fun_builtin(&builtin_load, "load"));
 }
