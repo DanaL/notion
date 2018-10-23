@@ -36,13 +36,9 @@ void sym_free(sym* b) {
 
 scope* scope_new(unsigned int size) {
 	scope *e = malloc(sizeof(scope));
-	e->sym_table = malloc(size * sizeof(sym*));
-
+	e->sym_table = calloc(size, sizeof(sym*));	
 	e->size = size;
 	e->parent = NULL;
-
-	for (int j = 0; j < size; j++)
-		e->sym_table[j] = NULL;
 
 	return e;
 }
