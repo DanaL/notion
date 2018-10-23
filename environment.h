@@ -37,7 +37,7 @@ void env_dump(vm_heap*, scope*);
 
 struct vm_heap {
 	sexpr *heap;
-	int gc_generation;
+	unsigned int gc_generation;
 	unsigned long count;
 };
 

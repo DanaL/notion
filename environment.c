@@ -109,7 +109,7 @@ sexpr* scope_fetch_var(vm_heap *vm, scope *sc, char* key) {
 }
 
 void scope_free(scope *sc) {
-	for (int j = 0; j < sc->size; j++) {
+	for (unsigned int j = 0; j < sc->size; j++) {
 		if (sc->sym_table[j])
 			sym_free(sc->sym_table[j]);
 	}
@@ -121,7 +121,7 @@ void env_dump(vm_heap *vm, scope* env) {
 	sym *b;
 
 	puts("Binding for current scope:");
-	for (int j = 0; j < env->size; j++) {
+	for (unsigned int j = 0; j < env->size; j++) {
 		b = env->sym_table[j];
 		if (b) {
 			printf("  %s ", b->name);
@@ -182,7 +182,7 @@ void gc_run(vm_heap* vm, scope* env) {
 	/* Need to pass over the entire symbol table and mark which objects
 		are still referenced. Don't bother marking built-ins because we are
 		never going to recycle them. */
-	for (int j = 0; j < env->size; j++) {
+	for (unsigned int j = 0; j < env->size; j++) {
 		sym *s = env->sym_table[j];
 
 		while (s) {
