@@ -101,7 +101,7 @@ int main(int argc, char **argv) {
 
 		sexpr_pprint(result);
 		putchar('\n');
-		puts("Garbage check:");
+		puts("\nGarbage check:");
 		gc_run(vm, global);
 	}
 

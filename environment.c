@@ -133,7 +133,7 @@ void env_dump(vm_heap *vm, scope* env) {
 	}
 
 	printf("\nHeap items:\n");
-	printf("Heap count: %d\n", vm->count);
+	printf("Heap count: %lu\n", vm->count);
 }
 
 vm_heap* vm_new(void) {
@@ -184,20 +184,28 @@ void gc_run(vm_heap* vm, scope* env) {
 		}
 	}
 
-	unsigned long total = 0;
-	unsigned long stale = 0;
-	unsigned long curr = 0;
+	sexpr *dead, *prev = NULL;
 	sexpr *h = vm->heap;
+	int swept = 0;
 	while (h) {
-		if (h->gen == vm->gc_generation)
-			++curr;
-		else
-			++stale;
-		++total;
-		h = h->neighbour;
+		if (h->gen < vm->gc_generation) {
+			dead = h;
+
+			if (!prev)
+				vm->heap = h->neighbour;
+			else
+				prev->neighbour = h->neighbour;
+			h = h->neighbour;
+
+			sexpr_free(dead);
+			--vm->count;
+			++swept;
+		}
+		else {
+			prev = h;
+			h = h->neighbour;
+		}
 	}
 
-	printf("Total objects on heap: %lu\n", total);
-	printf("    Total marked: %lu\n", curr);
-	printf("    Total stale:  %lu\n", stale);
+	printf("%d s-exprs deleted.\n", swept);
 }

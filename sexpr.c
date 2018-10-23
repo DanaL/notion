@@ -189,28 +189,19 @@ void sexpr_free(sexpr *v) {
 	switch (v->type) {
 		case LVAL_NULL:
 		case LVAL_NUM:
+		case LVAL_LIST:
 		case LVAL_BOOL:
 			break;
 		case LVAL_ERR:
 			free(v->err);
 			break;
 		case LVAL_FUN:
-			if (!v->builtin) {
-				sexpr_free(v->body);
-				sexpr_free(v->params);
-			}
-			free(v->sym);
-			break;
 		case LVAL_SYM:
 			free(v->sym);
 			break;
 		case LVAL_STR:
 			if (v->str)
 				free(v->str);
-			break;
-		case LVAL_LIST:
-			for (int j = 0; j < v->count; j++)
-				sexpr_free(v->children[j]);
 			break;
 	}
 
@@ -325,9 +316,6 @@ void sexpr_pprint(sexpr *v) {
 			}
 		case LVAL_NULL:
 			/* Don't need to do anything */
-			break;
-		default:
-			puts("WHAT");
 			break;
 	}
 }
