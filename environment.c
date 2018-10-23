@@ -36,7 +36,7 @@ void sym_free(sym* b) {
 
 scope* scope_new(unsigned int size) {
 	scope *e = malloc(sizeof(scope));
-	e->sym_table = calloc(size, sizeof(sym*));	
+	e->sym_table = calloc(size, sizeof(sym*));
 	e->size = size;
 	e->parent = NULL;
 
@@ -150,9 +150,13 @@ void mark_chain(vm_heap* vm, sexpr *chain) {
 	if (chain->gen == vm->gc_generation)
 		return;
 
-	if (chain->count > 0) {
+	if (chain->type == LVAL_LIST && chain->count > 0) {
 		for (int j = 0; j < chain->count; j++)
 			mark_chain(vm, chain->children[j]);
+	}
+	else if (chain->type == LVAL_FUN && !chain->builtin) {
+		mark_chain(vm, chain->params);
+		mark_chain(vm, chain->body);
 	}
 
 	chain->gen = vm->gc_generation;
@@ -166,6 +170,7 @@ void gc_run(vm_heap* vm, scope* env) {
 		never going to recycle them. */
 	for (int j = 0; j < env->size; j++) {
 		sym *s = env->sym_table[j];
+
 		while (s) {
 			mark_chain(vm, s->val);
 			s = s->next;
