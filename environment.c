@@ -43,6 +43,17 @@ scope* scope_new(unsigned int size) {
 	return e;
 }
 
+void scope_free(scope *sc) {
+	for (unsigned int j = 0; j < sc->size; j++) {
+		if (sc->sym_table[j])
+			sym_free(sc->sym_table[j]);
+	}
+
+	free(sc->sym_table);
+	free(sc);
+}
+
+
 int bt_hash(unsigned int size, char *s) {
 	long h = 0;
 	int len = strlen(s);
@@ -106,15 +117,6 @@ sexpr* scope_fetch_var(vm_heap *vm, scope *sc, char* key) {
 	}
 
 	return b->val;
-}
-
-void scope_free(scope *sc) {
-	for (unsigned int j = 0; j < sc->size; j++) {
-		if (sc->sym_table[j])
-			sym_free(sc->sym_table[j]);
-	}
-
-	free(sc);
 }
 
 void env_dump(vm_heap *vm, scope* env) {

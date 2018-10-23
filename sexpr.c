@@ -187,9 +187,11 @@ sexpr* sexpr_null(vm_heap* vm) {
 
 void sexpr_free(sexpr *v) {
 	switch (v->type) {
+		case LVAL_LIST:
+			free(v->children);
+			break;
 		case LVAL_NULL:
 		case LVAL_NUM:
-		case LVAL_LIST:
 		case LVAL_BOOL:
 			break;
 		case LVAL_ERR:
