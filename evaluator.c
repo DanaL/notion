@@ -188,7 +188,7 @@ sexpr* builtin_and(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) 
 		if (cp->type == LVAL_BOOL && !cp->bool)
 			return sexpr_bool(vm, 0);
 
-		result = sexpr_copy(vm, cp);
+		result = cp;
 	}
 
 	return result;
@@ -210,7 +210,7 @@ sexpr* builtin_or(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
 		if (cp->type != LVAL_BOOL || (cp->type == LVAL_BOOL && cp->bool))
 			return cp;
 
-		result = sexpr_copy(vm, cp);
+		result = cp;
 	}
 
 	return result;
@@ -397,7 +397,7 @@ sexpr* builtin_cdr(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) 
 
 	sexpr *result = sexpr_list(vm);
 	for (int j = 1; j < l->count; j++) {
-		sexpr_list_insert(vm, result, sexpr_copy(vm, l->children[j]));
+		sexpr_list_insert(vm, result, l->children[j]);
 	}
 
 	return result;
@@ -412,7 +412,7 @@ sexpr* builtin_car(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) 
 		return sexpr_err(vm, "car is defined only for non-empty lists.");
 	}
 
-	sexpr *result = sexpr_copy(vm, l->children[0]);
+	sexpr *result = l->children[0];
 
 	return result;
 }
@@ -430,7 +430,7 @@ sexpr* builtin_cons(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op)
 	sexpr_list_insert(vm, result, eval2(vm, env, nodes[1]));
 
 	for (int j = 0; j < a2->count; j++) {
-		sexpr_list_insert(vm, result, sexpr_copy(vm, a2->children[j]));
+		sexpr_list_insert(vm, result, a2->children[j]);
 	}
 
 	return result;
@@ -510,7 +510,7 @@ sexpr* builtin_quit(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op)
 }
 
 sexpr* quote_form(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
-	return sexpr_copy(vm, nodes[1]);
+	return nodes[1];
 }
 
 int is_quoted_val(sexpr *v) {
@@ -531,7 +531,7 @@ sexpr* define_var(vm_heap *vm, scope *sc, sexpr **nodes, int count, char *op) {
 	ASSERT_PRIMITIVE(vm, sc, nodes[1]->sym);
 
 	if (is_quoted_val(nodes[2]))
-		scope_insert_var(sc, nodes[1]->sym, sexpr_copy(vm, nodes[2]->children[1]));
+		scope_insert_var(sc, nodes[1]->sym, nodes[2]->children[1]);
 	else
 		scope_insert_var(sc, nodes[1]->sym, eval2(vm, sc, nodes[2]));
 
@@ -546,10 +546,10 @@ sexpr* build_func(vm_heap *vm, sexpr *header, sexpr *body, char *name) {
 		if (header->children[j]->type != LVAL_SYM) {
 			return sexpr_err(vm, "Paramter names must be symbols.");
 		}
-		sexpr_append(params, sexpr_copy(vm, header->children[j]));
+		sexpr_append(params, header->children[j]);
 	}
 
-	return sexpr_fun_user(vm, params, sexpr_copy(vm, body), name);
+	return sexpr_fun_user(vm, params, body, name);
 }
 
 sexpr* builtin_cond(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
@@ -619,7 +619,7 @@ sexpr* builtin_string(vm_heap *vm, scope *env, sexpr **nodes, int count, char *o
 		return sexpr_err(vm, "String takes a string type for its parameter.");
 	}
 
-	sexpr *result = sexpr_copy(vm, src);
+	sexpr *result = src;
 
 	return result;
 }
@@ -673,9 +673,7 @@ sexpr* builtin_stringcopy(vm_heap *vm, scope *env, sexpr **nodes, int count, cha
 		return sexpr_err(vm, "String copy only copies strings.");
 	}
 
-	/* Eval returns a copy of its input for atoms so we don't need to do
-		anything else. */
-	return s1;
+	return sexpr_copy(vm, s1);
 }
 
 sexpr* builtin_lambda(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
@@ -757,7 +755,7 @@ sexpr* eval_user_func(vm_heap *vm, scope *sc, sexpr **operands, int count, sexpr
 		else if (operands[j + 1]->type == LVAL_LIST)
 			var = eval2(vm, sc, operands[j + 1]);
 		else
-			var = sexpr_copy(vm, operands[j + 1]);
+			var = operands[j + 1];
 
 		if (var->type == LVAL_ERR)
 			return var;
@@ -806,7 +804,7 @@ sexpr* eval2(vm_heap *vm, scope *sc, sexpr *v) {
 		case LVAL_BOOL:
 		case LVAL_NULL:
 		case LVAL_STR:
-			return sexpr_copy(vm, v);
+			return v;
 			break;
 	}
 
