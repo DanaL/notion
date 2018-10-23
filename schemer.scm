@@ -170,3 +170,39 @@
             (else (cons (car l) (rempick (cdr l) (sub1 n))))
     )
 ))
+
+(define rember*
+    (lambda (a l)
+        (cond
+            ((null? l) '())
+            ((atom? (car l)) (cond ((eq? a (car l)) (rember* a (cdr l)))
+                             (else (cons (car l) (rember* a (cdr l)) ))
+
+            ))
+            (else (cons (rember* a (car l)) (rember* a (cdr l))))
+        )
+))
+
+(define l0 (list (list "coffee") "cup" (list (list "tea") "cup") (list "and" (list "hick")) "cup"))
+(define l1 '((("tomato" "sauce")) (("bean") "sauce") ("and" (("flying")) "sauce")   )  )
+
+(define insertR* (lambda (new old l)
+    (cond
+        ((null? l) '())
+        ((atom? (car l))
+            (cond
+                ((eq? (car l) old)
+                    (cons old
+                        (cons new (insertR* new old (cdr l)))))
+                (else (cons (car l)
+                    (insertR* new old (cdr l))) )
+            )
+        )
+    (else
+        (cons (insertR* new old
+            (car l)) (insertR* new old (cdr l))   ) )
+    )
+
+))
+
+(define l2 '(("how" "much" ("wood")) "could" (("a" ("wood") "chuck")) ((("chuck"))) ("if" ("a") (("wood" "chuck"))) "could" "chuck" "wood"  ))
