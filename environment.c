@@ -169,6 +169,13 @@ void mark_chain(vm_heap* vm, sexpr *chain) {
 	chain->gen = vm->gc_generation;
 }
 
+/* The garbage collector is a simple mark-and-sweep algorithm. Loop through
+	the symbol table and mark off any s-expressions that are still in use,
+	then loop over the VM's heap linked list and prune any items whose
+	generation count is less than current generation.
+
+	Note -- built-in functions are stored in the symbol table but they aren't
+	in the heap so they won't be deleted by the garbage collector */
 void gc_run(vm_heap* vm, scope* env) {
 	vm->gc_generation++;
 
