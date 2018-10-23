@@ -206,3 +206,12 @@
 ))
 
 (define l2 '(("how" "much" ("wood")) "could" (("a" ("wood") "chuck")) ((("chuck"))) ("if" ("a") (("wood" "chuck"))) "could" "chuck" "wood"  ))
+
+(define occurs* (lambda (a l)
+    (cond ((null? l) 0)
+        ((atom? (car l)) (cond ((eq? (car l) a)  (add1 (occurs* a (cdr l))))
+                            (else (occurs* a (cdr l)))))
+        (else (plus (occurs* a (car l)) (occurs* a (cdr l)))
+        ))
+
+))
