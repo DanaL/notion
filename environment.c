@@ -137,7 +137,7 @@ void env_dump(vm_heap *vm, scope* env) {
 }
 
 vm_heap* vm_new(void) {
-	vm_heap *vm = malloc(sizeof(vm));
+	vm_heap *vm = malloc(sizeof(vm_heap));
 	vm->count = 0;
 	vm->gc_generation = 0;
 	vm->heap = NULL;
