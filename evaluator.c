@@ -161,9 +161,7 @@ sexpr *builtin_not(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) 
 	sexpr *v = eval2(vm, env, nodes[1]);
 	ASSERT_TYPE(v, LVAL_BOOL, "Boolean value expected.");
 
-	sexpr *result = sexpr_bool(vm, !v->bool);
-
-	return result;
+	return sexpr_bool(vm, !v->bool);
 }
 
 /* I find Scheme's version of and pretty odd in how all non-booleans
@@ -280,10 +278,9 @@ sexpr* builtin_math_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *
 		else if (strcmp(op, "*") == 0)
 			result *= NUM_CONVERT(n);
 		else if (strcmp(op, "/") == 0) {
-			/* Let's make sure we're not trying to divide by zero */
-			if (is_zero(n)) {
+			if (is_zero(n))
 				return sexpr_err(vm, "Division by zero!");
-			}
+
 			result /= NUM_CONVERT(n);
 		}
 		else if (strcmp(op, "%") == 0) {
@@ -359,10 +356,7 @@ sexpr* builtin_list(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op)
 
 	for (int j = 1; j < count; j++) {
 		sexpr *cp = eval2(vm, env, nodes[j]);
-		if (cp->type == LVAL_ERR) {
-			return cp;
-		}
-
+		ASSERT_NOT_ERR(cp);
 		sexpr_append(result, cp);
 	}
 
@@ -394,9 +388,7 @@ sexpr* builtin_car(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) 
 		return sexpr_err(vm, "car is defined only for non-empty lists.");
 	}
 
-	sexpr *result = l->children[0];
-
-	return result;
+	return l->children[0];
 }
 
 sexpr* builtin_cons(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
@@ -422,9 +414,7 @@ sexpr* builtin_nullq(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op
 	sexpr *a = eval2(vm, env, nodes[1]);
 	ASSERT_NOT_ERR(a);
 
-	sexpr *result = sexpr_bool(vm, a->type == LVAL_LIST && a->count == 0 ? 1 :0);
-
-	return result;
+	return sexpr_bool(vm, a->type == LVAL_LIST && a->count == 0 ? 1 :0);
 }
 
 sexpr* builtin_numberq(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
@@ -433,9 +423,7 @@ sexpr* builtin_numberq(vm_heap *vm, scope *env, sexpr **nodes, int count, char *
 	sexpr *n = eval2(vm, env, nodes[1]);
 	ASSERT_NOT_ERR(n);
 
-	sexpr *result = sexpr_bool(vm, n->type == LVAL_NUM);
-
-	return result;
+	return sexpr_bool(vm, n->type == LVAL_NUM);
 }
 
 /* eq? as defined in the Little Schemer operates only on non-numeric atoms,
@@ -447,29 +435,24 @@ sexpr* builtin_eq(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
 	sexpr *a = eval2(vm, env, nodes[1]);
 	ASSERT_NOT_ERR(a);
 	sexpr *b = eval2(vm, env, nodes[2]);
-	if (b->type == LVAL_ERR) {
-		return b;
-	}
+	ASSERT_NOT_ERR(b);
 
-	sexpr *result = NULL;
 	if (a->type == LVAL_BOOL && b->type == LVAL_BOOL && a->bool == b->bool)
-		result = sexpr_bool(vm, 1);
+		return sexpr_bool(vm, 1);
 	else if (a->type == LVAL_SYM && b->type == LVAL_SYM && strcmp(a->sym, b->sym) == 0)
-		result = sexpr_bool(vm, 1);
+		return sexpr_bool(vm, 1);
 	else if (a->type == LVAL_STR && b->type == LVAL_STR && strcmp(a->str, b->str) == 0)
-		result = sexpr_bool(vm, 1);
+		return sexpr_bool(vm, 1);
 	else if (a->type == LVAL_NUM && b->type == LVAL_NUM && a->num_type == b->num_type) {
 		if (a->num_type == NUM_TYPE_INT && a->i_num == b->i_num)
-			result = sexpr_bool(vm, 1);
+			return sexpr_bool(vm, 1);
 		else if (a->num_type == NUM_TYPE_DEC && fabs(a->d_num - b->d_num) < 0.0000001)
-			result = sexpr_bool(vm, 1);
+			return sexpr_bool(vm, 1);
 		else
-			result = sexpr_bool(vm, 0);
+			return sexpr_bool(vm, 0);
 	}
 	else
-		result = sexpr_bool(vm, 0);
-
-	return result;
+		return sexpr_bool(vm, 0);
 }
 
 sexpr* builtin_eval(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
@@ -477,10 +460,8 @@ sexpr* builtin_eval(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op)
 
 	sexpr *f = eval2(vm, env, nodes[1]);
 
-	if (IS_FUNC(f)) {
-		sexpr *f2 = eval2(vm, env, f);
-		f = f2;
-	}
+	if (IS_FUNC(f))
+		return eval2(vm, env, f);
 
 	return f;
 }
@@ -569,9 +550,8 @@ sexpr* builtin_stringq(vm_heap *vm, scope *env, sexpr **nodes, int count, char *
 	ASSERT_PARAM_EQ(count, 2, "String? takes just one paramter.");
 
 	sexpr *s = eval2(vm, env, nodes[1]);
-	sexpr *result = sexpr_bool(vm, s->type == LVAL_STR ? 1 : 0);
-
-	return result;
+	
+	return sexpr_bool(vm, s->type == LVAL_STR ? 1 : 0);
 }
 
 sexpr* builtin_stringlen(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
