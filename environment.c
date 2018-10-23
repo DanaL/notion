@@ -64,11 +64,18 @@ void scope_insert_var(scope* sc, char *name, sexpr *exp) {
 		sc->sym_table[h] = s;
 	}
 	else {
-		/* Collision! I am going to make the assumption that a variable added will
-			also likely be called soon, so I will put it at the head of th chain */
+		/* A rebinding of the same name in the same scope should free up the
+			previous binding */
+		sym *existing = sc->sym_table[h];
+		while (existing) {
+			if (strcmp(existing->name, name) == 0) {
+				existing->val = s->val;
+				return;
+			}
 
-		/* Note that I am curently in no way handling what to do when a variable with the same name is added */
-		/* Or scope...I bet scope is going to be a huge pain... */
+			existing = existing->next;
+		}
+
 		s->next = sc->sym_table[h];
 		sc->sym_table[h] = s;
 	}
