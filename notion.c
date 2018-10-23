@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
 			nt = next_token(tz);
 		}
 		token_free(nt);
-
+		
 		if (!p->complete) {
 			puts("Incomplete expression. Did you type all your )s?");
 			parser_clear(p);

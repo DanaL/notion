@@ -32,6 +32,25 @@
     )
 )
 
+(define insertL
+    (lambda (old new lat)
+        (cond
+            ((null? lat) (quote ()))
+            (else   (cond
+                        ((eq? old (car lat))
+                            (cons new lat))
+                            (else (cons (car lat) (insertL old new (cdr lat)))))
+))))
+
+(define minsertL
+    (lambda (old new lat)
+        (cond ((null? lat) (quote ()))
+        (else   (cond ((eq? old (car lat))
+                    (cons new (cons old (minsertL old new (cdr lat)))   ))
+                    (else (cons (car lat) (minsertL old new (cdr lat)))))
+))))
+
+
 ; Chapter 4 has us re-implementing basic arithmetic :P
 (define add1 (lambda (x) (+ x 1)))
 (define sub1 (lambda (x) (- x 1)))

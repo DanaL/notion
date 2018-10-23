@@ -118,12 +118,8 @@ void parser_feed_token(vm_heap *vm, parser* p, token* t) {
 		quote->parent = p->curr;
 		if (p->curr)
 			sexpr_append(p->curr, quote);
-		else {
-			/* Case where a single quoted value is by itself, mark as complete
-				ie., 'foo */
+		else
 			p->head = quote;
-			p->complete = 1;
-		}
 
 		p->curr = quote;
 	}
@@ -176,6 +172,7 @@ void parser_feed_token(vm_heap *vm, parser* p, token* t) {
 				token) */
 			if (p->curr && p->curr->sq_list) {
 				p->curr = p->curr->parent;
+				p->complete = 1;
 			}
 		}
 	}
