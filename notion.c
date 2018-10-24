@@ -26,7 +26,7 @@ int is_whitespeace(char *s) {
 #define DEFAULT_TABLE_SIZE 1019
 
 int main(int argc, char **argv) {
-	puts("Notion (Dana's toy Scheme) 0.4.0");
+	puts("Notion (Dana's toy Scheme) 0.5.0");
 	puts("Press Ctrl-C or (quit) to exit");
 
 	puts("Loading env...");
@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
 			nt = next_token(tz);
 		}
 		token_free(nt);
-		
+
 		if (!p->complete) {
 			puts("Incomplete expression. Did you type all your )s?");
 			parser_clear(p);
