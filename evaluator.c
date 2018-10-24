@@ -292,6 +292,9 @@ sexpr* builtin_math_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *
 			}
 			result = nodes[1]->i_num % n->i_num;
 		}
+		else if (strcmp(op, "^") == 0) {
+			result = pow(result,NUM_CONVERT(n));
+		}
 	}
 
 	r = sexpr_num(vm, rt, result);
@@ -771,6 +774,7 @@ void load_built_ins(scope *sc) {
 	scope_insert_var(sc, "*", sexpr_fun_builtin(&builtin_math_op, "*"));
 	scope_insert_var(sc, "/", sexpr_fun_builtin(&builtin_math_op, "/"));
 	scope_insert_var(sc, "%", sexpr_fun_builtin(&builtin_math_op, "%"));
+	scope_insert_var(sc, "^", sexpr_fun_builtin(&builtin_math_op, "^"));
 	scope_insert_var(sc, "=", sexpr_fun_builtin(&builtin_math_cmp, "="));
 	scope_insert_var(sc, ">", sexpr_fun_builtin(&builtin_math_cmp, ">"));
 	scope_insert_var(sc, ">=", sexpr_fun_builtin(&builtin_math_cmp, ">="));

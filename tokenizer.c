@@ -181,7 +181,7 @@ token* next_token(tokenizer* t) {
     }
 
     if (s[t->pos] == '+' || s[t->pos] == '*' || s[t->pos] == '/' || s[t->pos] == '%'
-			|| s[t->pos] == '=') {
+			|| s[t->pos] == '=' || s[t->pos] == '^') {
 		tk = token_create(T_SYM);
 		x = t->pos + 1;
 	}
