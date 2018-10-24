@@ -282,6 +282,15 @@
         ((atom? aexp) (number? aexp)  )
         ((eq? (car (cdr aexp)) (quote +)) (and (numbered? (car aexp)) (numbered? (car (cdr (cdr aexp)))))  )
         ((eq? (car (cdr aexp)) (quote *)) (and (numbered? (car aexp)) (numbered? (car (cdr (cdr aexp)))))   )
-        ((eq? (car (cdr aexp)) (quote /)) (and (numbered? (car aexp)) (numbered? (car (cdr (cdr aexp)))))   )
+        ((eq? (car (cdr aexp)) (quote ^)) (and (numbered? (car aexp)) (numbered? (car (cdr (cdr aexp)))))   )
+    )
+))
+
+(define value (lambda (nexp)
+    (cond
+        ((atom? nexp) nexp)
+        ((eq? (car (cdr nexp)) (quote +)) (plus (value (car nexp)) (value (car (cdr (cdr nexp))))  ))
+        ((eq? (car (cdr nexp)) (quote *)) (mults (value (car nexp)) (value (car (cdr (cdr nexp))))  ))
+        ((eq? (car (cdr nexp)) (quote ^)) (^ (value (car nexp)) (value (car (cdr (cdr nexp))))  ))
     )
 ))

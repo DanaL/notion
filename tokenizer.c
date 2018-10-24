@@ -231,7 +231,7 @@ token* next_token(tokenizer* t) {
 		else
 			tk = token_create(T_NUM);
 	}
-	else if (isalpha(s[t->pos])) {
+	else if (isalpha(s[t->pos]) || s[t->pos] == '_') {
 		tk = token_create(T_SYM);
 		x = t->pos + 1;
 		while (s[x] != '\0' && is_valid_in_symbol(s[x]))
