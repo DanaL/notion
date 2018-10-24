@@ -11,6 +11,8 @@
 
 #define CLOSURE_TABLE_SIZE 89
 
+sexpr* resolve_symbol(vm_heap*, scope*, sexpr*);
+
 int is_zero(sexpr *num) {
 	if (num->num_type == NUM_TYPE_INT)
 		return num->i_num == 0;
@@ -624,6 +626,24 @@ sexpr* builtin_stringcopy(vm_heap *vm, scope *env, sexpr **nodes, int count, cha
 	return sexpr_copy(vm, s1);
 }
 
+/* Scan for any values that are going to become unbound and thus I need to keep
+	copies of. For instance, the parameters of nested lambda calls. If I find
+	a value stored in a local scope, I am going to just replace the sexpr in
+	the function's body with the resolved value. I'm not sure if this is a
+	dumb way to handle closures but for the moment it seems to work.
+ */
+void scan_for_closures(vm_heap *vm, scope *env, sexpr *params, sexpr *body) {
+	for (int j = 0; j < body->count; j++) {
+		sexpr *var = body->children[j];
+
+		if (var->type == LVAL_SYM) {
+			sexpr *f = resolve_symbol(vm, env, var);
+			if (f->type != LVAL_ERR && !f->global_scope)
+				body->children[j] = f;
+		}
+	}
+}
+
 sexpr* builtin_lambda(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
 	ASSERT_PARAM_EQ(count, 3, "Invalid lambda definition.");
 
@@ -634,10 +654,12 @@ sexpr* builtin_lambda(vm_heap *vm, scope *env, sexpr **nodes, int count, char *o
 	sexpr_append(params, sexpr_null());
 	for (int j = 0; j < nodes[1]->count; j++)
 		sexpr_append(params, sexpr_copy(vm, nodes[1]->children[j]));
-	sexpr *body = nodes[2];
+	sexpr *body = sexpr_copy(vm, nodes[2]);
 
 	if (params->count == 0)
 		return sexpr_err(vm, "Invalid definition.");
+
+	scan_for_closures(vm, env, params, body);
 
 	sexpr *lambda = build_func(vm, params, body, "");
 

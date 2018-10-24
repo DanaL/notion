@@ -116,6 +116,8 @@ sexpr* scope_fetch_var(vm_heap *vm, scope *sc, char* key) {
 		return CHECK_PARENT_SCOPE(vm, sc, key, msg);
 	}
 
+	b->val->global_scope = sc->parent ? 0 : 1;
+	
 	return b->val;
 }
 

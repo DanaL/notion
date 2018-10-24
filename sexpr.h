@@ -13,7 +13,8 @@ typedef sexpr*(*builtinf)(vm_heap *, scope*, sexpr**, int, char*);
 struct sexpr {
 	enum sexpr_type type;
 	enum sexpr_num_type num_type;
-
+	int global_scope; /* Is the value stashed in the global scope or not */
+	
 	union {
 		long i_num;
 		float d_num;

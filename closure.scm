@@ -11,3 +11,4 @@
 ))
 
 (define add6 (add-factory 6))
+(define add4 (add-factory 4))
