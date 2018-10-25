@@ -79,6 +79,7 @@ int is_valid_in_symbol(char c)
 		case '-':
 		case '+':
 		case '*':
+		case '!':
 			return 1;
 	}
 
@@ -253,6 +254,6 @@ token* next_token(tokenizer* t) {
 
 	if (tk->type == T_SYM && is_number_token(tk))
 	 	tk->type = T_NUM;
-		
+
     return tk;
 }
