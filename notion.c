@@ -26,7 +26,7 @@ int is_whitespeace(char *s) {
 #define DEFAULT_TABLE_SIZE 1019
 
 int main(int argc, char **argv) {
-	puts("Notion (Dana's toy Scheme) 0.5.0");
+	puts("Notion (Dana's toy Scheme) 0.6.0");
 	puts("Press Ctrl-C or (quit) to exit");
 
 	puts("Loading env...");

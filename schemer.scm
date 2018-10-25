@@ -286,11 +286,15 @@
     )
 ))
 
+(define (1st-sub-exp nexp) (car (cdr nexp)))
+(define (2nd-sub-exp nexp) (car (cdr (cdr nexp))))
+(define (operator aexp) (car aexp))
+
 (define value (lambda (nexp)
     (cond
         ((atom? nexp) nexp)
-        ((eq? (car (cdr nexp)) (quote +)) (plus (value (car nexp)) (value (car (cdr (cdr nexp))))  ))
-        ((eq? (car (cdr nexp)) (quote *)) (mults (value (car nexp)) (value (car (cdr (cdr nexp))))  ))
-        ((eq? (car (cdr nexp)) (quote ^)) (^ (value (car nexp)) (value (car (cdr (cdr nexp))))  ))
+        ((eq? (operator nexp) (quote +)) (plus (value (1st-sub-exp nexp)) (value (2nd-sub-exp nexp)) ))
+        ((eq? (operator nexp) (quote *)) (mults (value (1st-sub-exp nexp)) (value (2nd-sub-exp nexp)) ))
+        ((eq? (operator nexp) (quote ^)) (^ (value (1st-sub-exp nexp)) (value (2nd-sub-exp nexp)) ))
     )
 ))
