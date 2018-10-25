@@ -393,3 +393,35 @@
 (define build (lambda (s1 s2)
     (cons (first s1) (cons (second s2) (quote ()) ))
 ))
+
+(define firsts (lambda (l)
+    (cond
+        ((null? l) (quote()))
+    (else (cons (car (car l))  (firsts (cdr l)) )
+    ))
+))
+
+(define fun? (lambda (rel)
+    (set? (firsts rel))
+))
+
+(define revpair (lambda (p)
+    (cons (second p) (cons (first p) '()))
+))
+
+(define revrel (lambda (rel)
+    (cond
+        ((null? rel) (quote ()))
+    (else (cons (revpair (car rel)) (revrel (cdr rel)))
+))))
+
+(define seconds (lambda (l)
+    (cond
+        ((null? l) (quote ()))
+    (else
+        (cons (second (car l)) (seconds (cdr l)) )
+))))
+
+(define fullfun? (lambda (fun)
+    (and (fun? fun)(set? (seconds fun)))
+))
