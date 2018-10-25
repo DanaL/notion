@@ -11,6 +11,15 @@
         )
 ))
 
+(define member? (lambda (a lat)
+    (cond
+        ((null? lat) #f)
+        (else (or (eq? (car lat) a) (member? a (cdr lat)) )
+
+        )
+    )
+))
+
 (define insertR (lambda (old new lat)
     (cond
         ((null? lat) (quote ()))
@@ -50,6 +59,19 @@
                     (else (cons (car lat) (minsertL old new (cdr lat)))))
 ))))
 
+(define multirember (lambda (a lat)
+    (cond
+        ((null? lat) (quote ()))
+        (else
+            (cond
+                ((eq? (car lat) a) (multirember a (cdr lat)))
+                (else
+                    (cons (car lat) (multirember a (cdr lat)))
+                )
+            )
+        )
+    )
+))
 
 ; Chapter 4 has us re-implementing basic arithmetic :P
 (define add1 (lambda (x) (+ x 1)))
@@ -296,5 +318,40 @@
         ((eq? (operator nexp) (quote +)) (plus (value (1st-sub-exp nexp)) (value (2nd-sub-exp nexp)) ))
         ((eq? (operator nexp) (quote *)) (mults (value (1st-sub-exp nexp)) (value (2nd-sub-exp nexp)) ))
         ((eq? (operator nexp) (quote ^)) (^ (value (1st-sub-exp nexp)) (value (2nd-sub-exp nexp)) ))
+    )
+))
+
+(define set? (lambda (lat)
+    (cond
+        ((null? lat) #t)
+        ((member? (car lat) (cdr lat)) #f)
+        (else (set? (cdr lat)))
+    )
+))
+
+(define setify! (lambda (lat)
+    (cond ((null? lat) (quote ()))
+        (else (cons (car lat) (setify! (multirember (car lat) (cdr lat)))))
+    )
+))
+
+(define subset? (lambda (set1 set2)
+    (cond ((null? set1) #t) ; An empty set is always a subset I think?
+        (else
+            (and (member? (car set1) set2) (subset? (cdr set1) set2)  )
+        )
+    )
+))
+
+(define eqset? (lambda (set1 set2)
+    (and (subset? set1 set2) (subset? set2 set1))
+))
+
+(define intersect? (lambda (set1 set2)
+    (cond ((null? set1) #f)
+        ( (member? (car set1) set2) #t)
+        (else
+             (intersect? (cdr set1) set2 )
+        )
     )
 ))
