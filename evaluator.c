@@ -401,6 +401,7 @@ sexpr* builtin_cons(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op)
 
 	sexpr *a2 = eval2(vm, env, nodes[2]);
 
+	ASSERT_NOT_ERR(a2);
 	ASSERT_TYPE(a2, LVAL_LIST, "The second argument of cons must be a list.");
 
 	sexpr *result = sexpr_list(vm);

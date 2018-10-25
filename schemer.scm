@@ -355,3 +355,41 @@
         )
     )
 ))
+
+(define intersect (lambda (set1 set2)
+    (cond ((null? set1) (quote ()))
+        (else
+            (cond ((member? (car set1) set2) (cons (car set1) (intersect (cdr set1) set2))    )
+                (else
+                    (intersect (cdr set1) set2)))
+))))
+
+(define union (lambda (set1 set2)
+    (cond ((null? set1) set2)
+        ( (not (member? (car set1) set2) ) (cons (car set1) (union (cdr set1) set2)))
+        (else (union (cdr set1) set2)  )
+    )
+))
+
+(define intersect-all (lambda (l-set)
+    (cond ((null? (cdr l-set)) (car l-set))
+        (else
+            (intersect (car l-set) (intersect-all (cdr l-set)))
+        )
+    )
+))
+
+(define a-pair? (lambda (l)
+    (cond
+        ((null? l) #f)
+        ((atom? l) #f)
+        (else (and (not (null? (cdr l))) (null? (cdr (cdr l)))))
+    )
+))
+
+(define first (lambda (l) (car l)))
+(define second (lambda (l) (car (cdr l))))
+(define third (lambda (l) (car (cdr (cdr l)))))
+(define build (lambda (s1 s2)
+    (cons (first s1) (cons (second s2) (quote ()) ))
+))
