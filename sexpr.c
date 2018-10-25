@@ -315,10 +315,10 @@ void sexpr_pprint(sexpr *v) {
 			if (v->builtin)
 				printf("Built-in function");
 			else {
-				printf("User-defined function type");
-				putchar('\n');
+				printf("User-defined function");
+				putchar(' ');
 				sexpr_pprint(v->params);
-				putchar('\n');
+				putchar(' ');
 				sexpr_pprint(v->body);
 			}
 		case LVAL_NULL:

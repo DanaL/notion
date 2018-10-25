@@ -632,16 +632,25 @@ sexpr* builtin_stringcopy(vm_heap *vm, scope *env, sexpr **nodes, int count, cha
 	the function's body with the resolved value. I'm not sure if this is a
 	dumb way to handle closures but for the moment it seems to work.
  */
-void scan_for_closures(vm_heap *vm, scope *env, sexpr *params, sexpr *body) {
+sexpr* scan_for_closures(vm_heap *vm, scope *env, sexpr *params, sexpr *body) {
 	for (int j = 0; j < body->count; j++) {
 		sexpr *var = body->children[j];
 
 		if (var->type == LVAL_SYM) {
 			sexpr *f = resolve_symbol(vm, env, var);
-			if (f->type != LVAL_ERR && !f->global_scope)
-				body->children[j] = f;
+			if (f->type != LVAL_ERR && !f->global_scope) {
+				if (f->type == LVAL_FUN)
+					body->children[j] = f->body;
+				else
+					body->children[j] = f;
+			}
+		}
+		else if (var->type == LVAL_LIST) {
+			body->children[j] = scan_for_closures(vm, env, params, var);
 		}
 	}
+
+	return body;
 }
 
 sexpr* builtin_lambda(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
@@ -659,7 +668,7 @@ sexpr* builtin_lambda(vm_heap *vm, scope *env, sexpr **nodes, int count, char *o
 	if (params->count == 0)
 		return sexpr_err(vm, "Invalid definition.");
 
-	scan_for_closures(vm, env, params, body);
+	body = scan_for_closures(vm, env, params, body);
 
 	sexpr *lambda = build_func(vm, params, body, "");
 
