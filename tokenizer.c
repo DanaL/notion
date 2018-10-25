@@ -114,6 +114,19 @@ int skip_whitespace(char *line, int pos) {
 	return curr;
 }
 
+int is_number_token(token *tk) {
+	char *p;
+
+	strtol(tk->val, &p, 10);
+	if (strcmp(p, "") == 0)
+		return 1;
+	strtof(tk->val, &p);
+	if (strcmp(p, "") == 0)
+		return 1;
+
+	return 0;
+}
+
 token* parse_str_token(char *s, int *start) {
 	token *tk = NULL;
 	int len, x = *start + 1;
@@ -181,7 +194,8 @@ token* next_token(tokenizer* t) {
     }
 
     if (s[t->pos] == '+' || s[t->pos] == '*' || s[t->pos] == '/' || s[t->pos] == '%'
-			|| s[t->pos] == '=' || s[t->pos] == '^') {
+			|| s[t->pos] == '=' || s[t->pos] == '^'
+			|| (s[t->pos] == '-' && s[t->pos] == ' ')) {
 		tk = token_create(T_SYM);
 		x = t->pos + 1;
 	}
@@ -214,33 +228,16 @@ token* next_token(tokenizer* t) {
 		tk = token_create(T_LIST_END);
 		x = t->pos + 1;
 	}
-	else if (s[t->pos] == '-' || isdigit(s[t->pos])) {
-		int dot_found = 0;
-		// It's either a negative number or a subtraction function
-		x = t->pos + 1;
-
-		// This is terrible and I should turn this whole function into a state machine
-		while (s[x] != '\0' && (isdigit(s[x]) || (s[x] == '.' && !dot_found))) {
-			if (s[x] == '.')
-				dot_found = 1;
-			++x;
-		}
-
-		if (s[t->pos] == '-' && x - t->pos == 1)
-			tk = token_create(T_SYM);
-		else
-			tk = token_create(T_NUM);
-	}
-	else if (isalpha(s[t->pos]) || s[t->pos] == '_') {
-		tk = token_create(T_SYM);
-		x = t->pos + 1;
-		while (s[x] != '\0' && is_valid_in_symbol(s[x]))
-			++x;
-	}
 	else if (s[t->pos] == '#') {
 		tk = token_create(T_CONSTANT);
 		x = t->pos + 1;
 		while (s[x] != '\0' && isalpha(s[x]))
+			++x;
+	}
+	else if (is_valid_in_symbol(s[t->pos])) {
+		tk = token_create(T_SYM);
+		x = t->pos + 1;
+		while (s[x] != '\0' && is_valid_in_symbol(s[x]))
 			++x;
 	}
 	else {
@@ -254,5 +251,8 @@ token* next_token(tokenizer* t) {
 	tk->val[len - 1] = '\0';
 	t->pos = x;
 
+	if (tk->type == T_SYM && is_number_token(tk))
+	 	tk->type = T_NUM;
+		
     return tk;
 }
