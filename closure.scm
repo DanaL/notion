@@ -10,13 +10,13 @@
     (lambda (y) (addn x y))
 ))
 
+(define add6 (add-factory 6))
+(define add4 (add-factory 4))
+
 (define f0 addn)
 (define f1 (lambda (x y)
     (* (f0 x y) (f0 x y))
 ))
-
-(define add6 (add-factory 6))
-(define add4 (add-factory 4))
 
 (define make-factory (lambda (x y) (lambda () (addn x y))))
 

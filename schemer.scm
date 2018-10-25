@@ -425,3 +425,24 @@
 (define fullfun? (lambda (fun)
     (and (fun? fun)(set? (seconds fun)))
 ))
+
+(define rember-f
+    (lambda (test? a l)
+        (cond
+            ((null? l) '())
+            ((atom? (car l)) (cond ((test? a (car l)) (rember-f test? a (cdr l)))
+                             (else (cons (car l) (rember-f test? a (cdr l)) ))
+
+            ))
+            (else (cons (rember-f test? a (car l)) (rember-f test? a (cdr l))))
+        )
+))
+
+(define diff2?
+    (lambda (x y)
+        (or (> (- x y ) 2) (> (- y x) 2))
+))
+
+(define eq?-c (lambda (x)
+    (lambda (a) (eq? x a))
+))
