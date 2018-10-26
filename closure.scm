@@ -31,3 +31,7 @@
 (define af2 (lambda (x)
     (lambda (y) (+ (+ x y)(* x y)))
 ))
+
+(define make-test (lambda (test?)
+    (lambda (a b) (test? a b))
+))
