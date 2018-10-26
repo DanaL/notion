@@ -92,6 +92,12 @@ void scope_insert_var(scope* sc, char *name, sexpr *exp) {
 	}
 }
 
+void scope_insert_global_var(scope *sc, char *name, sexpr *exp) {
+	while (sc->parent)
+		sc = sc->parent;
+	scope_insert_var(sc, name, exp);
+}
+
 sexpr* scope_fetch_var(vm_heap *vm, scope *sc, char* key) {
 	int h = bt_hash(sc->size, key);
 
@@ -117,7 +123,7 @@ sexpr* scope_fetch_var(vm_heap *vm, scope *sc, char* key) {
 	}
 
 	b->val->global_scope = sc->parent ? 0 : 1;
-	
+
 	return b->val;
 }
 

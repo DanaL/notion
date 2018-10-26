@@ -25,6 +25,7 @@ struct scope {
 scope* scope_new(unsigned int size);
 void scope_free(scope*);
 void scope_insert_var(scope*, char*, sexpr*);
+void scope_insert_global_var(scope*, char*, sexpr*);
 sexpr* scope_fetch_var(vm_heap*, scope*, char*);
 void env_dump(vm_heap*, scope*);
 

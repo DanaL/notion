@@ -13,9 +13,10 @@
 
 sexpr* resolve_symbol(vm_heap*, scope*, sexpr*);
 
-/* I need variable names for things like closure variables. Since an integer
-	is an invalid symbol name, I'll integers for them. So, generate an int
-	and ensure it isn't already bound */
+/* I need variable names for things like closures. They need to be unique and
+	they are only used internally so integers should work fine. (An integer
+	isn't an invalid symbol name so they should never conflict with other
+	bound symbols */
 sexpr* gen_private_var_name(vm_heap *vm, scope *sc) {
 	char buffer[50];
 	sexpr *e = sexpr_null();
@@ -645,9 +646,9 @@ sexpr* builtin_stringcopy(vm_heap *vm, scope *env, sexpr **nodes, int count, cha
 
 /* Scan for any values that are going to become unbound and thus I need to keep
 	copies of. For instance, the parameters of nested lambda calls. If I find
-	a value stored in a local scope, I am going to just replace the sexpr in
-	the function's body with the resolved value. I'm not sure if this is a
-	dumb way to handle closures but for the moment it seems to work.
+	a value stored in a local scope, replace the symbol in the expression with
+	a randomly generated, unique variable name. Then, it lives on the global
+	scope as long as the function exists.
  */
 sexpr* scan_for_closures(vm_heap *vm, scope *env, sexpr *params, sexpr *body) {
 	for (int j = 0; j < body->count; j++) {
@@ -655,11 +656,10 @@ sexpr* scan_for_closures(vm_heap *vm, scope *env, sexpr *params, sexpr *body) {
 
 		if (var->type == LVAL_SYM) {
 			sexpr *f = resolve_symbol(vm, env, var);
-			if (f->type != LVAL_ERR && !f->global_scope) {
-				if (f->type == LVAL_FUN)
-					body->children[j] = f->body;
-				else
-					body->children[j] = f;
+			if (f->type != LVAL_ERR) {
+				sexpr *cv = gen_private_var_name(vm, env);
+				scope_insert_global_var(env, cv->sym, f);
+				body->children[j] = cv;
 			}
 		}
 		else if (var->type == LVAL_LIST) {
@@ -767,6 +767,7 @@ sexpr* eval_user_func(vm_heap *vm, scope *sc, sexpr **operands, int count, sexpr
 
 sexpr* eval2(vm_heap *vm, scope *sc, sexpr *v) {
 	sexpr *result = NULL;
+
 	switch (v->type) {
 		case LVAL_LIST:
 			/* An empty list evals to an empty list */
@@ -791,6 +792,9 @@ sexpr* eval2(vm_heap *vm, scope *sc, sexpr *v) {
 
 			return result;
 		case LVAL_SYM:
+			result = resolve_symbol(vm, sc, v);
+			if (result->type == LVAL_FUN)
+				printf("Function eval'ed: %s\n", v->sym);
 			return resolve_symbol(vm, sc, v);
 		case LVAL_FUN:
 			break;
