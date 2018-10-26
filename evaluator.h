@@ -12,8 +12,6 @@ void load_built_ins(scope*);
             if (c->type == LVAL_FUN && c->builtin) { \
                 return sexpr_err(vm, "Scheme primitives cannot be redefined."); }
 
-#endif
-
 #define ASSERT_PARAM_MIN(c, e, err) if (c < e) return sexpr_err(vm, err)
 #define ASSERT_PARAM_EQ(c, e, err) if (c != e) return sexpr_err(vm, err)
 #define ASSERT_NOT_ERR(e) if (e->type == LVAL_ERR) return e
@@ -23,3 +21,5 @@ void load_built_ins(scope*);
                                     && strcmp("else", cond->sym) == 0
 
 typedef int(*cmpf)(float x, float y);
+
+#endif

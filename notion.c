@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <time.h>
 
 #ifndef _WIN32
 #include <editline/readline.h>
@@ -29,7 +30,9 @@ int main(int argc, char **argv) {
 	puts("Notion (Dana's toy Scheme) 0.7.0");
 	puts("Press Ctrl-C or (quit) to exit");
 
-	puts("Loading env...");
+	puts("Loading start-up environment...");
+
+	srand(time(NULL));
 
 	vm_heap *vm = vm_new();
 	scope *global =  scope_new(DEFAULT_TABLE_SIZE);

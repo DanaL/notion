@@ -9,9 +9,25 @@
 #include "parser.h"
 #include "util.h"
 
-#define CLOSURE_TABLE_SIZE 89
+#define CLOSURE_TABLE_SIZE 47
 
 sexpr* resolve_symbol(vm_heap*, scope*, sexpr*);
+
+/* I need variable names for things like closure variables. Since an integer
+	is an invalid symbol name, I'll integers for them. So, generate an int
+	and ensure it isn't already bound */
+sexpr* gen_private_var_name(vm_heap *vm, scope *sc) {
+	char buffer[50];
+	sexpr *e = sexpr_null();
+
+	while (e->type != LVAL_ERR) {
+		int n = rand();
+		sprintf(buffer, "%d", n);
+		e = scope_fetch_var(vm, sc, buffer);
+	}
+
+	return sexpr_sym(vm, buffer);
+}
 
 int is_zero(sexpr *num) {
 	if (num->num_type == NUM_TYPE_INT)
