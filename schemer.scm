@@ -438,6 +438,16 @@
         )
 ))
 
+(define rember-f2
+    (lambda (test?)
+
+    (lambda (a l)
+        (cond
+            ((null? l) '())
+            ((test? (car l) a) (cdr l))
+            (else (cons (car l) ((rember-f2 test?) a (cdr l))
+))))))
+
 (define diff2?
     (lambda (x y)
         (or (> (- x y ) 2) (> (- y x) 2))

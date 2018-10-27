@@ -644,6 +644,16 @@ sexpr* builtin_stringcopy(vm_heap *vm, scope *env, sexpr **nodes, int count, cha
 	return sexpr_copy(vm, s1);
 }
 
+int is_local_param(sexpr *params, sexpr* sym) {
+	for (int j = 0; j < params->count; j++) {
+		sexpr *p = params->children[j];
+		if (p->sym && sym->sym && strcmp(p->sym, sym->sym) == 0)
+			return 1;
+	}
+	
+	return 0;
+}
+
 /* Scan for any values that are going to become unbound and thus I need to keep
 	copies of. For instance, the parameters of nested lambda calls. If I find
 	a value stored in a local scope, replace the symbol in the expression with
@@ -655,6 +665,9 @@ sexpr* scan_for_closures(vm_heap *vm, scope *env, sexpr *params, sexpr *body) {
 		sexpr *var = body->children[j];
 
 		if (var->type == LVAL_SYM) {
+			if (is_local_param(params, var))
+				continue;
+
 			sexpr *f = resolve_symbol(vm, env, var);
 			if (f->type != LVAL_ERR && !f->global_scope) {
 				sexpr *cv = gen_private_var_name(vm, env);
