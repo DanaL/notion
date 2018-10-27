@@ -656,7 +656,7 @@ sexpr* scan_for_closures(vm_heap *vm, scope *env, sexpr *params, sexpr *body) {
 
 		if (var->type == LVAL_SYM) {
 			sexpr *f = resolve_symbol(vm, env, var);
-			if (f->type != LVAL_ERR) {
+			if (f->type != LVAL_ERR && !f->global_scope) {
 				sexpr *cv = gen_private_var_name(vm, env);
 				scope_insert_global_var(env, cv->sym, f);
 				body->children[j] = cv;
@@ -792,9 +792,6 @@ sexpr* eval2(vm_heap *vm, scope *sc, sexpr *v) {
 
 			return result;
 		case LVAL_SYM:
-			result = resolve_symbol(vm, sc, v);
-			if (result->type == LVAL_FUN)
-				printf("Function eval'ed: %s\n", v->sym);
 			return resolve_symbol(vm, sc, v);
 		case LVAL_FUN:
 			break;

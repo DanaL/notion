@@ -26,7 +26,7 @@
 ; the lambda.
 (define m7  (make-factory 5 2))
 (define m10 (make-factory 6 4))
-(define m17 (make-factory-alt m10 m7))
+(define m17 (make-factory-alt (m10) (m7)))
 
 (define af2 (lambda (x)
     (lambda (y) (+ (+ x y)(* x y)))
