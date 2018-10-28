@@ -11,8 +11,6 @@
 
 #define CLOSURE_TABLE_SIZE 47
 
-sexpr* resolve_symbol(vm_heap*, scope*, sexpr*);
-
 /* I need variable names for things like closures. They need to be unique and
 	they are only used internally so integers should work fine. (An integer
 	isn't an invalid symbol name so they should never conflict with other
@@ -474,6 +472,8 @@ sexpr* builtin_eq(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
 		else
 			return sexpr_bool(vm, 0);
 	}
+	else if (a == b)
+		return sexpr_bool(vm, 1);
 	else
 		return sexpr_bool(vm, 0);
 }
@@ -482,9 +482,7 @@ sexpr* builtin_eval(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op)
 	ASSERT_PARAM_EQ(count, 2, "eval expects just 1 argument");
 
 	sexpr *f = eval2(vm, env, nodes[1]);
-
-	if (IS_FUNC(f))
-		return eval2(vm, env, f);
+	f = eval2(vm, env, f);
 
 	return f;
 }
@@ -668,7 +666,7 @@ sexpr* scan_for_closures(vm_heap *vm, scope *env, sexpr *params, sexpr *body) {
 			if (is_local_param(params, var))
 				continue;
 
-			sexpr *f = resolve_symbol(vm, env, var);
+			sexpr *f = scope_fetch_var(vm, env, var->sym);
 			if (f->type != LVAL_ERR && !f->global_scope) {
 				sexpr *cv = gen_private_var_name(vm, env);
 				scope_insert_global_var(env, cv->sym, f);
@@ -735,20 +733,6 @@ sexpr* define(vm_heap *vm, scope *sc, sexpr **nodes, int count, char *op) {
 		return define_var(vm, sc, nodes, count, op);
 }
 
-sexpr* resolve_symbol(vm_heap *vm, scope *sc, sexpr *s) {
-	sexpr *r = scope_fetch_var(vm, sc, s->sym);
-
-	if (r->type == LVAL_SYM) {
-		sexpr *r2 = scope_fetch_var(vm, sc, r->sym);
-		/* If the symbol isn't found, just return the original result.
-			(This is for cases like (define x 'aaa) where aaa is a meaningless
-			symbol) */
-		return r2->type == LVAL_ERR ? r : r2;
-	}
-
-	return r;
-}
-
 sexpr* eval_user_func(vm_heap *vm, scope *sc, sexpr **operands, int count, sexpr *fun) {
 	ASSERT_PARAM_MIN(count - 1, fun->params->count, "Too few paramters passed to function.");
 
@@ -787,13 +771,15 @@ sexpr* eval2(vm_heap *vm, scope *sc, sexpr *v) {
 			if (v->count == 0)
 				return sexpr_list(vm);
 
-			sexpr *func;
-			if (v->children[0]->type == LVAL_LIST)
-				func = eval2(vm, sc, v->children[0]);
-			else if (v->children[0]->type == LVAL_SYM)
+			sexpr *func = sexpr_null();
+			if (v->children[0]->type == LVAL_SYM) {
 				func = scope_fetch_var(vm, sc, v->children[0]->sym);
-			else
-				return sexpr_err(vm, "Expected function.");
+				while (func->type == LVAL_SYM)
+					func = scope_fetch_var(vm, sc, func->sym);
+			}
+			else if (v->children[0]->type == LVAL_LIST) {
+				func = eval2(vm, sc, v->children[0]);
+			}
 
 			if (func->type != LVAL_FUN)
 				return sexpr_err(vm, "Expected function.");
@@ -805,17 +791,14 @@ sexpr* eval2(vm_heap *vm, scope *sc, sexpr *v) {
 
 			return result;
 		case LVAL_SYM:
-			return resolve_symbol(vm, sc, v);
-		case LVAL_FUN:
-			break;
+			return scope_fetch_var(vm, sc, v->sym);
 		case LVAL_ERR:
-			return v;
+		case LVAL_FUN:
 		case LVAL_NUM:
 		case LVAL_BOOL:
 		case LVAL_NULL:
 		case LVAL_STR:
 			return v;
-			break;
 	}
 
 	return sexpr_err(vm, "Something hasn't been implemented yet");
