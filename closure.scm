@@ -35,3 +35,7 @@
 (define make-test (lambda (test?)
     (lambda (a b) (test? a b))
 ))
+
+(define test-one (lambda (test? n)
+    (lambda (x) (test? x n))
+))

@@ -456,3 +456,77 @@
 (define eq?-c (lambda (x)
     (lambda (a) (eq? x a))
 ))
+
+(define insertL-f
+    (lambda (test?)
+    (lambda (old new lat)
+        (cond
+            ((null? lat) (quote ()))
+            (else   (cond
+                        ((test? old (car lat))
+                            (cons new lat))
+                            (else (cons (car lat) ((insertL-f test?) old new (cdr lat)))))
+)))))
+
+(define seqL (lambda (new old l)
+    (cons new (cons old l))
+))
+
+(define seqR (lambda (new old l)
+    (cons old (cons new l))
+))
+
+(define seqS (lambda (new old l)
+    (cons new l)
+))
+
+(define insert-g
+    (lambda (seq)
+    (lambda (new old l)
+        (cond
+            ((null? l) (quote ()))
+            ((eq? (car l) old) (seq new old (cdr l)) )
+            (else (cons (car l) ((insert-g seq) new old (cdr l))))
+        )
+    )
+))
+
+(define atom-to-fun (lambda (x)
+    (cond ((eq? x '+) +)
+            ((eq? x '*) *)
+            (else ^)
+    )
+))
+
+(define value2 (lambda (nexp)
+    (cond
+        ((atom? nexp) nexp)
+        (else
+            ((atom-to-fun (operator nexp)) (value2 (1st-sub-exp nexp))
+                (value2 (2nd-sub-exp nexp)))
+        )
+    )
+))
+
+(define multirember-f (lambda (test?)
+    (lambda (a lat)
+    (cond
+        ((null? lat) (quote ()))
+        (else
+            (cond
+                ((test? (car lat) a) ((multirember-f test?) a (cdr lat)))
+                (else
+                    (cons (car lat) ((multirember-f test?) a (cdr lat)))
+                )
+            )
+        )
+))))
+
+(define multiremberT (lambda (test? lat)
+    (cond
+        ((null? lat) '())
+        ((test? (car lat)) (multiremberT test? (cdr lat)))
+        (else (cons (car lat) (multiremberT test? (cdr lat)))
+))))
+
+(define eq?-tuna (eq?-c 'tuna))
