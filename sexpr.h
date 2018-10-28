@@ -14,10 +14,10 @@ struct sexpr {
 	enum sexpr_type type;
 	enum sexpr_num_type num_type;
 	int global_scope; /* Is the value stashed in the global scope or not */
-	
+
 	union {
 		long i_num;
-		float d_num;
+		double d_num;
 		int bool;
 		char *sym;
 		char *err;
@@ -40,7 +40,7 @@ struct sexpr {
 
 sexpr* sexpr_err(vm_heap*, char*);
 sexpr* sexpr_num_s(vm_heap*, char*);
-sexpr* sexpr_num(vm_heap*, enum sexpr_num_type, float);
+sexpr* sexpr_num(vm_heap*, enum sexpr_num_type, double);
 sexpr* sexpr_null(void);
 sexpr* sexpr_sym(vm_heap*, char*);
 sexpr* sexpr_list(vm_heap*);

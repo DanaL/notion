@@ -227,9 +227,9 @@ sexpr* builtin_or(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
 	return result;
 }
 
-/* Converting integers into floats and then comparing them that way is
+/* Converting integers into doubles and then comparing them that way is
 	probably deeply flawed, but the code sure is cleaner than trying to sort
-	out if we are comparing ints to ints, floats to floats or a mix.
+	out if we are comparing ints to ints, doubles to doubles or a mix.
 
 	It should be sufficiently fast and accurate for anything I might want to
 	use notion for.
@@ -244,25 +244,25 @@ sexpr* builtin_math_cmp(vm_heap *vm, scope *env, sexpr **nodes, int count, char 
 	ASSERT_TYPE(n1, LVAL_NUM, "Number expected.");
 
 	int eq = 0;
-	float f0 = n0->num_type == NUM_TYPE_INT ? n0->i_num : n0->d_num;
-	float f1 = n1->num_type == NUM_TYPE_INT ? n1->i_num : n1->d_num;
+	double f0 = n0->num_type == NUM_TYPE_INT ? n0->i_num : n0->d_num;
+	double f1 = n1->num_type == NUM_TYPE_INT ? n1->i_num : n1->d_num;
 
 	if (strcmp("=", op) == 0)
-		eq = fabsf(f0 - f1) < 0.000000001;
+		eq = fabs(f0 - f1) < 0.000000001;
 	else if (strcmp("<", op) == 0)
 		eq = f0 < f1;
 	else if (strcmp(">", op) == 0)
 		eq = f0 > f1;
 	else if (strcmp(">=", op) == 0)
-		eq = f0 > f1 || fabsf(f0 - f1) < 0.000000001;
+		eq = f0 > f1 || fabs(f0 - f1) < 0.000000001;
 	else if (strcmp("<=", op) == 0)
-		eq = f0 < f1 || fabsf(f0 - f1) < 0.000000001;
+		eq = f0 < f1 || fabs(f0 - f1) < 0.000000001;
 
 	return eq ? sexpr_bool(vm, 1) : sexpr_bool(vm, 0);
 }
 
 sexpr* builtin_math_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
-	float result;
+	double result;
 	sexpr *r;
 
 	/* Unary subtraction */
@@ -322,7 +322,7 @@ sexpr* builtin_math_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *
 sexpr* builtin_min_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
 	ASSERT_PARAM_MIN(count, 2, "At least one parameter needed for min");
 
-	float curr_max, x;
+	double curr_max, x;
 
 	enum sexpr_num_type rt = NUM_TYPE_INT;
 	for (int j = 1; j < count; j++) {
@@ -348,7 +348,7 @@ sexpr* builtin_min_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *o
 sexpr* builtin_max_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
 	ASSERT_PARAM_MIN(count, 2, "At least one parameter needed for max");
 
-	float curr_max, x;
+	double curr_max, x;
 	enum sexpr_num_type rt = NUM_TYPE_INT;
 
 	for (int j = 1; j < count; j++) {

@@ -20,6 +20,6 @@ void load_built_ins(scope*);
 #define IS_ELSE_CLAUSE(n, c, cond) n == (c - 1) && cond->type == LVAL_SYM \
                                     && strcmp("else", cond->sym) == 0
 
-typedef int(*cmpf)(float x, float y);
+typedef int(*cmpf)(double x, double y);
 
 #endif

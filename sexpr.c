@@ -42,7 +42,7 @@ void print_sexpr_type(sexpr *v) {
 
 /* This is mathematically, philosophically terrible, but also so
 	terribly convenient */
-sexpr* sexpr_num(vm_heap* vm, enum sexpr_num_type t, float n) {
+sexpr* sexpr_num(vm_heap* vm, enum sexpr_num_type t, double n) {
 	sexpr *v = malloc(sizeof(sexpr));
 	v->type = LVAL_NUM;
 	v->num_type = t;
@@ -67,7 +67,7 @@ sexpr* sexpr_num_s(vm_heap* vm, char *s) {
 	v->count = 0;
 
 	if (strchr(s, '.')) {
-		float f = strtof(s, NULL);
+		double f = strtod(s, NULL);
 		v->num_type = NUM_TYPE_DEC;
 		v->d_num = f;
 	}
