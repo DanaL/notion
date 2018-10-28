@@ -650,7 +650,7 @@ int is_local_param(sexpr *params, sexpr* sym) {
 		if (p->sym && sym->sym && strcmp(p->sym, sym->sym) == 0)
 			return 1;
 	}
-	
+
 	return 0;
 }
 

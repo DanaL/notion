@@ -172,7 +172,7 @@ void parser_feed_token(vm_heap *vm, parser* p, token* t) {
 				token) */
 			if (p->curr && p->curr->sq_list) {
 				p->curr = p->curr->parent;
-				p->complete = 1;
+				//p->complete = 1;
 			}
 		}
 	}

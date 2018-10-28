@@ -94,7 +94,6 @@ int main(int argc, char **argv) {
 
 		sexpr *ast = p->head;
 		parser_clear(p);
-
 		sexpr *result = eval2(vm, global, ast);
 
 		if (result->type == LVAL_ERR && strcmp(result->err, "<quit>") == 0) {
