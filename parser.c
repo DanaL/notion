@@ -51,18 +51,20 @@ sexpr* sexpr_from_token(vm_heap *vm, token *t) {
 	return expr;
 }
 
-parser* parser_create(void) {
+parser* parser_new(tokenizer *tk) {
 	parser *p = malloc(sizeof(parser));
 	p->complete = 0;
 	p->open_p = 0;
 	p->closed_p = 0;
 	p->curr = NULL;
 	p->head = NULL;
+	p->tk = tk;
 
 	return p;
 }
 
 void parser_free(parser *p) {
+	tokenizer_free(p->tk);
 	free(p);
 }
 
@@ -73,6 +75,28 @@ void parser_clear(parser* p) {
 	p->open_p = 0;
 	p->closed_p = 0;
 }
+
+sexpr *get_next_expr(vm_heap *vm, parser *p) {
+	token *t = next_token(p->tk);
+
+	if (!t)
+		return NULL;
+	else if (t->type == T_LIST_START) {
+		// fetch until end of list or end of tokens
+	}
+	else {
+		sexpr *e = sexpr_from_token(vm, t);
+		token_free(t);
+		return e;
+	}
+
+	return sexpr_err(vm, "Expected s-expression.");
+}
+/*
+void parse(vm_heap *vm , parser *p) {
+
+}
+*/
 
 void parser_feed_token(vm_heap *vm, parser* p, token* t) {
 	/* If we have a open parenthesis, start a new list and make it our current

@@ -13,11 +13,15 @@ typedef struct parser {
     unsigned int closed_p;
     sexpr *head;
     sexpr *curr;
+    tokenizer *tk;
 } parser;
 
-parser* parser_create(void);
+parser* parser_new(tokenizer*);
 void parser_free(parser*);
 void parser_clear(parser*);
 void parser_feed_token(vm_heap*, parser*, token*);
+//void parse(vm_heap*, parser*);
+
+sexpr *get_next_expr(vm_heap *vm, parser *p);
 
 #endif
