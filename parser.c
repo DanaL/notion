@@ -105,7 +105,7 @@ sexpr *get_next_expr(vm_heap *vm, parser *p) {
 				tokenizer_stash(p->tk, t);
 				sexpr_append(list, get_next_expr(vm, p));
 			}
-			else {
+			else if (t->type != T_COMMENT) {
 				sexpr_append(list, sexpr_from_token(vm, p, t));
 			}
 

@@ -20,5 +20,6 @@
 ; Generates functions that remove all items in list that are > n
 (define rem-gt-n
     (lambda (n)
-        (lambda (l) ((rem-fact <) n l))
+        (lambda (l) ((rem-fact <) n l)) ; n is remember from the enclosing
+                                        ; closure
 ))

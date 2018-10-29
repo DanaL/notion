@@ -288,7 +288,7 @@ token* next_in_line(tokenizer *t) {
     else if (s[t->pos] == ';') {
         /* We're at a comment so we can just ignore the rest of the line */
         t->pos = strlen(t->curr_line);
-        return token_new(T_COMMENT);
+		return token_new(T_COMMENT);
     }
 	else if(s[t->pos] == ')') {
 		tk = token_new(T_LIST_END);
