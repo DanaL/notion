@@ -76,13 +76,67 @@ void parser_clear(parser* p) {
 	p->closed_p = 0;
 }
 
+sexpr *build_quote_form(vm_heap *vm, parser *p) {
+	sexpr *sq = sexpr_list(vm);
+	sexpr_list_insert(vm, sq, sexpr_sym(vm, "quote"));
+
+	sexpr *quoted = get_next_expr(vm, p);
+	if (quoted->type == LVAL_ERR)
+		return quoted;
+
+	sexpr_list_insert(vm, sq, quoted);
+
+	return sq;
+}
+
+sexpr *build_list(vm_heap *vm, parser *p) {
+	sexpr *list = sexpr_list(vm);
+
+	token *t = next_token(p->tk);
+	while (t && t->type != T_LIST_END) {
+		if (t->type == T_LIST_START) {
+			sexpr *l2 = build_list(vm, p);
+			if (l2->type == LVAL_ERR)
+				return l2;
+			else
+				sexpr_list_insert(vm, list, l2);
+		}
+		else if (t->type == T_SINGLE_QUOTE) {
+			token_free(t);
+			sexpr_list_insert(vm, list, build_quote_form(vm, p));
+		}
+		else {
+			sexpr *item = sexpr_from_token(vm, t);
+			sexpr_list_insert(vm, list, item);
+		}
+
+		token_free(t);
+		t = next_token(p->tk);
+	}
+
+	if (!t)
+		return sexpr_err(vm, "Expected end of list.");
+
+	token_free(t);
+
+	return list;
+}
+
 sexpr *get_next_expr(vm_heap *vm, parser *p) {
 	token *t = next_token(p->tk);
 
 	if (!t)
-		return NULL;
+		return sexpr_null();
 	else if (t->type == T_LIST_START) {
-		// fetch until end of list or end of tokens
+		sexpr *e = build_list(vm, p);
+		if (e->type == LVAL_ERR)
+			return e;
+
+		return e;
+	}
+	else if (t->type == T_SINGLE_QUOTE) {
+		token_free(t);
+		return build_quote_form(vm, p);
 	}
 	else {
 		sexpr *e = sexpr_from_token(vm, t);
@@ -91,113 +145,4 @@ sexpr *get_next_expr(vm_heap *vm, parser *p) {
 	}
 
 	return sexpr_err(vm, "Expected s-expression.");
-}
-/*
-void parse(vm_heap *vm , parser *p) {
-
-}
-*/
-
-void parser_feed_token(vm_heap *vm, parser* p, token* t) {
-	/* If we have a open parenthesis, start a new list and make it our current
-		head. If head is an existing list, we append the new list to its lists
-		if children. */
-	if (t->type == T_LIST_START) {
-		sexpr *list = sexpr_list(vm);
-
-		/* Are we at the start of a brand new expression? */
-		if (!p->head)
-			p->head = list;
-
-		list->parent = p->curr;
-
-		if (p->curr)
-			sexpr_append(p->curr, list);
-
-		p->curr = list;
-		p->open_p++;
-	}
-	else if (t->type == T_SINGLE_QUOTE) {
-		/* This is the case of: (car '(1 2 3)), which I want to expand to:
-			(car (quote (1 2 3)))
-
-			So start a new list, add a quote symbol to it and make that the
-			new curr pointer.
-		 */
-		sexpr *quote = sexpr_list(vm);
-
-		/* This is a bit kludgy :( If this, the single quoted item we are
-			expanding in a (quote ...) expression contains a list, when we
-			hit its ending paranthesis, we will need to pop out two levels
-			instead of one, so track that with the sq_list field */
-		quote->sq_list = 1;
-		sexpr_append(quote, sexpr_sym(vm, "quote"));
-
-		/* I don't really need to increment the counts but I know sometime in
-			the future I'll be debugging and manually counting them and panic
-			when they don't match what the program has */
-		p->open_p++;
-		p->closed_p++;
-
-		quote->parent = p->curr;
-		if (p->curr)
-			sexpr_append(p->curr, quote);
-		else
-			p->head = quote;
-
-		p->curr = quote;
-	}
-	else if (t->type == T_LIST_END) {
-		/* the parent appears to be NULL, it's because an extra close
-			parenthesis was typed. Ie,  (+ (list 1 2 3)) (list 3 2 1))
-			So flag that as an error condition. */
-		if (!p->curr) {
-			parser_clear(p);
-			p->head = sexpr_err(vm, "Unexpected end of list. Too many )s?");
-			p->complete = 1;
-			return;
-		}
-
-		/* Pop up the chain to the parent, or the grandparent if we are
-		 	finishing a list that was single quoted, ie., '(1 2 3) */
-		p->curr = p->curr->parent;
-		if (p->curr && p->curr->sq_list)
-			p->curr = p->curr->parent;
-
-		p->closed_p++;
-		if (p->open_p == p->closed_p)
-			p->complete = 1;
-	}
-	else {
-		sexpr *e = sexpr_from_token(vm, t);
-
-		if (e->type == LVAL_ERR) {
-			parser_clear(p);
-			p->head = e;
-			p->complete = 1;
-			return;
-		}
-
-		/* Okay, if we have an atom and the head is empty, our s-expression
-		 	is just a single atom, otherwise we want to append it to curr */
-		if (!p->head && IS_ATOM(e)) {
-			p->head = e;
-			p->complete = 1;
-
-			return;
-		}
-		else {
-			sexpr_append(p->curr, e);
-
-			/* I hate Scheme's '(1 2 3) and 'foo special form :/
-				If we are an atom and our parent was marked as a single-quoted
-				list, we want to set curr equal to its parent (because with the
-				faked list for the special form, we never get the end-of-list
-				token) */
-			if (p->curr && p->curr->sq_list) {
-				p->curr = p->curr->parent;
-				//p->complete = 1;
-			}
-		}
-	}
 }
