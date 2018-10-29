@@ -9,19 +9,21 @@ typedef struct token {
 	char *val;
 } token;
 
-token* token_create(enum token_type);
+token* token_new(enum token_type);
 void token_free(token *);
 void dump_tokens(char *);
 
 typedef struct tokenizer {
     char *curr_line;
     int pos;
+	FILE *file;
 } tokenizer;
 
-tokenizer* tokenizer_create(void);
+tokenizer* tokenizer_new(void);
 void tokenizer_free(tokenizer*);
 void tokenizer_feed_line(tokenizer*, char*);
 token* next_token(tokenizer*);
 void print_token(token*);
+int start_file(tokenizer*, char*);
 
 #endif
