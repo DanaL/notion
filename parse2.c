@@ -41,7 +41,7 @@ int main() {
     //char buff[] = "(+ (2 3 4) (5 (6 7 8)) 9 10)";
     //tokenizer_feed_line(tz, buff);
 
-    start_file(tz, "rember.scm");
+    start_file(tz, "schemer.scm");
     parser *p = parser_new(tz);
 
     sexpr* ast = get_next_expr(vm, p);

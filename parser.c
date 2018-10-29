@@ -87,9 +87,15 @@ void parser_free(parser *p) {
 sexpr *get_next_expr(vm_heap *vm, parser *p) {
 	token *t = next_token(p->tk);
 
+	while (t && t->type == T_COMMENT) {
+		token_free(t);
+		t = next_token(p->tk);
+	}
+
 	if (!t)
 		return sexpr_null();
-	else if (t->type == T_LIST_START) {
+
+	if (t->type == T_LIST_START) {
 		token_free(t);
 		sexpr *list = sexpr_list(vm);
 

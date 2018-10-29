@@ -16,6 +16,7 @@
         )
 )))
 
+; Closures are very confusing to me...
 ; Generates functions that remove all items in list that are > n
 (define rem-gt-n
     (lambda (n)
