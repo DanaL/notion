@@ -7,6 +7,8 @@ enum token_type { T_NUM, T_SYM, T_STR, T_NULL, T_LIST_START, T_LIST_END,
 typedef struct token {
 	enum token_type type;
 	char *val;
+	struct token *next;
+	struct token *top;
 } token;
 
 token* token_new(enum token_type);
@@ -17,6 +19,7 @@ typedef struct tokenizer {
     char *curr_line;
     int pos;
 	FILE *file;
+	struct token *stashed;
 } tokenizer;
 
 tokenizer* tokenizer_new(void);
@@ -25,5 +28,6 @@ void tokenizer_feed_line(tokenizer*, char*);
 token* next_token(tokenizer*);
 void print_token(token*);
 int start_file(tokenizer*, char*);
+void tokenizer_stash (tokenizer*, token*);
 
 #endif

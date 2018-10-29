@@ -14,7 +14,20 @@
 #include "sexpr.h"
 #include "util.h"
 
-sexpr* sexpr_from_token(vm_heap *vm, token *t) {
+sexpr *build_quote_form(vm_heap *vm, parser *p) {
+	sexpr *sq = sexpr_list(vm);
+	sexpr_append(sq, sexpr_sym(vm, "quote"));
+
+	sexpr *quoted = get_next_expr(vm, p);
+	if (quoted->type == LVAL_ERR)
+		return quoted;
+
+	sexpr_append(sq, quoted);
+
+	return sq;
+}
+
+sexpr* sexpr_from_token(vm_heap *vm, parser *p, token *t) {
 	sexpr *expr = NULL;
 
 	switch (t->type) {
@@ -38,15 +51,18 @@ sexpr* sexpr_from_token(vm_heap *vm, token *t) {
 		case T_ERR:
 			expr = sexpr_err(vm, t->val);
 			break;
+		case T_SINGLE_QUOTE:
+			return build_quote_form(vm, p);
 		case T_LIST_START:
 		case T_LIST_END:
 		case T_NULL:
 		case T_UNKNOWN:
 		case T_COMMENT:
-		case T_SINGLE_QUOTE:
-			expr = sexpr_err(vm, "Unexpeted token.");
+			expr = sexpr_err(vm, "Unexpected token.");
 			break;
 	}
+
+	token_free(t);
 
 	return expr;
 }
@@ -68,78 +84,37 @@ void parser_free(parser *p) {
 	free(p);
 }
 
-void parser_clear(parser* p) {
-	p->curr = NULL;
-	p->head = NULL;
-	p->complete = 0;
-	p->open_p = 0;
-	p->closed_p = 0;
-}
-
-sexpr *build_quote_form(vm_heap *vm, parser *p) {
-	sexpr *sq = sexpr_list(vm);
-	sexpr_list_insert(vm, sq, sexpr_sym(vm, "quote"));
-
-	sexpr *quoted = get_next_expr(vm, p);
-	if (quoted->type == LVAL_ERR)
-		return quoted;
-
-	sexpr_list_insert(vm, sq, quoted);
-
-	return sq;
-}
-
-sexpr *build_list(vm_heap *vm, parser *p) {
-	sexpr *list = sexpr_list(vm);
-
-	token *t = next_token(p->tk);
-	while (t && t->type != T_LIST_END) {
-		if (t->type == T_LIST_START) {
-			sexpr *l2 = build_list(vm, p);
-			if (l2->type == LVAL_ERR)
-				return l2;
-			else
-				sexpr_list_insert(vm, list, l2);
-		}
-		else if (t->type == T_SINGLE_QUOTE) {
-			token_free(t);
-			sexpr_list_insert(vm, list, build_quote_form(vm, p));
-		}
-		else {
-			sexpr *item = sexpr_from_token(vm, t);
-			sexpr_list_insert(vm, list, item);
-		}
-
-		token_free(t);
-		t = next_token(p->tk);
-	}
-
-	if (!t)
-		return sexpr_err(vm, "Expected end of list.");
-
-	token_free(t);
-
-	return list;
-}
-
 sexpr *get_next_expr(vm_heap *vm, parser *p) {
 	token *t = next_token(p->tk);
 
 	if (!t)
 		return sexpr_null();
 	else if (t->type == T_LIST_START) {
-		sexpr *e = build_list(vm, p);
-		if (e->type == LVAL_ERR)
-			return e;
-
-		return e;
-	}
-	else if (t->type == T_SINGLE_QUOTE) {
 		token_free(t);
-		return build_quote_form(vm, p);
+		sexpr *list = sexpr_list(vm);
+
+		t = next_token(p->tk);
+		while (t && t->type != T_LIST_END) {
+			if (t->type == T_LIST_START) {
+				tokenizer_stash(p->tk, t);
+				sexpr_append(list, get_next_expr(vm, p));
+			}
+			else {
+				sexpr_append(list, sexpr_from_token(vm, p, t));
+			}
+
+			t = next_token(p->tk);
+		}
+
+		if (!t)
+			return sexpr_err(vm, "Expected end of list.");
+		else
+			token_free(t);
+
+		return list;
 	}
 	else {
-		sexpr *e = sexpr_from_token(vm, t);
+		sexpr *e = sexpr_from_token(vm, p, t);
 		token_free(t);
 		return e;
 	}

@@ -393,7 +393,7 @@ sexpr* builtin_cdr(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) 
 
 	sexpr *result = sexpr_list(vm);
 	for (int j = 1; j < l->count; j++) {
-		sexpr_list_insert(vm, result, l->children[j]);
+		sexpr_append(result, l->children[j]);
 	}
 
 	return result;
@@ -420,10 +420,10 @@ sexpr* builtin_cons(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op)
 	ASSERT_TYPE(a2, LVAL_LIST, "The second argument of cons must be a list.");
 
 	sexpr *result = sexpr_list(vm);
-	sexpr_list_insert(vm, result, eval2(vm, env, nodes[1]));
+	sexpr_append(result, eval2(vm, env, nodes[1]));
 
 	for (int j = 0; j < a2->count; j++) {
-		sexpr_list_insert(vm, result, a2->children[j]);
+		sexpr_append(result, a2->children[j]);
 	}
 
 	return result;

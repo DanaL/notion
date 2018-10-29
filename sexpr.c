@@ -169,7 +169,6 @@ sexpr* sexpr_list(vm_heap* vm) {
 	v->type = LVAL_LIST;
 	v->count = 0;
 	v->children = NULL;
-	v->sq_list = 0;
 	v->gen = 0;
 
 	vm_add(vm, v);
@@ -244,7 +243,6 @@ sexpr* sexpr_copy_atom(vm_heap* vm, sexpr* src) {
 
 sexpr* sexpr_copy_list(vm_heap* vm, sexpr* src) {
 	sexpr *dst = sexpr_list(vm);
-	dst->sq_list = src->sq_list;
 
 	for (int j = 0; j < src->count; j++) {
 		if (IS_ATOM(src->children[j])) {
@@ -270,11 +268,6 @@ void sexpr_append(sexpr *v, sexpr *next) {
 	v->count++;
 	v->children = realloc(v->children, sizeof(sexpr*) * v->count);
 	v->children[v->count - 1] = next;
-}
-
-void sexpr_list_insert(vm_heap* vm, sexpr *dst, sexpr *item) {
-	sexpr* cp = sexpr_copy(vm, item);
-	sexpr_append(dst, cp);
 }
 
 void print_padding(int depth) {

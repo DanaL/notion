@@ -10,6 +10,7 @@ token* token_new(enum token_type type) {
 	token *t = malloc(sizeof(token));
 	t->type = type;
 	t->val = NULL;
+	t->next = NULL;
 
 	return t;
 }
@@ -91,15 +92,24 @@ tokenizer* tokenizer_new(void) {
     t->curr_line = NULL;
     t->pos = 0;
 	t->file = NULL;
+	t->stashed = NULL;
 
     return t;
 }
 
-void tokenizer_free(tokenizer* t) {
-	if (t->file)
-		fclose(t->file);
+void tokenizer_free(tokenizer* tk) {
+	if (tk->file)
+		fclose(tk->file);
 
-    free(t);
+	/* There shouldn't be any leftover tokens on the stash, but just in case */
+	token *t;
+	while (tk->stashed) {
+		t = tk->stashed;
+		tk->stashed = tk->stashed->next;
+		token_free(t);
+	}
+
+    free(tk);
 }
 
 void tokenizer_feed_line(tokenizer* t, char* line) {
@@ -313,16 +323,29 @@ token* next_in_line(tokenizer *t) {
     return tk;
 }
 
-token* next_token(tokenizer* t) {
-	/* If our source is a file, do we need to read another line in? */
-	if (t->file && (!t->curr_line || t->curr_line[t->pos] == '\0')) {
-		tokenizer_feed_line(t, fetch_next_line(t));
+void tokenizer_stash (tokenizer* tk, token* t) {
+	if (tk->stashed)
+		t->next = tk->stashed;
+
+	tk->stashed = t;
+}
+
+token* next_token(tokenizer* tk) {
+	if (tk->stashed) {
+		token *t = tk->stashed;
+		tk->stashed = tk->stashed->next;
+		return t;
 	}
 
-	if (!t->curr_line)
+	/* If our source is a file, do we need to read another line in? */
+	if (tk->file && (!tk->curr_line || tk->curr_line[tk->pos] == '\0')) {
+		tokenizer_feed_line(tk, fetch_next_line(tk));
+	}
+
+	if (!tk->curr_line)
 		return NULL;
 
-	return next_in_line(t);
+	return next_in_line(tk);
 }
 
 int start_file(tokenizer *tz, char *filename) {
