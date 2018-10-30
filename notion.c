@@ -80,6 +80,7 @@ int main(int argc, char **argv) {
 	tokenizer_free(tz);
 	parser_free(p);
 	scope_free(global);
-
+	vm_free(vm);
+	
 	return 0;
 }

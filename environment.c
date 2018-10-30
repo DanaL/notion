@@ -161,6 +161,16 @@ void vm_add(vm_heap* vm, sexpr* expr) {
 	vm->count++;
 }
 
+void vm_free(vm_heap *vm) {
+	sexpr *node;
+
+	while (vm->heap) {
+		node = vm->heap;
+		vm->heap = vm->heap->neighbour;
+		sexpr_free(node);
+	}
+}
+
 void mark_chain(vm_heap* vm, sexpr *chain) {
 	/* Bailing out if it has been marked avoids cycles in the graph of
 		connection objects */
