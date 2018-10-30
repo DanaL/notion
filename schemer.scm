@@ -530,3 +530,73 @@
 ))))
 
 (define eq?-tuna (eq?-c 'tuna))
+
+; I didn't understand this exercise at all T_T
+(define multiremberCo
+    (lambda (a lat col)
+        (cond
+            ((null? lat) (col (quote ()) (quote())  ))
+            ((eq? (car lat) a) (multiremberCo a (cdr lat)
+                    (lambda (newlat seen) (col newlat (cons (car lat) seen))  )) )
+            (else
+                (multiremberCo a (cdr lat) (lambda (newlat seen)
+                                            (col (cons (cdr lat) newlat) seen)
+                ))
+            )
+        )
+))
+
+(define a-friend
+    (lambda (x y) (null? y))
+)
+
+(define multiInsertL
+    (lambda (new old lat)
+        (cond
+            ((null? lat) (quote()))
+            ((eq? (car lat) old)
+                (cons new (cons old (multiInsertL new old (cdr lat)))))
+            (else (cons (car lat) (multiInsertL new old (cdr lat))))
+        )
+))
+
+(define multiInsertR
+    (lambda (new old lat)
+        (cond
+            ((null? lat) (quote()))
+            ((eq? (car lat) old)
+                (cons old (cons new (multiInsertR new old (cdr lat)))))
+            (else (cons (car lat) (multiInsertR1 new old (cdr lat))))
+        )
+))
+
+(define multiInsertLR
+    (lambda (new oldL oldR lat)
+        (cond
+            ((null? lat) (quote()))
+            ((eq? (car lat) oldL)
+                (cons new (cons oldL (multiInsertLR new oldL oldR (cdr lat)))))
+            ((eq? (car lat) oldR)
+                (cons oldR (cons new (multiInsertLR new oldL oldR (cdr lat)))))
+            (else (cons (car lat) (multiInsertLR new oldL oldR (cdr lat))))
+        )
+))
+
+(define even?
+    (lambda (n)
+        (= (* (/ n 2) 2) n)
+))
+
+(define evens-only*
+    (lambda (l)
+        (cond
+            ((null? l) (quote ()))
+            ((atom? (car l))
+                (cond
+                    ((even? (car l)) (cons (car l) (evens-only* (cdr l)))    )
+                    (else (evens-only* (cdr l)))))
+            (else
+                (cons (evens-only* (car l)) (evens-only* (cdr l)))
+
+        ))
+))
