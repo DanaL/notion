@@ -9,4 +9,6 @@
   comppile to the appropriate "safe" function */
 char* n_strcpy(char*, char*);
 
+int is_whitespace(char*);
+
 #endif

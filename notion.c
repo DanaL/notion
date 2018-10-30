@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <string.h>
 #include <time.h>
 
@@ -13,15 +12,7 @@
 #include "parser.h"
 #include "sexpr.h"
 #include "tokenizer.h"
-
-int is_whitespeace(char *s) {
-	while (*s) {
-		if (!isspace(*s++))
-			return 0;
-	}
-
-	return 1;
-}
+#include "util.h"
 
 #define MAX_LINE_LENGTH 999
 #define DEFAULT_TABLE_SIZE 1019
@@ -57,7 +48,7 @@ int main(int argc, char **argv) {
 		add_history(line);
 #endif
 		/* Read in an expression from the user */
-		if (is_whitespeace(line)) {
+		if (is_whitespace(line)) {
 			free(line);
 			putchar('\n');
 			continue;

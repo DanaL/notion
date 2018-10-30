@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -19,4 +20,13 @@ char* n_strcpy(char *s, char *ct) {
 #endif
 
     return s;
+}
+
+int is_whitespace(char *s) {
+	while (*s) {
+		if (!isspace(*s++))
+			return 0;
+	}
+
+	return 1;
 }

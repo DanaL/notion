@@ -191,15 +191,6 @@ err:
 	return tk;
 }
 
-int is_whitespace(char *s) {
-	while (*s) {
-		if (!(isspace(*s++) || *s == '\n'))
-			return 0;
-	}
-
-	return 1;
-}
-
 char* trim_line(char *buffer) {
 	int c = 0;
 
