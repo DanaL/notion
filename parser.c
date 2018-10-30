@@ -62,8 +62,6 @@ sexpr* sexpr_from_token(vm_heap *vm, parser *p, token *t) {
 			break;
 	}
 
-	token_free(t);
-
 	return expr;
 }
 
@@ -106,6 +104,7 @@ sexpr *get_next_expr(vm_heap *vm, parser *p) {
 			}
 			else if (t->type != T_COMMENT) {
 				sexpr_append(list, sexpr_from_token(vm, p, t));
+				token_free(t);
 			}
 
 			t = next_token(p->tk);

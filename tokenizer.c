@@ -228,90 +228,90 @@ char* fetch_next_line(tokenizer *t) {
 	return line;
 }
 
-token* next_in_line(tokenizer *t) {
-	token *tk;
-    t->pos = skip_whitespace(t->curr_line, t->pos);
-    char *s = t->curr_line;
-    int x = t->pos;
+token* next_in_line(tokenizer *tk) {
+	token *t;
+    tk->pos = skip_whitespace(tk->curr_line, tk->pos);
+    char *s = tk->curr_line;
+    int x = tk->pos;
 
-	if (s[t->pos] == '\0') {
-		free(t->curr_line);
-		t->curr_line = NULL;
-		t->pos = 0;
+	if (s[tk->pos] == '\0') {
+		free(tk->curr_line);
+		tk->curr_line = NULL;
+		tk->pos = 0;
 
 		return NULL;
 	}
 
-	if (t->curr_line[t->pos] == '(') {
-        tk = token_new(T_LIST_START);
-        tk->val =  n_strcpy(tk->val, "(");
-        t->pos++;
+	if (tk->curr_line[tk->pos] == '(') {
+        t = token_new(T_LIST_START);
+        t->val =  n_strcpy(t->val, "(");
+        tk->pos++;
 
-        return tk;
+        return t;
     }
 
-    if (s[t->pos] == '+' || s[t->pos] == '*' || s[t->pos] == '/' || s[t->pos] == '%'
-			|| s[t->pos] == '=' || s[t->pos] == '^'
-			|| (s[t->pos] == '-' && s[t->pos] == ' ')) {
-		tk = token_new(T_SYM);
-		x = t->pos + 1;
+    if (s[tk->pos] == '+' || s[tk->pos] == '*' || s[tk->pos] == '/' || s[tk->pos] == '%'
+			|| s[tk->pos] == '=' || s[tk->pos] == '^'
+			|| (s[tk->pos] == '-' && s[tk->pos] == ' ')) {
+		t = token_new(T_SYM);
+		x = tk->pos + 1;
 	}
-	else if (s[t->pos] == '\\') {
-		tk = token_new(T_ERR);
-		tk->val = NULL;
-		tk->val = n_strcpy(tk->val, "Invalid token.");
-		return tk;
+	else if (s[tk->pos] == '\\') {
+		t = token_new(T_ERR);
+		t->val = NULL;
+		t->val = n_strcpy(t->val, "Invalid token.");
+		return t;
 	}
-	else if (s[t->pos] == '"') {
-		tk = parse_str_token(s, &(t->pos));
-		return tk;
+	else if (s[tk->pos] == '"') {
+		t = parse_str_token(s, &(tk->pos));
+		return t;
 	}
-	else if (s[t->pos] == '<' || s[t->pos] == '>') {
-		tk = token_new(T_SYM);
-		x = t->pos + 1;
+	else if (s[tk->pos] == '<' || s[tk->pos] == '>') {
+		t = token_new(T_SYM);
+		x = tk->pos + 1;
 		if (s[x] && s[x] == '=')
 			++x;
 	}
-	else if (s[t->pos] == '\'') {
-		tk = token_new(T_SINGLE_QUOTE);
-		x = t->pos + 1;
+	else if (s[tk->pos] == '\'') {
+		t = token_new(T_SINGLE_QUOTE);
+		x = tk->pos + 1;
 	}
-    else if (s[t->pos] == ';') {
+    else if (s[tk->pos] == ';') {
         /* We're at a comment so we can just ignore the rest of the line */
-        t->pos = strlen(t->curr_line);
+        tk->pos = strlen(tk->curr_line);
 		return token_new(T_COMMENT);
     }
-	else if(s[t->pos] == ')') {
-		tk = token_new(T_LIST_END);
-		x = t->pos + 1;
+	else if(s[tk->pos] == ')') {
+		t = token_new(T_LIST_END);
+		x = tk->pos + 1;
 	}
-	else if (s[t->pos] == '#') {
-		tk = token_new(T_CONSTANT);
-		x = t->pos + 1;
+	else if (s[tk->pos] == '#') {
+		t = token_new(T_CONSTANT);
+		x = tk->pos + 1;
 		while (s[x] != '\0' && isalpha(s[x]))
 			++x;
 	}
-	else if (is_valid_in_symbol(s[t->pos])) {
-		tk = token_new(T_SYM);
-		x = t->pos + 1;
+	else if (is_valid_in_symbol(s[tk->pos])) {
+		t = token_new(T_SYM);
+		x = tk->pos + 1;
 		while (s[x] != '\0' && is_valid_in_symbol(s[x]))
 			++x;
 	}
 	else {
-		tk = token_new(T_UNKNOWN);
-		x = t->pos + 1;
+		t = token_new(T_UNKNOWN);
+		x = tk->pos + 1;
 	}
 
-    int len = x - t->pos + 1;
-	tk->val = malloc(len * sizeof(char));
-	memcpy(tk->val, &s[t->pos], len - 1);
-	tk->val[len - 1] = '\0';
-	t->pos = x;
+    int len = x - tk->pos + 1;
+	t->val = malloc(len * sizeof(char));
+	memcpy(t->val, &s[tk->pos], len - 1);
+	t->val[len - 1] = '\0';
+	tk->pos = x;
 
-	if (tk->type == T_SYM && is_number_token(tk))
-	 	tk->type = T_NUM;
+	if (t->type == T_SYM && is_number_token(t))
+	 	t->type = T_NUM;
 
-    return tk;
+    return t;
 }
 
 void tokenizer_stash (tokenizer* tk, token* t) {
