@@ -101,6 +101,7 @@ sexpr* builtin_load(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op)
 	ASSERT_PARAM_EQ(count, 2, "Load expects only the filename to be loaded.");
 	ASSERT_TYPE(nodes[1], LVAL_STR, "Filename must be a string constant.");
 
+#if 0 
 	char buffer[1024];
 	FILE *infile = fopen(nodes[1]->str, "r");
 
@@ -148,7 +149,7 @@ sexpr* builtin_load(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op)
 	tokenizer_free(t);
 	parser_free(p);
 	fclose(infile);
-
+#endif
 	return sexpr_null();
 }
 

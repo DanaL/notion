@@ -38,10 +38,8 @@ int main(int argc, char **argv) {
 	scope *global =  scope_new(DEFAULT_TABLE_SIZE);
 
 	load_built_ins(global);
-	tokenizer *tz = tokenizer_create();
-	parser *p = parser_create();
-	token *nt;
-	int okay;
+	tokenizer *tz = tokenizer_new();
+	parser *p = parser_new(tz);
 
 	char *line;
 	while (1) {
@@ -59,7 +57,6 @@ int main(int argc, char **argv) {
 		add_history(line);
 #endif
 		/* Read in an expression from the user */
-		okay = 1;
 		if (is_whitespeace(line)) {
 			free(line);
 			putchar('\n');
@@ -67,33 +64,15 @@ int main(int argc, char **argv) {
 		}
 
 		tokenizer_feed_line(tz, line);
-		nt = next_token(tz);
-		while (nt) {
-			parser_feed_token(vm, p, nt);
-			if (p->complete)
-				break;
-			token_free(nt);
-			nt = next_token(tz);
-		}
-		token_free(nt);
-
-		if (!p->complete) {
-			puts("Incomplete expression. Did you type all your )s?");
-			parser_clear(p);
-			okay = 0;
-		}
-		else if (p->head->type == LVAL_ERR) {
-			sexpr_pprint(p->head);
-			parser_clear(p);
-			okay = 0;
-		}
+		sexpr *ast = get_next_expr(vm, p);
 		free(line);
 
-		if (!okay)
+		if (ast->type == LVAL_ERR) {
+			sexpr_pprint(ast);
+			putchar('\n');
 			continue;
+		}
 
-		sexpr *ast = p->head;
-		parser_clear(p);
 		sexpr *result = eval2(vm, global, ast);
 
 		if (result->type == LVAL_ERR && strcmp(result->err, "<quit>") == 0) {

@@ -80,7 +80,6 @@ parser* parser_new(tokenizer *tk) {
 }
 
 void parser_free(parser *p) {
-	tokenizer_free(p->tk);
 	free(p);
 }
 
