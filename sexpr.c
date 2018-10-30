@@ -180,8 +180,15 @@ sexpr* sexpr_null(void) {
 	if (!null_expr) {
 		null_expr = malloc(sizeof(sexpr));
 		null_expr->type = LVAL_NULL;
+		null_expr->sym = NULL;
+		null_expr->err = NULL;
+		null_expr->str = NULL;
 		null_expr->count = 0;
 		null_expr->children = NULL;
+		null_expr->neighbour = NULL;
+		null_expr->params = NULL;
+		null_expr->body = NULL;
+		null_expr->fun = NULL;
 		null_expr->gen = 0;
 		null_expr->count = 0;
 	}
@@ -194,9 +201,9 @@ void sexpr_free(sexpr *v) {
 		case LVAL_LIST:
 			free(v->children);
 			break;
-		case LVAL_NULL:
 		case LVAL_NUM:
 		case LVAL_BOOL:
+		case LVAL_NULL:
 			break;
 		case LVAL_ERR:
 			free(v->err);
