@@ -51,6 +51,7 @@ sexpr* sexpr_str(vm_heap*, char *);
 void sexpr_free(sexpr*);
 void sexpr_append(sexpr*, sexpr*);
 
+char* sexpr_desc(sexpr*); 
 void print_sexpr_type(sexpr*);
 void sexpr_pprint(sexpr*);
 

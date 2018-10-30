@@ -110,7 +110,7 @@ sexpr* builtin_load(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op)
 	parser *p = parser_new(tk);
 	sexpr* ast = get_next_expr(vm, p);
     while (ast->type != LVAL_NULL)
-    {	
+    {
 		sexpr *result = eval2(vm, env, ast);
 		if (result->type != LVAL_NULL) {
 			sexpr_pprint(result);
@@ -755,9 +755,14 @@ sexpr* eval2(vm_heap *vm, scope *sc, sexpr *v) {
 				func = eval2(vm, sc, v->children[0]);
 			}
 
-			if (func->type != LVAL_FUN)
-				return sexpr_err(vm, "Expected function.");
-
+			if (func->type != LVAL_FUN) {
+				char msg[1024];
+				char *desc = sexpr_desc(func);
+				snprintf(msg, sizeof msg, "%s%s", "Expected function. Instead got: ", desc);
+				sexpr *err = sexpr_err(vm, msg);
+				free(desc);
+				return err;
+			}
 			if (func->builtin)
 				result = func->fun(vm, sc, v->children, v->count, func->sym);
 			else

@@ -40,6 +40,43 @@ void print_sexpr_type(sexpr *v) {
 	}
 }
 
+char* sexpr_desc(sexpr *v) {
+	char buffer[1024];
+
+	switch (v->type) {
+		case LVAL_NUM:
+			if (v->num_type == NUM_TYPE_INT)
+				snprintf(buffer, sizeof buffer, "%ld", v->i_num);
+			else
+				snprintf(buffer, sizeof buffer, "%f", v->d_num);
+			break;
+		case LVAL_STR:
+			snprintf(buffer, sizeof buffer, "\"%s\"", v->str);
+			break;
+		case LVAL_FUN:
+		case LVAL_SYM:
+			snprintf(buffer, sizeof buffer, "%s", v->sym);
+			break;
+		case LVAL_ERR:
+			snprintf(buffer, sizeof buffer, "Err: %s", v->sym);
+			break;
+		case LVAL_LIST:
+			snprintf(buffer, sizeof buffer, "List");
+			break;
+		case LVAL_NULL:
+			snprintf(buffer, sizeof buffer, "Null");
+			break;
+		case LVAL_BOOL:
+			snprintf(buffer, sizeof buffer, "%s", v->bool ? "#t" : "#f");
+			break;
+	}
+
+	char *msg = NULL;
+	msg = n_strcpy(msg, buffer);
+
+	return msg;
+}
+
 /* This is mathematically, philosophically terrible, but also so
 	terribly convenient */
 sexpr* sexpr_num(vm_heap* vm, enum sexpr_num_type t, double n) {
