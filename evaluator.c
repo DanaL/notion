@@ -101,55 +101,28 @@ sexpr* builtin_load(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op)
 	ASSERT_PARAM_EQ(count, 2, "Load expects only the filename to be loaded.");
 	ASSERT_TYPE(nodes[1], LVAL_STR, "Filename must be a string constant.");
 
-#if 0 
-	char buffer[1024];
-	FILE *infile = fopen(nodes[1]->str, "r");
-
-    parser *p = parser_create();
-    tokenizer *t = tokenizer_create();
-
-	if (!infile) {
-		puts("File not found.");
+    tokenizer *tk = tokenizer_new();
+	if (!start_file(tk, nodes[1]->str)) {
+		tokenizer_free(tk);
+		return sexpr_err(vm, "File not found.");
 	}
-	else {
-		sexpr *expr = NULL;
 
-		while (fgets(buffer, 1024, infile)) {
-            tokenizer_feed_line(t, buffer);
-            token *nt;
-            while (1) {
-				nt = next_token(t);
-
-                if (!nt)
-                    break;
-				else if (nt->type == T_COMMENT) {
-					token_free(nt);
-					continue;
-				}
-				else {
-					parser_feed_token(vm, p, nt);
-					token_free(nt);
-                    if (p->open_p == p->closed_p) {
-                        expr = sexpr_copy(vm, p->head);
-						parser_clear(p);
-                        sexpr *result = eval2(vm, env, expr);
-
-						if (result->type != LVAL_NULL) {
-							sexpr_pprint(result);
-							putchar('\n');
-						}
-                    }
-                }
-            }
-			if (nt)
-				token_free(nt);
+	parser *p = parser_new(tk);
+	sexpr* ast = get_next_expr(vm, p);
+    while (ast->type != LVAL_NULL)
+    {	
+		sexpr *result = eval2(vm, env, ast);
+		if (result->type != LVAL_NULL) {
+			sexpr_pprint(result);
+			putchar('\n');
 		}
-	}
 
-	tokenizer_free(t);
+		ast = get_next_expr(vm, p);
+    }
+
+	tokenizer_free(tk);
 	parser_free(p);
-	fclose(infile);
-#endif
+
 	return sexpr_null();
 }
 
