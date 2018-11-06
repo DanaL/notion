@@ -97,28 +97,6 @@ sexpr* sexpr_num(vm_heap* vm, enum sexpr_num_type t, double n) {
 	return v;
 }
 
-sexpr* sexpr_num_s(vm_heap* vm, char *s) {
-	sexpr *v = malloc(sizeof(sexpr));
-	v->type = LVAL_NUM;
-	v->gen = 0;
-	v->count = 0;
-
-	if (strchr(s, '.')) {
-		double f = strtod(s, NULL);
-		v->num_type = NUM_TYPE_DEC;
-		v->d_num = f;
-	}
-	else {
-		long i = strtol(s, NULL, 10);
-		v->num_type = NUM_TYPE_INT;
-		v->i_num = i;
-	}
-
-	vm_add(vm, v);
-
-	return v;
-}
-
 sexpr* sexpr_fun_builtin(builtinf fun, char *name) {
 	sexpr *v = malloc(sizeof(sexpr));
 	v->type = LVAL_FUN;

@@ -7,6 +7,9 @@ enum token_type { T_NUM, T_SYM, T_STR, T_NULL, T_LIST_START, T_LIST_END,
 typedef struct token {
 	enum token_type type;
 	char *val;
+	int is_int;
+	long i_num;
+	double d_num;
 	struct token *next;
 	struct token *top;
 } token;

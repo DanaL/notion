@@ -132,12 +132,19 @@ int skip_whitespace(char *line, int pos) {
 int is_number_token(token *tk) {
 	char *p;
 
-	strtol(tk->val, &p, 10);
-	if (strcmp(p, "") == 0)
+	long a =strtol(tk->val, &p, 10);
+	if (strcmp(p, "") == 0) {
+		tk->is_int = 1;
+		tk->i_num = a;
 		return 1;
-	strtof(tk->val, &p);
-	if (strcmp(p, "") == 0)
+	}
+
+	double b = strtod(tk->val, &p);
+	if (strcmp(p, "") == 0) {
+		tk->is_int = 0;
+		tk->d_num = b;
 		return 1;
+	}
 
 	return 0;
 }
@@ -308,8 +315,9 @@ token* next_in_line(tokenizer *tk) {
 	t->val[len - 1] = '\0';
 	tk->pos = x;
 
-	if (t->type == T_SYM && is_number_token(t))
-	 	t->type = T_NUM;
+	if (t->type == T_SYM && is_number_token(t)) {
+		t->type = T_NUM;
+	}
 
     return t;
 }
