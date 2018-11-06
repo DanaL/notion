@@ -274,15 +274,6 @@ sexpr* builtin_math_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *
 
 			result /= NUM_CONVERT(n);
 		}
-		else if (strcmp(op, "%") == 0) {
-			if (n->num_type != NUM_TYPE_INT || nodes[1]->num_type != NUM_TYPE_INT) {
-				return sexpr_err(vm, "Can only calculate the remainder for integers.");
-			}
-			else if (is_zero(n)) {
-				return sexpr_err(vm, "Division by zero!");
-			}
-			result = nodes[1]->i_num % n->i_num;
-		}
 		else if (strcmp(op, "^") == 0) {
 			result = pow(result,NUM_CONVERT(n));
 		}
@@ -291,6 +282,26 @@ sexpr* builtin_math_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *
 	r = sexpr_num(vm, rt, result);
 
 	return r;
+}
+
+sexpr* builtin_math_modulo(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
+	ASSERT_PARAM_EQ(count, 3, "Modoulo takes exactly two parameters.");
+
+	sexpr *dividend = eval2(vm, env, nodes[1]);
+	sexpr *divisor = eval2(vm, env, nodes[2]);
+	ASSERT_TYPE(dividend, LVAL_NUM, "The dividend must be an integer");
+	ASSERT_TYPE(divisor, LVAL_NUM, "The divisor must be an integer");
+
+	if (dividend->num_type != NUM_TYPE_INT || divisor->num_type != NUM_TYPE_INT) {
+		return sexpr_err(vm, "Can only calculate the remainder for integers.");
+	}
+	else if (is_zero(divisor)) {
+		return sexpr_err(vm, "Division by zero!");
+	}
+
+	long result = dividend->i_num % divisor->i_num;
+
+	return sexpr_num(vm, NUM_TYPE_INT, result);
 }
 
 sexpr* builtin_min_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
@@ -797,7 +808,7 @@ void load_built_ins(scope *sc) {
 	scope_insert_var(sc, "-", sexpr_fun_builtin(&builtin_math_op, "-"));
 	scope_insert_var(sc, "*", sexpr_fun_builtin(&builtin_math_op, "*"));
 	scope_insert_var(sc, "/", sexpr_fun_builtin(&builtin_math_op, "/"));
-	scope_insert_var(sc, "%", sexpr_fun_builtin(&builtin_math_op, "%"));
+	scope_insert_var(sc, "%", sexpr_fun_builtin(&builtin_math_modulo, "%"));
 	scope_insert_var(sc, "^", sexpr_fun_builtin(&builtin_math_op, "^"));
 	scope_insert_var(sc, "=", sexpr_fun_builtin(&builtin_math_cmp, "="));
 	scope_insert_var(sc, ">", sexpr_fun_builtin(&builtin_math_cmp, ">"));
