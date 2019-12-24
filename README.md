@@ -15,8 +15,6 @@ more closely to the dialect presented in the Little Schemer. My C is definitely 
 cheating to use his parser library so I wrote my own, crappy, recursive decent parser. Maybe one day I'll dust off my old
 university notes on lex and yacc...
 
-So far, we don't have variables, but we do have basic math operations, min, max, list, car, cdr, and cons.
-
 I was pretty tickled when, after implementing cdr, this gem ran correctly:
 
 (/ (car (cdr (cdr(list(car (car (cdr (list 1 (list 2 3) (list (list 4)))))) 4 8)))) 2)
