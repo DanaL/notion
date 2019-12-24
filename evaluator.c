@@ -272,7 +272,15 @@ sexpr* builtin_math_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *
 			if (is_zero(n))
 				return sexpr_err(vm, "Division by zero!");
 
+			
 			result /= NUM_CONVERT(n);
+
+			// If the result contains a fractional component, force
+			// the result to be decimal type. notion probably shouldn't
+			// be used for precision financial or scientific calculations...
+			long temp_r = result;
+			if (fabs(result - temp_r) > 0.00000000001)
+				rt = NUM_TYPE_DEC;
 		}
 		else if (strcmp(op, "^") == 0) {
 			result = pow(result,NUM_CONVERT(n));
