@@ -32,9 +32,9 @@ sexpr* sexpr_from_token(vm_heap *vm, parser *p, token *t) {
 
 	switch (t->type) {
 		case T_NUM:
-			if (t->is_int)
+			if (t->is_int) 
 				expr = sexpr_num(vm, NUM_TYPE_INT, t->i_num);
-			else
+			else 
 				expr = sexpr_num(vm, NUM_TYPE_DEC, t->d_num);
 			break;
 		case T_SYM:

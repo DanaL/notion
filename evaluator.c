@@ -244,8 +244,8 @@ sexpr* builtin_math_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *
 		sexpr *n = eval2(vm, env, nodes[1]);
 		ASSERT_TYPE(n, LVAL_NUM, "Expected number!");
 
-		result = - (NUM_CONVERT(nodes[1]));
-		return sexpr_num(vm, nodes[1]->num_type, result);
+		result = - (NUM_CONVERT(n));
+		return sexpr_num(vm, n->num_type, result);
 	}
 
 	enum sexpr_num_type rt = NUM_TYPE_INT;
@@ -264,7 +264,7 @@ sexpr* builtin_math_op(vm_heap *vm, scope *env, sexpr **nodes, int count, char *
 
 		if (strcmp(op, "+") == 0)
 			result += NUM_CONVERT(n);
-		else if (strcmp(op, "-") == 0)
+		else if (strcmp(op, "-") == 0) 
 			result -= NUM_CONVERT(n);
 		else if (strcmp(op, "*") == 0)
 			result *= NUM_CONVERT(n);
@@ -774,11 +774,12 @@ sexpr* eval2(vm_heap *vm, scope *sc, sexpr *v) {
 				free(desc);
 				return err;
 			}
-			if (func->builtin)
+			if (func->builtin) {
 				result = func->fun(vm, sc, v->children, v->count, func->sym);
-			else
+			}
+			else {
 				result = eval_user_func(vm, sc, v->children, v->count, func);
-
+			}
 			return result;
 		case LVAL_SYM:
 			return scope_fetch_var(vm, sc, v->sym);

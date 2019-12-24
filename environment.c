@@ -103,7 +103,7 @@ sexpr* scope_fetch_var(vm_heap *vm, scope *sc, char* key) {
 
 	if (!sc->sym_table[h]) {
 		char msg[256];
-		snprintf(msg, sizeof msg, "%s%s", "Unbound symbol: ", key);
+		snprintf(msg, sizeof msg, "%s'%s'", "Unbound symbol: ", key);
 		sexpr *r = CHECK_PARENT_SCOPE(vm, sc, key, msg);
 		return r;
 	}
