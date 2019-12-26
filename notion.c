@@ -18,7 +18,7 @@
 #define DEFAULT_TABLE_SIZE 1019
 
 int main(int argc, char **argv) {
-	puts("Notion (Dana's toy Scheme) 0.8.2");
+	puts("Notion (Dana's toy Scheme) 0.8.3");
 	puts("Press Ctrl-C or (quit) to exit");
 
 	puts("Loading start-up environment...");
