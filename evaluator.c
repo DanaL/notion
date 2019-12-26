@@ -523,6 +523,22 @@ sexpr* build_func(vm_heap *vm, sexpr *header, sexpr *body, char *name) {
 	return sexpr_fun_user(vm, params, body, name);
 }
 
+sexpr* builtin_if(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
+	ASSERT_PARAM_EQ(count, 4, "If is of the form (if <pred> <consequent> <alternate>.");
+
+	sexpr *result = eval2(vm, env, nodes[1]);
+	if (result->type == LVAL_ERR)
+		return result;
+	else if (result->type == LVAL_BOOL) {
+		return result->bool ? eval2(vm, env, nodes[2]) : eval2(vm, env, nodes[3]);
+	}
+	else {
+		// Evidently, a non-boolean value is considered true so:
+		// (if (+ 1 2 3) 17 8) would have 17 for a result
+		return eval2(vm, env, nodes[2]);
+	}
+}
+
 sexpr* builtin_cond(vm_heap *vm, scope *env, sexpr **nodes, int count, char *op) {
 	ASSERT_PARAM_MIN(count, 2, "Cond requires at least one expression.");
 
@@ -835,6 +851,7 @@ void load_built_ins(scope *sc) {
 	scope_insert_var(sc, "lambda", sexpr_fun_builtin(&builtin_lambda, "lambda"));
 	scope_insert_var(sc, "dump", sexpr_fun_builtin(&builtin_mem_dump, "dump"));
 	scope_insert_var(sc, "cond", sexpr_fun_builtin(&builtin_cond, "cond"));
+	scope_insert_var(sc, "if", sexpr_fun_builtin(&builtin_if, "if"));
 	scope_insert_var(sc, "string?", sexpr_fun_builtin(&builtin_stringq, "string?"));
 	scope_insert_var(sc, "string-length", sexpr_fun_builtin(&builtin_stringlen, "string-length"));
 	scope_insert_var(sc, "string", sexpr_fun_builtin(&builtin_string, "string"));
