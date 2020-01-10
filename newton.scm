@@ -65,3 +65,25 @@
 (define (sqrt3 x)
     (sqrt-iter3 1 x x))
 
+;; Exercise 1.8
+(define (cube x) (* x x x))
+
+(define (good-enough-cube? guess x)
+    (< (abs (- (cube guess) x)) 0.001))
+
+(define (improve-cube guess x)
+    (/   
+        (+ (/ x (square guess)) (* guess 2))
+        3)
+)
+
+(define (cbrt-iter guess x)
+    (if (good-enough-cube? guess x)
+        guess
+        (cbrt-iter (improve-cube guess x) x)
+    )
+) 
+
+(define (cbrt x)
+    (cbrt-iter 1 x)
+)
