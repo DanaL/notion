@@ -511,7 +511,7 @@ sexpr* define_var(vm_heap *vm, scope *sc, sexpr **nodes, int count, char *op) {
 	return sexpr_null();
 }
 
-sexpr* build_func(vm_heap *vm, sexpr *header, sexpr *body, char *name) {
+sexpr* build_func_stmt(vm_heap *vm, sexpr *header, sexpr *body, char *name) {
 	/* Each parameter must be a symbol and be uniquely named
 		Note to self: there can be zero params of course */
 	sexpr *params = sexpr_list(vm);
@@ -707,25 +707,28 @@ sexpr* builtin_lambda(vm_heap *vm, scope *env, sexpr **nodes, int count, char *o
 
 	body = scan_for_closures(vm, env, params, body);
 
-	sexpr *lambda = build_func(vm, params, body, "");
+	sexpr *lambda = build_func_stmt(vm, params, body, "");
 
 	return lambda;
 }
 
 sexpr* define_fun(vm_heap *vm, scope *sc, sexpr **nodes, int count, char *op)  {
 	sexpr *header = nodes[1];
-	sexpr *body = nodes[2];
-
-	if (count < 3)
-		return sexpr_err(vm, "Invalid definition.");
 
 	ASSERT_PRIMITIVE(vm, sc, header->children[0]->sym);
 	char *fun_name = header->children[0]->sym;
+	sexpr *fun;	
 
-	sexpr *fun = build_func(vm, header, body, fun_name);
-
-	if (fun->type == LVAL_ERR)
-		return fun;
+	for (int j = 2; j < count; j++ ) {
+		sexpr *child = nodes[j]->children[0];	
+		if (child->type == LVAL_SYM && strcmp(child->sym, "define") == 0) 
+			fun = define_fun(vm, sc, nodes[j]->children, nodes[j]->count, op);
+		else 
+			fun = build_func_stmt(vm, header, nodes[j], fun_name);
+			
+		if (fun->type == LVAL_ERR)
+			return fun;
+	}
 
 	scope_insert_var(sc, fun_name, fun);
 
@@ -733,13 +736,18 @@ sexpr* define_fun(vm_heap *vm, scope *sc, sexpr **nodes, int count, char *op)  {
 }
 
 sexpr* define(vm_heap *vm, scope *sc, sexpr **nodes, int count, char *op) {
-	if (count != 3)
-		return sexpr_err(vm, "Invalid definition.");
+	ASSERT_PARAM_MIN(count, 3, "Invalid definition.");
 
-	if (nodes[1]->type == LVAL_LIST)
-		return define_fun(vm, sc, nodes, count, op);
-	else
+	// I need to change how I process define. If the first child node is a symbol,
+	// we are defining a variable, otherwise we are trying to define a function
+	// and that can have multiple statements, whereas I originally assumed it would 
+	// only be: (define (name <params>) (<body>))
+	if (nodes[1]->type == LVAL_SYM)
 		return define_var(vm, sc, nodes, count, op);
+	else if (nodes[1]->type == LVAL_LIST)
+		return define_fun(vm, sc, nodes, count, op);
+	else 
+		return sexpr_err(vm, "Define: symbol or list expected.");	
 }
 
 sexpr* eval_user_func(vm_heap *vm, scope *sc, sexpr **operands, int count, sexpr *fun) {
